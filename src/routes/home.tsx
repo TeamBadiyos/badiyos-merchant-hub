@@ -136,6 +136,26 @@ function HomePage() {
               ))}
             </div>
 
+            {lowStockCount > 0 && can("manage_products") && (
+              <Link
+                to="/products"
+                search={{ low: true }}
+                className="flex items-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-destructive/10">
+                  <AlertTriangle className="size-5 text-destructive" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="num text-sm font-bold text-destructive">
+                    {lowStockCount} {t("lowStockBanner")}
+                  </p>
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {t("viewLowStock")}
+                  </p>
+                </div>
+              </Link>
+            )}
+
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
                 <TrendingUp className="size-5 text-primary" />
