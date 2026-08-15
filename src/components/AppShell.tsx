@@ -33,12 +33,12 @@ const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }
 /** Live screens in the side menu, gated by role permissions. */
 const links: { to: string; key: Key; icon: typeof Home; permission: Permission }[] = [
   { to: "/products", key: "products", icon: Boxes, permission: "manage_products" },
+  { to: "/reports", key: "reports", icon: BarChart3, permission: "view_reports" },
+  { to: "/wallet", key: "wallet", icon: Wallet, permission: "view_reports" },
   { to: "/staff", key: "rolesStaff", icon: Users, permission: "manage_staff" },
 ];
 
 const menuItems: { key: Key; icon: typeof Home }[] = [
-  { key: "reports", icon: BarChart3 },
-  { key: "payouts", icon: Wallet },
   { key: "settings", icon: Settings },
   { key: "support", icon: LifeBuoy },
 ];
