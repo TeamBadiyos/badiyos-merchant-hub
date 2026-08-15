@@ -295,6 +295,8 @@ function ProductForm({
   const [stock, setStock] = useState(product ? String(product.stock_quantity) : "0");
   const [unit, setUnit] = useState(product?.unit ?? "piece");
   const [threshold, setThreshold] = useState(String(product?.low_stock_threshold ?? 5));
+  const [gstRate, setGstRate] = useState(String(product?.gst_rate ?? 0));
+  const [hsn, setHsn] = useState(product?.hsn_sac_code ?? "");
   const [imagePath, setImagePath] = useState<string | null>(product?.image_url ?? null);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -320,6 +322,8 @@ function ProductForm({
         stock_quantity: Number(stock),
         unit,
         low_stock_threshold: Number(threshold || 0),
+        gst_rate: Number(gstRate || 0),
+        hsn_sac_code: hsn.trim() || null,
         image_url: imagePath,
       };
       if (product) {
@@ -425,6 +429,24 @@ function ProductForm({
               className="num rounded-xl"
             />
           </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label={t("gstRate")}>
+              <Input
+                inputMode="decimal"
+                value={gstRate}
+                onChange={(e) => setGstRate(e.target.value.replace(/[^0-9.]/g, ""))}
+                className="num rounded-xl"
+              />
+            </Field>
+            <Field label={t("hsn")}>
+              <Input
+                value={hsn}
+                onChange={(e) => setHsn(e.target.value.toUpperCase())}
+                className="num rounded-xl"
+              />
+            </Field>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Field label={t("price")} error={errors["price"] ?? ""}>
