@@ -188,7 +188,7 @@ function ProductsPage() {
               key={product.id}
               actions={[
                 {
-                  label: t("edit"),
+                  label: t("editProduct"),
                   icon: <Pencil className="size-4" />,
                   onSelect: () => setEditing(product),
                 },
