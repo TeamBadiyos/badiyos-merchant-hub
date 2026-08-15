@@ -216,7 +216,7 @@ function StaffPage() {
                 </div>
                 <div className="mt-3 flex items-center gap-3">
                   <Select
-                    value={member.role_id ?? undefined}
+                    value={member.role_id ?? ""}
                     onValueChange={(roleId) => setStaffRole.mutate({ member, roleId })}
                   >
                     <SelectTrigger className="rounded-xl text-xs font-bold">
@@ -435,7 +435,7 @@ function InviteForm({
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-bold">{t("role")}</Label>
-            <Select value={roleId} onValueChange={setRoleId}>
+            <Select value={roleId ?? ""} onValueChange={setRoleId}>
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder={t("role")} />
               </SelectTrigger>

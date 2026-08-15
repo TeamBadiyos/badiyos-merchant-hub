@@ -254,10 +254,10 @@ function ProductForm({
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!name.trim()) next.name = t("required");
-    if (!price || Number(price) <= 0) next.price = "Enter a price above 0";
+    if (!name.trim()) next["name"] = t("required");
+    if (!price || Number(price) <= 0) next["price"] = "Enter a price above 0";
     if (stock === "" || Number(stock) < 0 || !Number.isInteger(Number(stock)))
-      next.stock = "Stock must be 0 or more";
+      next["stock"] = "Stock must be 0 or more";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -347,7 +347,7 @@ function ProductForm({
             </Button>
           </div>
 
-          <Field label={t("productName")} error={errors.name}>
+          <Field label={t("productName")} error={errors["name"] ?? ""}>
             <Input value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />
           </Field>
 
@@ -370,7 +370,7 @@ function ProductForm({
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t("price")} error={errors.price}>
+            <Field label={t("price")} error={errors["price"] ?? ""}>
               <Input
                 inputMode="decimal"
                 value={price}
@@ -378,7 +378,7 @@ function ProductForm({
                 className="num rounded-xl"
               />
             </Field>
-            <Field label={t("stock")} error={errors.stock}>
+            <Field label={t("stock")} error={errors["stock"] ?? ""}>
               <Input
                 inputMode="numeric"
                 value={stock}

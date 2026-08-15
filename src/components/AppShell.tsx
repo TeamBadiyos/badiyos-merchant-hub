@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Store,
   User,
+  Users,
   Wallet,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
