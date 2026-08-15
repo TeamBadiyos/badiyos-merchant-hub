@@ -28,6 +28,30 @@ export type OpenState =
   | { kind: "open"; till: string }
   | { kind: "outside"; from: string; till: string };
 
+/**
+ * Derived customer-facing availability: the manual `is_accepting_orders`
+ * toggle AND the schedule must both allow orders. Mirrors the database
+ * helper `public.merchant_is_currently_open(uuid)`, which is the source of
+ * truth for anything customer-facing.
+ */
+export type Availability = {
+  open: boolean;
+  reason: "open" | "manual_off" | "outside_hours" | "closed_today" | "not_approved";
+};
+
+export function availabilityFor(
+  merchant: { status?: string | null; is_accepting_orders?: boolean | null } | null | undefined,
+  state: OpenState,
+): Availability {
+  if (!merchant) return { open: false, reason: "not_approved" };
+  if (merchant.status !== "approved") return { open: false, reason: "not_approved" };
+  if (merchant.is_accepting_orders !== true) return { open: false, reason: "manual_off" };
+  if (state.kind === "closed") return { open: false, reason: "closed_today" };
+  if (state.kind === "outside") return { open: false, reason: "outside_hours" };
+  // "unset" means no weekly timings yet — fall back to the manual toggle.
+  return { open: true, reason: "open" };
+}
+
 /** Current open/closed state from the weekly hours plus any date override. */
 export function openStateFor(
   hours: StoreHour[] | undefined,
