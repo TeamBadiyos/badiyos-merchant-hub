@@ -23,13 +23,26 @@ export function Wordmark({
   );
 }
 
-export function BrandMark({ className = "" }: { className?: string }) {
+export function BrandMark({
+  className = "",
+  on = "dark",
+}: {
+  className?: string;
+  /** On green/dark surfaces the icon sits on a white chip so the mark keeps contrast. */
+  on?: "dark" | "light";
+}) {
   return (
-    <img
-      src={appIcon.url}
-      alt="badiyos"
-      className={`shadow-brand size-12 rounded-2xl select-none ${className}`}
-      draggable={false}
-    />
+    <span
+      className={`shadow-brand inline-flex size-12 items-center justify-center overflow-hidden rounded-2xl ${
+        on === "dark" ? "bg-primary-foreground p-1" : ""
+      } ${className}`}
+    >
+      <img
+        src={appIcon.url}
+        alt="badiyos"
+        className="size-full rounded-xl select-none"
+        draggable={false}
+      />
+    </span>
   );
 }
