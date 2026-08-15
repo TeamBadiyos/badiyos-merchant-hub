@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { SwipeDismiss } from "@/components/SwipeRow";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { OrderCard } from "@/components/OrderCard";
 import { Button } from "@/components/ui/button";
@@ -58,6 +60,7 @@ function HomePage() {
   const { t } = useI18n();
   const { can, context } = useAuth();
   const merchant = useRequireAuth();
+  const [lowStockDismissed, setLowStockDismissed] = useState(false);
   const allowed = can("view_orders");
 
   useOrderRealtime(merchant?.id, allowed);
