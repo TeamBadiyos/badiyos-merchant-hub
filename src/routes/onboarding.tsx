@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { verifyGstin } from "@/lib/gstin.functions";
+import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import { lookupRegionDefaults } from "@/lib/locale-config";
 import {
@@ -506,7 +507,10 @@ function OnboardingPage() {
               <Button
                 size="lg"
                 disabled={gstChoice === null || saving}
-                onClick={() => void submitStep1()}
+                onClick={() => {
+                    hapticImpact("light");
+                    void submitStep1();
+                  }}
                 className="w-full rounded-2xl text-base font-bold shadow-brand"
               >
                 {saving && <Loader2 className="size-5 animate-spin" />}
@@ -570,7 +574,10 @@ function OnboardingPage() {
                 <Button
                   size="lg"
                   disabled={saving}
-                  onClick={() => void submitStep2()}
+                  onClick={() => {
+                    hapticImpact("light");
+                    void submitStep2();
+                  }}
                   className="flex-1 rounded-2xl text-base font-bold shadow-brand"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
@@ -651,7 +658,10 @@ function OnboardingPage() {
                 <Button
                   size="lg"
                   disabled={saving}
-                  onClick={() => void submitStep3()}
+                  onClick={() => {
+                    hapticImpact("light");
+                    void submitStep3();
+                  }}
                   className="flex-1 rounded-2xl text-base font-bold shadow-brand"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
@@ -697,7 +707,10 @@ function OnboardingPage() {
                 <Button
                   size="lg"
                   disabled={saving}
-                  onClick={() => void submitApplication()}
+                  onClick={() => {
+                    hapticNotify("success");
+                    void submitApplication();
+                  }}
                   className="flex-1 rounded-2xl text-base font-bold shadow-brand"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
