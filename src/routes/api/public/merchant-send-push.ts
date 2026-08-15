@@ -31,11 +31,12 @@ function b64url(bytes: Uint8Array): string {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function pemToPkcs8(pem: string): Uint8Array {
+function pemToPkcs8(pem: string): ArrayBuffer {
   const raw = atob(pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, ""));
-  const out = new Uint8Array(raw.length);
+  const buf = new ArrayBuffer(raw.length);
+  const out = new Uint8Array(buf);
   for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
+  return buf;
 }
 
 async function googleAccessToken(sa: {
