@@ -22,7 +22,7 @@ import { useI18n } from "@/lib/i18n";
 import { inr } from "@/lib/order-status";
 import { fetchOrders } from "@/lib/orders";
 import { supabase } from "@/integrations/supabase/client";
-import { openStateFor, type ScheduleOverride, type StoreHour } from "@/lib/schedule";
+import { useAvailability } from "@/lib/use-availability";
 import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
@@ -90,26 +90,10 @@ function HomePage() {
     },
   });
 
-  const schedule = useQuery({
-    queryKey: ["schedule", merchant?.id],
-    enabled: Boolean(merchant?.id),
-    queryFn: async () => {
-      const [hours, overrides] = await Promise.all([
-        supabase.from("merchant_store_hours").select("*"),
-        supabase.from("merchant_schedule_overrides").select("*"),
-      ]);
-      if (hours.error) throw hours.error;
-      if (overrides.error) throw overrides.error;
-      return {
-        hours: (hours.data ?? []) as StoreHour[],
-        overrides: (overrides.data ?? []) as ScheduleOverride[],
-      };
-    },
-  });
+  const { schedule, openState, availability } = useAvailability();
 
   if (!merchant) return null;
 
-  const openState = openStateFor(schedule.data?.hours, schedule.data?.overrides);
   const openLabel =
     openState.kind === "open"
       ? `${t("openNow")} · ${t("openTill")} ${openState.till}`
@@ -118,6 +102,14 @@ function HomePage() {
         : openState.kind === "closed"
           ? t("closedTodayMsg")
           : t("scheduleNotSet");
+
+  const availLabel = availability.open
+    ? t("availOpen")
+    : availability.reason === "outside_hours"
+      ? t("availPausedSchedule")
+      : availability.reason === "closed_today"
+        ? t("availPausedClosedDay")
+        : t("availPausedManual");
 
   const lowStockCount = lowStock.data?.length ?? 0;
 
@@ -161,6 +153,25 @@ function HomePage() {
           <AccessDenied />
         ) : (
           <>
+            <div
+              className={`rounded-2xl border p-4 ${
+                availability.open
+                  ? "border-primary/30 bg-primary-soft"
+                  : "border-destructive/30 bg-destructive/5"
+              }`}
+            >
+              <p
+                className={`text-sm font-bold ${
+                  availability.open ? "text-foreground" : "text-destructive"
+                }`}
+              >
+                {availLabel}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                {availability.open ? t("availOpenHint") : t("availPausedHint")}
+              </p>
+            </div>
+
             <Link
               to="/settings"
               className={`flex items-center gap-4 rounded-2xl border p-4 ${
