@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
+  Clock,
   IndianRupee,
   Loader2,
   PackageOpen,
@@ -19,6 +20,7 @@ import { useI18n } from "@/lib/i18n";
 import { inr } from "@/lib/order-status";
 import { fetchOrders } from "@/lib/orders";
 import { supabase } from "@/integrations/supabase/client";
+import { openStateFor, type ScheduleOverride, type StoreHour } from "@/lib/schedule";
 import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
@@ -85,7 +87,34 @@ function HomePage() {
     },
   });
 
+  const schedule = useQuery({
+    queryKey: ["schedule", merchant?.id],
+    enabled: Boolean(merchant?.id),
+    queryFn: async () => {
+      const [hours, overrides] = await Promise.all([
+        supabase.from("merchant_store_hours").select("*"),
+        supabase.from("merchant_schedule_overrides").select("*"),
+      ]);
+      if (hours.error) throw hours.error;
+      if (overrides.error) throw overrides.error;
+      return {
+        hours: (hours.data ?? []) as StoreHour[],
+        overrides: (overrides.data ?? []) as ScheduleOverride[],
+      };
+    },
+  });
+
   if (!merchant) return null;
+
+  const openState = openStateFor(schedule.data?.hours, schedule.data?.overrides);
+  const openLabel =
+    openState.kind === "open"
+      ? `${t("openNow")} · ${t("openTill")} ${openState.till}`
+      : openState.kind === "outside"
+        ? `${t("closed")} · ${openState.from}–${openState.till}`
+        : openState.kind === "closed"
+          ? t("closedTodayMsg")
+          : t("scheduleNotSet");
 
   const lowStockCount = lowStock.data?.length ?? 0;
 
@@ -124,6 +153,25 @@ function HomePage() {
           <AccessDenied />
         ) : (
           <>
+            <Link
+              to="/settings"
+              className={`flex items-center gap-4 rounded-2xl border p-4 ${
+                openState.kind === "open"
+                  ? "border-primary/30 bg-primary-soft"
+                  : "border-border bg-card shadow-card"
+              }`}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-background/60">
+                <Clock
+                  className={`size-5 ${openState.kind === "open" ? "text-primary" : "text-muted-foreground"}`}
+                />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-muted-foreground">{t("todaySchedule")}</p>
+                <p className="num text-sm font-bold text-foreground">{openLabel}</p>
+              </div>
+            </Link>
+
             <div className="grid grid-cols-3 gap-3">
               {stats.map(({ label, value, icon: Icon }) => (
                 <div key={label} className="rounded-2xl border border-border bg-card p-4 shadow-card">

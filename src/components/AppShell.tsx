@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   Receipt,
+  ScanLine,
   Settings,
   ShoppingBag,
   Store,
@@ -26,22 +27,21 @@ import { useI18n, type Key } from "@/lib/i18n";
 const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
   { to: "/home", key: "home", icon: Home, permission: "view_orders" },
   { to: "/orders", key: "orders", icon: Receipt, permission: "view_orders" },
-  { to: "/catalogue", key: "catalogue", icon: ShoppingBag },
+  { to: "/pos", key: "pos", icon: ScanLine, permission: "manage_orders" },
   { to: "/profile", key: "profile", icon: User },
 ];
 
 /** Live screens in the side menu, gated by role permissions. */
-const links: { to: string; key: Key; icon: typeof Home; permission: Permission }[] = [
+const links: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
   { to: "/products", key: "products", icon: Boxes, permission: "manage_products" },
+  { to: "/catalogue", key: "catalogue", icon: ShoppingBag },
   { to: "/reports", key: "reports", icon: BarChart3, permission: "view_reports" },
   { to: "/wallet", key: "wallet", icon: Wallet, permission: "view_reports" },
   { to: "/staff", key: "rolesStaff", icon: Users, permission: "manage_staff" },
+  { to: "/settings", key: "settings", icon: Settings },
 ];
 
-const menuItems: { key: Key; icon: typeof Home }[] = [
-  { key: "settings", icon: Settings },
-  { key: "support", icon: LifeBuoy },
-];
+const menuItems: { key: Key; icon: typeof Home }[] = [{ key: "support", icon: LifeBuoy }];
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useI18n();
@@ -73,7 +73,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
                 </div>
                 <nav className="flex flex-col p-4">
                   {links
-                    .filter((item) => can(item.permission))
+                    .filter((item) => !item.permission || can(item.permission))
                     .map(({ to, key, icon: Icon }) => (
                       <Link
                         key={to}
@@ -135,11 +135,15 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
 
         <main className="flex-1 px-6 pt-6 pb-28">{children}</main>
 
-        <nav className="fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur">
-          <ul className="grid grid-cols-4">
-            {tabs
-              .filter((tab) => !tab.permission || can(tab.permission))
-              .map(({ to, key, icon: Icon }) => {
+        <nav className="fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur print:hidden">
+          {(() => {
+            const visible = tabs.filter((tab) => !tab.permission || can(tab.permission));
+            return (
+              <ul
+                className="grid"
+                style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))` }}
+              >
+                {visible.map(({ to, key, icon: Icon }) => {
               const active = pathname === to;
               return (
                 <li key={to}>
@@ -160,8 +164,10 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
                   </Link>
                 </li>
               );
-            })}
-          </ul>
+                })}
+              </ul>
+            );
+          })()}
         </nav>
       </div>
     </div>

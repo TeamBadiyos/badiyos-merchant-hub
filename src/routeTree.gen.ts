@@ -15,9 +15,11 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as PosRouteImport } from './routes/pos'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as WalletRouteImport } from './routes/wallet'
 
@@ -51,6 +53,11 @@ const OrdersRoute = OrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PosRoute = PosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -64,6 +71,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffRoute = StaffRouteImport.update({
@@ -84,9 +96,11 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
   '/wallet': typeof WalletRoute
 }
@@ -97,9 +111,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
   '/wallet': typeof WalletRoute
 }
@@ -111,9 +127,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
   '/wallet': typeof WalletRoute
 }
@@ -126,9 +144,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/orders'
+    | '/pos'
     | '/products'
     | '/profile'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/wallet'
   fileRoutesByTo: FileRoutesByTo
@@ -139,9 +159,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/orders'
+    | '/pos'
     | '/products'
     | '/profile'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/wallet'
   id:
@@ -152,9 +174,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/orders'
+    | '/pos'
     | '/products'
     | '/profile'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/wallet'
   fileRoutesById: FileRoutesById
@@ -166,9 +190,11 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRoute
+  PosRoute: typeof PosRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
   StaffRoute: typeof StaffRoute
   WalletRoute: typeof WalletRoute
 }
@@ -217,6 +243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pos': {
+      id: '/pos'
+      path: '/pos'
+      fullPath: '/pos'
+      preLoaderRoute: typeof PosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products': {
       id: '/products'
       path: '/products'
@@ -236,6 +269,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/staff': {
@@ -262,9 +302,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRoute,
+  PosRoute: PosRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
   StaffRoute: StaffRoute,
   WalletRoute: WalletRoute,
 }
