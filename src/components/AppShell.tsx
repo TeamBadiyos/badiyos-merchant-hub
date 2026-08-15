@@ -101,7 +101,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
 
             <label className="flex items-center gap-2 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold">
               <Store className="size-4" />
-              <span className="hidden xs:inline">{shopOpen ? t("openNow") : t("closed")}</span>
+              <span className="hidden sm:inline">{shopOpen ? t("openNow") : t("closed")}</span>
               <Switch
                 checked={shopOpen}
                 onCheckedChange={setShopOpen}
