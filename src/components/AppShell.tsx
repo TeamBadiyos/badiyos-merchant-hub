@@ -146,7 +146,10 @@ export function AppShell({
               <span className="hidden sm:inline">{shopOpen ? t("openNow") : t("closed")}</span>
               <Switch
                 checked={shopOpen}
-                onCheckedChange={setShopOpen}
+                onCheckedChange={(next) => {
+                  hapticImpact("medium");
+                  setShopOpen(next);
+                }}
                 aria-label={t("shopStatus")}
                 className="data-[state=checked]:bg-primary-foreground/90 data-[state=unchecked]:bg-primary-foreground/30 [&_span]:bg-primary"
               />
@@ -154,9 +157,17 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 px-6 pt-6 pb-28">{children}</main>
+        <main ref={scrollRef} className="app-scroll relative flex-1">
+          {onRefresh && <PullIndicator pull={pull} refreshing={refreshing} threshold={threshold} />}
+          <div
+            className={pull ? "" : "transition-transform duration-200 ease-out"}
+            style={{ transform: `translate3d(0,${pull}px,0)` }}
+          >
+            <div className="px-6 pt-6 pb-32">{children}</div>
+          </div>
+        </main>
 
-        <nav className="fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur print:hidden">
+        <nav className="safe-bottom fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur print:hidden">
           {(() => {
             const visible = tabs.filter((tab) => !tab.permission || can(tab.permission));
             return (
