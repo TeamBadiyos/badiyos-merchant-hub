@@ -38,20 +38,20 @@ function Splash() {
   }, [ready, session, navigate]);
 
   return (
-    <div className="bg-brand-gradient flex min-h-screen flex-col items-center justify-center gap-2 px-3 text-primary-foreground">
-      <BrandMark className="size-9 animate-in text-4xl zoom-in-75 duration-500" />
+    <div className="bg-brand-gradient flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-primary-foreground">
+      <BrandMark className="size-18 animate-in text-4xl zoom-in-75 duration-500" />
       <div className="animate-in text-center fade-in duration-700">
         <h1 className="text-4xl">
           <Wordmark className="text-primary-foreground [&_span]:text-primary-foreground/70" />
         </h1>
-        <p className="mt-1 text-sm font-semibold tracking-wide uppercase opacity-85">
+        <p className="mt-2 text-sm font-semibold tracking-wide uppercase opacity-85">
           {t("tagline")}
         </p>
       </div>
-      <div className="mt-3 h-1 w-12 overflow-hidden rounded-full bg-primary-foreground/25">
+      <div className="mt-6 h-2 w-24 overflow-hidden rounded-full bg-primary-foreground/25">
         <div className="h-full w-1/3 animate-pulse rounded-full bg-primary-foreground" />
       </div>
-      <p className="absolute bottom-4 text-xs opacity-75">Latur, Maharashtra</p>
+      <p className="absolute bottom-8 text-xs opacity-75">Latur, Maharashtra</p>
     </div>
   );
 }

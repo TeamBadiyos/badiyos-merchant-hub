@@ -54,20 +54,20 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <div className="bg-brand-gradient px-3 pt-6 pb-8 text-primary-foreground">
+      <div className="bg-brand-gradient px-6 pt-12 pb-16 text-primary-foreground">
         <div className="mx-auto flex w-full max-w-[520px] items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <BrandMark className="size-5 text-xl" />
+          <div className="flex items-center gap-3">
+            <BrandMark className="size-10 text-xl" />
             <span className="text-2xl">
               <Wordmark className="text-primary-foreground [&_span]:text-primary-foreground/70" />
             </span>
           </div>
-          <div className="flex overflow-hidden rounded-full bg-primary-foreground/15 p-0.5 text-xs font-bold">
+          <div className="flex overflow-hidden rounded-full bg-primary-foreground/15 p-1 text-xs font-bold">
             {(["en", "mr"] as const).map((l) => (
               <button
                 key={l}
                 onClick={() => setLang(l)}
-                className={`rounded-full px-1.5 py-0.5 transition-colors ${
+                className={`rounded-full px-3 py-1 transition-colors ${
                   lang === l ? "bg-primary-foreground text-primary" : "text-primary-foreground"
                 }`}
               >
@@ -76,24 +76,24 @@ function LoginPage() {
             ))}
           </div>
         </div>
-        <p className="mx-auto mt-3 w-full max-w-[520px] text-sm font-semibold opacity-90">
+        <p className="mx-auto mt-6 w-full max-w-[520px] text-sm font-semibold opacity-90">
           {t("subTagline")}
         </p>
       </div>
 
-      <div className="mx-auto -mt-4 w-full max-w-[520px] flex-1 px-3">
-        <div className="rounded-3xl border border-border bg-card p-3 shadow-card">
+      <div className="mx-auto -mt-8 w-full max-w-[520px] flex-1 px-6">
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
           {step === "mobile" && (
-            <div className="space-y-3">
+            <div className="space-y-6">
               <div>
                 <h1 className="text-xl font-extrabold text-foreground">{t("loginTitle")}</h1>
-                <p className="mt-0.5 text-sm text-muted-foreground">{t("loginSub")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("loginSub")}</p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="mobile" className="text-sm font-bold">
                   {t("mobile")}
                 </Label>
-                <div className="flex items-center gap-1.5 rounded-2xl border border-input bg-background px-2 focus-within:ring-2 focus-within:ring-ring/40">
+                <div className="flex items-center gap-3 rounded-2xl border border-input bg-background px-4 focus-within:ring-2 focus-within:ring-ring/40">
                   <span className="num text-sm font-bold text-muted-foreground">+91</span>
                   <Input
                     id="mobile"
@@ -112,38 +112,38 @@ function LoginPage() {
                 onClick={() => setStep("otp")}
                 className="w-full rounded-2xl text-base font-bold shadow-brand"
               >
-                <MessageCircle className="size-2.5" />
+                <MessageCircle className="size-5" />
                 {t("sendOtp")}
               </Button>
-              <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                <ShieldCheck className="size-2 text-primary" />
+              <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="size-4 text-primary" />
                 {t("verified")}
               </p>
             </div>
           )}
 
           {step === "otp" && (
-            <div className="space-y-3">
+            <div className="space-y-6">
               <button
                 onClick={() => setStep("mobile")}
-                className="flex items-center gap-1 text-sm font-bold text-muted-foreground"
+                className="flex items-center gap-2 text-sm font-bold text-muted-foreground"
               >
-                <ArrowLeft className="size-2" />
+                <ArrowLeft className="size-4" />
                 {t("changeNumber")}
               </button>
               <div>
                 <h1 className="text-xl font-extrabold text-foreground">{t("otpTitle")}</h1>
-                <p className="num mt-0.5 text-sm text-muted-foreground">
+                <p className="num mt-1 text-sm text-muted-foreground">
                   {t("otpSub")} +91 {mobile}
                 </p>
               </div>
               <InputOTP maxLength={6} value={otp} onChange={setOtp} containerClassName="justify-center">
-                <InputOTPGroup className="gap-1">
+                <InputOTPGroup className="gap-2">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
                     <InputOTPSlot
                       key={i}
                       index={i}
-                      className="num size-5 rounded-xl border border-input text-base font-bold"
+                      className="num size-10 rounded-xl border border-input text-base font-bold"
                     />
                   ))}
                 </InputOTPGroup>
@@ -166,22 +166,22 @@ function LoginPage() {
           )}
 
           {step === "pin" && (
-            <div className="space-y-3">
+            <div className="space-y-6">
               <div>
-                <div className="flex size-5 items-center justify-center rounded-2xl bg-primary-soft">
-                  <KeyRound className="size-2.5 text-primary" />
+                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary-soft">
+                  <KeyRound className="size-5 text-primary" />
                 </div>
-                <h1 className="mt-2 text-xl font-extrabold text-foreground">{t("pinTitle")}</h1>
-                <p className="mt-0.5 text-sm text-muted-foreground">{t("pinSub")}</p>
+                <h1 className="mt-4 text-xl font-extrabold text-foreground">{t("pinTitle")}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">{t("pinSub")}</p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <InputOTP maxLength={4} value={pin1} onChange={setPin1} containerClassName="justify-center">
-                  <InputOTPGroup className="gap-1">
+                  <InputOTPGroup className="gap-2">
                     {[0, 1, 2, 3].map((i) => (
                       <InputOTPSlot
                         key={i}
                         index={i}
-                        className="num size-5 rounded-xl border border-input text-base font-bold"
+                        className="num size-10 rounded-xl border border-input text-base font-bold"
                       />
                     ))}
                   </InputOTPGroup>
@@ -190,12 +190,12 @@ function LoginPage() {
                   {t("pinConfirm")}
                 </p>
                 <InputOTP maxLength={4} value={pin2} onChange={setPin2} containerClassName="justify-center">
-                  <InputOTPGroup className="gap-1">
+                  <InputOTPGroup className="gap-2">
                     {[0, 1, 2, 3].map((i) => (
                       <InputOTPSlot
                         key={i}
                         index={i}
-                        className="num size-5 rounded-xl border border-input text-base font-bold"
+                        className="num size-10 rounded-xl border border-input text-base font-bold"
                       />
                     ))}
                   </InputOTPGroup>
@@ -218,7 +218,7 @@ function LoginPage() {
             </div>
           )}
         </div>
-        <p className="py-3 text-center text-xs text-muted-foreground">
+        <p className="py-6 text-center text-xs text-muted-foreground">
           badiyos · Latur, Maharashtra
         </p>
       </div>
