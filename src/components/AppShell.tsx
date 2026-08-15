@@ -27,6 +27,7 @@ import { useNativeOrderActions } from "@/lib/native-order-actions";
 import { usePushRegistration } from "@/lib/push";
 import { hapticImpact } from "@/lib/haptics";
 import { useI18n, type Key } from "@/lib/i18n";
+import { useAvailability } from "@/lib/use-availability";
 import { useEdgeSwipeBack } from "@/lib/use-edge-swipe-back";
 import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 
@@ -65,7 +66,7 @@ export function AppShell({
   usePushRegistration(context.merchantId ?? merchant?.id);
   useNativeOrderActions();
   const [open, setOpen] = useState(false);
-  const [shopOpen, setShopOpen] = useState(true);
+  const { availability, accepting, scheduleBlocked, setAccepting } = useAvailability();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const scrollRef = useRef<HTMLElement>(null);
   const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, onRefresh);
@@ -147,14 +148,18 @@ export function AppShell({
 
             <label className="flex items-center gap-2 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold">
               <Store className="size-4" />
-              <span className="hidden sm:inline">{shopOpen ? t("openNow") : t("closed")}</span>
+              <span className="hidden sm:inline">
+                {availability.open ? t("openNow") : t("closed")}
+              </span>
               <Switch
-                checked={shopOpen}
+                checked={accepting}
+                disabled={setAccepting.isPending}
                 onCheckedChange={(next) => {
                   hapticImpact("medium");
-                  setShopOpen(next);
+                  setAccepting.mutate(next);
                 }}
                 aria-label={t("shopStatus")}
+                title={scheduleBlocked ? t("availPausedHint") : undefined}
                 className="data-[state=checked]:bg-primary-foreground/90 data-[state=unchecked]:bg-primary-foreground/30 [&_span]:bg-primary"
               />
             </label>
