@@ -16,13 +16,17 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
+import { PullIndicator } from "@/components/PullIndicator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { BrandMark, Wordmark } from "@/components/Wordmark";
 import { useAuth, type Permission } from "@/lib/auth";
+import { hapticImpact } from "@/lib/haptics";
 import { useI18n, type Key } from "@/lib/i18n";
+import { useEdgeSwipeBack } from "@/lib/use-edge-swipe-back";
+import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 
 const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
   { to: "/home", key: "home", icon: Home, permission: "view_orders" },
@@ -43,19 +47,36 @@ const links: { to: string; key: Key; icon: typeof Home; permission?: Permission 
 
 const menuItems: { key: Key; icon: typeof Home }[] = [{ key: "support", icon: LifeBuoy }];
 
-export function AppShell({ title, children }: { title: string; children: ReactNode }) {
+export function AppShell({
+  title,
+  children,
+  onRefresh,
+}: {
+  title: string;
+  children: ReactNode;
+  /** Enables native-style pull-to-refresh on this screen's scroll area. */
+  onRefresh?: () => Promise<unknown> | void;
+}) {
   const { t } = useI18n();
   const { merchant, signOut, can } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(true);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const scrollRef = useRef<HTMLElement>(null);
+  const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, onRefresh);
+  const { dragX, animating } = useEdgeSwipeBack(!open);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto flex min-h-screen w-full max-w-[520px] flex-col border-border bg-background sm:border-x">
-        <header className="bg-brand-gradient sticky top-0 z-20 px-6 pt-6 pb-8 text-primary-foreground">
-          <div className="flex items-center gap-4">
+    <div className="h-full overflow-hidden bg-background">
+      <div
+        className={`safe-x mx-auto flex h-full w-full max-w-[520px] flex-col border-border bg-background sm:border-x ${
+          animating ? "transition-transform duration-200 ease-out" : ""
+        }`}
+        style={dragX ? { transform: `translate3d(${dragX}px,0,0)` } : undefined}
+      >
+        <header className="bg-brand-gradient safe-top z-20 shrink-0 px-6 pb-8 text-primary-foreground">
+          <div className="flex items-center gap-4 pt-6">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger
                 aria-label={t("menu")}
