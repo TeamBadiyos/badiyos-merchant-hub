@@ -14,10 +14,10 @@ export const Route = createFileRoute("/")({
         content:
           "Login to the badiyos Merchant Portal to manage orders, catalogue, payouts and shop timings from your phone.",
       },
-      { property: "og:title", content: "badiyos Merchant Portal" },
+      { property: "og:title", content: "badiyos Merchant Portal — Run your shop in Latur" },
       {
         property: "og:description",
-        content: "Orders, catalogue and payouts for badiyos merchants in Latur.",
+        content: "Login to the badiyos Merchant Portal to manage orders, catalogue, payouts and shop timings from your phone.",
       },
     ],
   }),

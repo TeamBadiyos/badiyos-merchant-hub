@@ -81,20 +81,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "badiyos Merchant Portal" },
+      { title: "badiyos Merchant Portal — Run your shop in Latur" },
       {
         name: "description",
         content:
-          "Manage your shop orders, catalogue and payouts on badiyos — the local services and delivery marketplace in Latur.",
+          "Login to the badiyos Merchant Portal to manage orders, catalogue, payouts and shop timings from your phone.",
       },
       { name: "author", content: "badiyos" },
-      { property: "og:title", content: "badiyos Merchant Portal" },
+      { property: "og:title", content: "badiyos Merchant Portal — Run your shop in Latur" },
       {
         property: "og:description",
-        content: "Manage your shop on badiyos — orders, catalogue and payouts in one place.",
+        content: "Login to the badiyos Merchant Portal to manage orders, catalogue, payouts and shop timings from your phone.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "badiyos Merchant Portal — Run your shop in Latur" },
+      { name: "twitter:description", content: "Login to the badiyos Merchant Portal to manage orders, catalogue, payouts and shop timings from your phone." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4baf03f0fabc8437250b72df8e5e9a64/id-preview-a8368334--981f7dd4-309e-4614-b96b-67bc34bd1fdd.lovable.app-1786788361989.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4baf03f0fabc8437250b72df8e5e9a64/id-preview-a8368334--981f7dd4-309e-4614-b96b-67bc34bd1fdd.lovable.app-1786788361989.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
