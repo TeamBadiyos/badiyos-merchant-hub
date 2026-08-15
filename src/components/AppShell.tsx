@@ -39,7 +39,7 @@ const menuItems: { key: Key; icon: typeof Home }[] = [
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useI18n();
-  const { session, signOut } = useAuth();
+  const { merchant, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(true);
@@ -60,9 +60,9 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
               <SheetContent side="left" className="w-[300px] p-0">
                 <div className="bg-brand-gradient px-6 pt-12 pb-6 text-primary-foreground">
                   <BrandMark className="size-12 text-xl" />
-                  <p className="mt-4 text-base font-bold">{session?.shopName ?? "badiyos"}</p>
+                  <p className="mt-4 text-base font-bold">{merchant?.store_name ?? "badiyos"}</p>
                   <p className="num text-sm opacity-80">
-                    {session ? `+91 ${session.mobile}` : t("tagline")}
+                    {merchant?.phone ? `+91 ${merchant.phone}` : t("tagline")}
                   </p>
                 </div>
                 <nav className="flex flex-col p-4">
@@ -81,9 +81,10 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
                   <div className="my-4 h-px bg-border" />
                   <button
                     onClick={() => {
-                      signOut();
-                      setOpen(false);
-                      navigate({ to: "/login", replace: true });
+                      void signOut().then(() => {
+                        setOpen(false);
+                        return navigate({ to: "/login", replace: true });
+                      });
                     }}
                     className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                   >
@@ -96,7 +97,7 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold uppercase opacity-80">{title}</p>
-              <p className="truncate text-base font-bold">{session?.shopName ?? "badiyos"}</p>
+              <p className="truncate text-base font-bold">{merchant?.store_name ?? "badiyos"}</p>
             </div>
 
             <label className="flex items-center gap-2 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold">

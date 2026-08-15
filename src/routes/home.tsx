@@ -3,7 +3,6 @@ import { IndianRupee, PackageOpen, RefreshCw, Star, TrendingUp } from "lucide-re
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { demoMerchant } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
@@ -35,13 +34,13 @@ function greetingKey() {
 
 function HomePage() {
   const { t } = useI18n();
-  const session = useRequireAuth();
-  if (!session) return null;
+  const merchant = useRequireAuth();
+  if (!merchant) return null;
 
   const stats = [
-    { label: t("todayOrders"), value: String(demoMerchant.todayOrders), icon: PackageOpen },
-    { label: t("todaySales"), value: `₹${demoMerchant.todaySales}`, icon: IndianRupee },
-    { label: t("rating"), value: demoMerchant.rating.toFixed(1), icon: Star },
+    { label: t("todayOrders"), value: "0", icon: PackageOpen },
+    { label: t("todaySales"), value: "₹0", icon: IndianRupee },
+    { label: t("rating"), value: "—", icon: Star },
   ];
 
   return (
@@ -49,9 +48,11 @@ function HomePage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-xl font-extrabold text-foreground">
-            {t(greetingKey())}, {session.ownerName.split(" ")[0]}
+            {t(greetingKey())}, {(merchant.owner_name ?? "Merchant").split(" ")[0]}
           </h1>
-          <p className="text-sm text-muted-foreground">{demoMerchant.area}</p>
+          <p className="text-sm text-muted-foreground">
+            {[merchant.address, merchant.city].filter(Boolean).join(", ") || "Latur, Maharashtra"}
+          </p>
         </div>
 
         <div className="grid grid-cols-3 gap-3">

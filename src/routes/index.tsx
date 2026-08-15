@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { BrandMark, Wordmark } from "@/components/Wordmark";
-import { useAuth } from "@/lib/auth";
+import { routeForMerchant, useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
@@ -25,17 +25,17 @@ export const Route = createFileRoute("/")({
 });
 
 function Splash() {
-  const { session, ready } = useAuth();
+  const { userId, merchant, ready } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!ready) return;
     const timer = setTimeout(() => {
-      navigate({ to: session ? "/home" : "/login", replace: true });
+      void navigate({ to: userId ? routeForMerchant(merchant) : "/login", replace: true });
     }, 1500);
     return () => clearTimeout(timer);
-  }, [ready, session, navigate]);
+  }, [ready, userId, merchant, navigate]);
 
   return (
     <div className="bg-brand-gradient flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-primary-foreground">
