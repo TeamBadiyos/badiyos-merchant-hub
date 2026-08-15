@@ -35,6 +35,20 @@ function publicClient() {
 export async function mintMerchantSession(phone: string): Promise<Session> {
   const email = merchantEmailForPhone(phone);
 
+  // Ensure a confirmed auth user exists BEFORE minting the link — confirming the
+  // mailbox afterwards invalidates the freshly issued token.
+  const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    phone_confirm: false,
+    user_metadata: { merchant_phone: phone },
+  });
+  if (createError && !/already|registered|exists/i.test(createError.message)) {
+    console.error("[merchant-auth] createUser failed", createError.message);
+    throw new Error("Could not complete login. Please try again.");
+  }
+  void created;
+
   const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
     type: "magiclink",
     email,
@@ -42,11 +56,6 @@ export async function mintMerchantSession(phone: string): Promise<Session> {
   if (linkError || !link?.properties?.hashed_token) {
     console.error("[merchant-auth] generateLink failed", linkError?.message);
     throw new Error("Could not complete login. Please try again.");
-  }
-
-  // Make sure the synthetic mailbox never blocks login.
-  if (link.user?.id && !link.user.email_confirmed_at) {
-    await supabaseAdmin.auth.admin.updateUserById(link.user.id, { email_confirm: true });
   }
 
   const { data, error } = await publicClient().auth.verifyOtp({
