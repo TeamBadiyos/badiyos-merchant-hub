@@ -14,6 +14,7 @@ import { routeForMerchant, useAuth } from "@/lib/auth";
 import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import {
+  merchantHasPin,
   sendMerchantOtp,
   verifyMerchantOtp,
   verifyMerchantPin,
@@ -46,6 +47,7 @@ function LoginPage() {
   const sendOtpFn = useServerFn(sendMerchantOtp);
   const verifyOtpFn = useServerFn(verifyMerchantOtp);
   const verifyPinFn = useServerFn(verifyMerchantPin);
+  const hasPinFn = useServerFn(merchantHasPin);
 
   const [step, setStep] = useState<Step>("mobile");
   const [mobile, setMobile] = useState("");
@@ -89,7 +91,7 @@ function LoginPage() {
 
     setBusy(true);
     try {
-      const { data: hasPin } = await supabase.rpc("merchant_has_login_pin", { p_phone: mobile });
+      const { hasPin } = await hasPinFn({ data: { phone: mobile } });
       if (hasPin) {
         setStep("pinLogin");
         return;

@@ -4,6 +4,25 @@ import { z } from "zod";
 
 import { PHONE_RE, PIN_RE, OTP_RE } from "./validation";
 
+/**
+ * Pre-login check: does this number already have a PIN? Runs server-side with the
+ * admin client so the underlying RPC stays unreachable from an anonymous browser session.
+ */
+export const merchantHasPin = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ phone: z.string().regex(PHONE_RE) }).parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: hasPin, error } = await supabaseAdmin.rpc("merchant_has_login_pin", {
+      p_phone: data.phone,
+    });
+    if (error) {
+      console.error("[merchant-auth] pin lookup failed", error.message);
+      return { hasPin: false as const };
+    }
+    return { hasPin: Boolean(hasPin) };
+  });
+
 export const sendMerchantOtp = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ phone: z.string().regex(PHONE_RE) }).parse(input))
   .handler(async ({ data }) => {
