@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#00B97A"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/ring_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="New order" />
+
+    <TextView
+        android:id="@+id/ring_amount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#FFFFFF"
+        android:textSize="40sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/ring_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:textColor="#EAFFF6"
+        android:textSize="16sp"
+        android:text="Tap to accept" />
+
+    <TextView
+        android:id="@+id/ring_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:text="45s" />
+
+    <Button
+        android:id="@+id/ring_accept"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_marginTop="32dp"
+        android:backgroundTint="#FFFFFF"
+        android:textColor="#00875A"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:text="ACCEPT" />
+
+    <Button
+        android:id="@+id/ring_reject"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="#0C7A55"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:text="REJECT" />
+</LinearLayout>
