@@ -198,7 +198,7 @@ function PosPage() {
 
   if (merchant.status !== "approved" || !allowed) {
     return (
-      <AppShell title={t("pos")}>
+      <AppShell title={t("pos")} onRefresh={() => Promise.all([products.refetch(), modes.refetch()])}>
         {merchant.status !== "approved" ? <PendingApproval /> : <AccessDenied />}
       </AppShell>
     );

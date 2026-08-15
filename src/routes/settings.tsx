@@ -169,7 +169,12 @@ function SettingsPage() {
   if (!merchant) return null;
   if (merchant.status !== "approved") {
     return (
-      <AppShell title={t("settings")}>
+      <AppShell
+      title={t("settings")}
+      onRefresh={() =>
+        Promise.all([hours.refetch(), overrides.refetch(), invoices.refetch(), tier.refetch()])
+      }
+    >
         <PendingApproval />
       </AppShell>
     );
