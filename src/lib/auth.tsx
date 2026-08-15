@@ -14,10 +14,37 @@ import type { Database } from "@/integrations/supabase/types";
 
 export type Merchant = Database["public"]["Tables"]["merchants"]["Row"];
 
+export const ALL_PERMISSIONS = [
+  "view_orders",
+  "manage_orders",
+  "manage_products",
+  "view_reports",
+  "manage_staff",
+] as const;
+
+export type Permission = (typeof ALL_PERMISSIONS)[number];
+
+export type MerchantContext = {
+  merchantId: string | null;
+  isOwner: boolean;
+  permissions: Permission[];
+  staffName: string | null;
+};
+
+const EMPTY_CONTEXT: MerchantContext = {
+  merchantId: null,
+  isOwner: false,
+  permissions: [],
+  staffName: null,
+};
+
 type AuthState = {
   /** Supabase auth user id, when signed in. */
   userId: string | null;
   merchant: Merchant | null;
+  context: MerchantContext;
+  /** Owner always true; staff depend on their role permissions. */
+  can: (permission: Permission) => boolean;
   ready: boolean;
   refresh: () => Promise<Merchant | null>;
   ensureDraft: (phone: string) => Promise<Merchant | null>;
@@ -27,6 +54,8 @@ type AuthState = {
 const AuthContext = createContext<AuthState>({
   userId: null,
   merchant: null,
+  context: EMPTY_CONTEXT,
+  can: () => false,
   ready: false,
   refresh: async () => null,
   ensureDraft: async () => null,
@@ -42,15 +71,39 @@ async function fetchMerchant(): Promise<Merchant | null> {
   return data ?? null;
 }
 
+async function fetchContext(): Promise<MerchantContext> {
+  const { data, error } = await supabase.rpc("merchant_my_context");
+  if (error) {
+    console.error("[auth] context fetch failed", error.message);
+    return EMPTY_CONTEXT;
+  }
+  const payload = (data ?? {}) as {
+    merchant_id?: string | null;
+    is_owner?: boolean;
+    permissions?: string[];
+    staff_name?: string | null;
+  };
+  return {
+    merchantId: payload.merchant_id ?? null,
+    isOwner: Boolean(payload.is_owner),
+    permissions: (payload.permissions ?? []).filter((p): p is Permission =>
+      (ALL_PERMISSIONS as readonly string[]).includes(p),
+    ),
+    staffName: payload.staff_name ?? null,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [merchant, setMerchant] = useState<Merchant | null>(null);
+  const [context, setContext] = useState<MerchantContext>(EMPTY_CONTEXT);
   const [ready, setReady] = useState(false);
   const queryClient = useQueryClient();
 
   const refresh = useCallback(async () => {
-    const next = await fetchMerchant();
+    const [next, ctx] = await Promise.all([fetchMerchant(), fetchContext()]);
     setMerchant(next);
+    setContext(ctx);
     return next;
   }, []);
 
@@ -72,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserId(session?.user.id ?? null);
       if (event === "SIGNED_OUT") {
         setMerchant(null);
+        setContext(EMPTY_CONTEXT);
         queryClient.clear();
         return;
       }
@@ -99,13 +153,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setMerchant(null);
+    setContext(EMPTY_CONTEXT);
     setUserId(null);
     queryClient.clear();
   }, [queryClient]);
 
+  const can = useCallback(
+    (permission: Permission) => context.isOwner || context.permissions.includes(permission),
+    [context],
+  );
+
   const value = useMemo(
-    () => ({ userId, merchant, ready, refresh, ensureDraft, signOut }),
-    [userId, merchant, ready, refresh, ensureDraft, signOut],
+    () => ({ userId, merchant, context, can, ready, refresh, ensureDraft, signOut }),
+    [userId, merchant, context, can, ready, refresh, ensureDraft, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Store,
   User,
+  Users,
   Wallet,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -19,18 +20,23 @@ import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { BrandMark, Wordmark } from "@/components/Wordmark";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type Permission } from "@/lib/auth";
 import { useI18n, type Key } from "@/lib/i18n";
 
-const tabs: { to: string; key: Key; icon: typeof Home }[] = [
-  { to: "/home", key: "home", icon: Home },
-  { to: "/orders", key: "orders", icon: Receipt },
+const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
+  { to: "/home", key: "home", icon: Home, permission: "view_orders" },
+  { to: "/orders", key: "orders", icon: Receipt, permission: "view_orders" },
   { to: "/catalogue", key: "catalogue", icon: ShoppingBag },
   { to: "/profile", key: "profile", icon: User },
 ];
 
+/** Live screens in the side menu, gated by role permissions. */
+const links: { to: string; key: Key; icon: typeof Home; permission: Permission }[] = [
+  { to: "/products", key: "products", icon: Boxes, permission: "manage_products" },
+  { to: "/staff", key: "rolesStaff", icon: Users, permission: "manage_staff" },
+];
+
 const menuItems: { key: Key; icon: typeof Home }[] = [
-  { key: "inventory", icon: Boxes },
   { key: "reports", icon: BarChart3 },
   { key: "payouts", icon: Wallet },
   { key: "settings", icon: Settings },
@@ -39,7 +45,7 @@ const menuItems: { key: Key; icon: typeof Home }[] = [
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
   const { t } = useI18n();
-  const { merchant, signOut } = useAuth();
+  const { merchant, signOut, can } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(true);
@@ -66,6 +72,20 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
                   </p>
                 </div>
                 <nav className="flex flex-col p-4">
+                  {links
+                    .filter((item) => can(item.permission))
+                    .map(({ to, key, icon: Icon }) => (
+                      <Link
+                        key={to}
+                        to={to}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                      >
+                        <Icon className="size-5 text-primary" />
+                        <span className="flex-1">{t(key)}</span>
+                        <ChevronRight className="size-4 text-muted-foreground" />
+                      </Link>
+                    ))}
                   {menuItems.map(({ key, icon: Icon }) => (
                     <button
                       key={key}
@@ -117,7 +137,9 @@ export function AppShell({ title, children }: { title: string; children: ReactNo
 
         <nav className="fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur">
           <ul className="grid grid-cols-4">
-            {tabs.map(({ to, key, icon: Icon }) => {
+            {tabs
+              .filter((tab) => !tab.permission || can(tab.permission))
+              .map(({ to, key, icon: Icon }) => {
               const active = pathname === to;
               return (
                 <li key={to}>
