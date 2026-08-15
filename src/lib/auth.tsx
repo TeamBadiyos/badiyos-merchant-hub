@@ -1,82 +1,123 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
-export type Session = {
-  mobile: string;
-  shopName: string;
-  ownerName: string;
-  hasPin: boolean;
-};
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-const STORAGE_KEY = "badiyos.session";
+export type Merchant = Database["public"]["Tables"]["merchants"]["Row"];
 
-/** Placeholder merchant profile — replaced by real backend data later. */
-export const demoMerchant = {
-  shopName: "Shri Ganesh Kirana Stores",
-  ownerName: "Gaurav Baheti",
-  area: "Ausa Road, Latur",
-  todayOrders: 0,
-  todaySales: 0,
-  rating: 4.8,
-};
-
-const AuthContext = createContext<{
-  session: Session | null;
+type AuthState = {
+  /** Supabase auth user id, when signed in. */
+  userId: string | null;
+  merchant: Merchant | null;
   ready: boolean;
-  signIn: (mobile: string) => void;
-  setPin: () => void;
-  signOut: () => void;
-}>({ session: null, ready: false, signIn: () => {}, setPin: () => {}, signOut: () => {} });
+  refresh: () => Promise<Merchant | null>;
+  ensureDraft: (phone: string) => Promise<Merchant | null>;
+  signOut: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthState>({
+  userId: null,
+  merchant: null,
+  ready: false,
+  refresh: async () => null,
+  ensureDraft: async () => null,
+  signOut: async () => {},
+});
+
+async function fetchMerchant(): Promise<Merchant | null> {
+  const { data, error } = await supabase.from("merchants").select("*").maybeSingle();
+  if (error) {
+    console.error("[auth] merchant fetch failed", error.message);
+    return null;
+  }
+  return data ?? null;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [ready, setReady] = useState(false);
+  const queryClient = useQueryClient();
+
+  const refresh = useCallback(async () => {
+    const next = await fetchMerchant();
+    setMerchant(next);
+    return next;
+  }, []);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setSession(JSON.parse(raw) as Session);
-    } catch {
-      /* ignore malformed session */
-    }
-    setReady(true);
-  }, []);
+    let active = true;
 
-  const persist = useCallback((next: Session | null) => {
-    setSession(next);
-    if (next) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    else localStorage.removeItem(STORAGE_KEY);
-  }, []);
+    const bootstrap = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
+      const id = data.session?.user.id ?? null;
+      setUserId(id);
+      if (id) await refresh();
+      if (active) setReady(true);
+    };
+    void bootstrap();
 
-  const signIn = useCallback(
-    (mobile: string) => {
-      persist({
-        mobile,
-        shopName: demoMerchant.shopName,
-        ownerName: demoMerchant.ownerName,
-        hasPin: false,
-      });
-    },
-    [persist],
-  );
-
-  const setPin = useCallback(() => {
-    setSession((prev) => {
-      if (!prev) return prev;
-      const next = { ...prev, hasPin: true };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      setUserId(session?.user.id ?? null);
+      if (event === "SIGNED_OUT") {
+        setMerchant(null);
+        queryClient.clear();
+        return;
+      }
+      void refresh();
     });
-  }, []);
 
-  const signOut = useCallback(() => persist(null), [persist]);
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [refresh, queryClient]);
 
-  return (
-    <AuthContext.Provider value={{ session, ready, signIn, setPin, signOut }}>
-      {children}
-    </AuthContext.Provider>
+  const ensureDraft = useCallback(
+    async (phone: string) => {
+      const { error } = await supabase.rpc("merchant_ensure_draft", { _phone: phone });
+      if (error) {
+        console.error("[auth] ensure draft failed", error.message);
+        return null;
+      }
+      return refresh();
+    },
+    [refresh],
   );
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setMerchant(null);
+    setUserId(null);
+    queryClient.clear();
+  }, [queryClient]);
+
+  const value = useMemo(
+    () => ({ userId, merchant, ready, refresh, ensureDraft, signOut }),
+    [userId, merchant, ready, refresh, ensureDraft, signOut],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   return useContext(AuthContext);
+}
+
+/** Where should a signed-in merchant land, based on their application state? */
+export function routeForMerchant(merchant: Merchant | null): string {
+  if (!merchant) return "/login";
+  if (merchant.status === "draft") return "/onboarding";
+  return "/home";
 }

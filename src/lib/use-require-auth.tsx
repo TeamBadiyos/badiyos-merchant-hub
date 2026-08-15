@@ -3,14 +3,26 @@ import { useEffect } from "react";
 
 import { useAuth } from "./auth";
 
-/** Client-side placeholder guard until real auth is wired to the backend. */
-export function useRequireAuth() {
-  const { session, ready } = useAuth();
+/**
+ * Guards a merchant screen: redirects to login when signed out and back to
+ * onboarding while the application is still a draft.
+ */
+export function useRequireAuth({ allowDraft = false }: { allowDraft?: boolean } = {}) {
+  const { userId, merchant, ready } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (ready && !session) navigate({ to: "/login", replace: true });
-  }, [ready, session, navigate]);
+    if (!ready) return;
+    if (!userId) {
+      void navigate({ to: "/login", replace: true });
+      return;
+    }
+    if (!allowDraft && merchant?.status === "draft") {
+      void navigate({ to: "/onboarding", replace: true });
+    }
+  }, [ready, userId, merchant?.status, allowDraft, navigate]);
 
-  return session;
+  if (!ready || !userId) return null;
+  if (!allowDraft && merchant?.status === "draft") return null;
+  return merchant;
 }
