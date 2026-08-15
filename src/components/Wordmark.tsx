@@ -33,7 +33,7 @@ export function BrandMark({
 }) {
   return (
     <span
-      className={`shadow-brand inline-flex size-12 items-center justify-center overflow-hidden rounded-2xl ${
+      className={`shadow-brand inline-flex items-center justify-center overflow-hidden rounded-2xl ${
         on === "dark" ? "bg-primary-foreground p-1" : ""
       } ${className}`}
     >
