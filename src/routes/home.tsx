@@ -1,6 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { IndianRupee, Loader2, PackageOpen, RefreshCw, Star, TrendingUp } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  AlertTriangle,
+  IndianRupee,
+  Loader2,
+  PackageOpen,
+  RefreshCw,
+  Star,
+  TrendingUp,
+} from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
@@ -10,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { inr } from "@/lib/order-status";
 import { fetchOrders } from "@/lib/orders";
+import { supabase } from "@/integrations/supabase/client";
 import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
@@ -63,7 +72,22 @@ function HomePage() {
     queryFn: () => fetchOrders(),
   });
 
+  const lowStock = useQuery({
+    queryKey: ["products", "low-stock", merchant?.id],
+    enabled: Boolean(merchant?.id) && merchant?.status === "approved",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, stock_quantity, low_stock_threshold, is_active")
+        .eq("is_active", true);
+      if (error) throw error;
+      return (data ?? []).filter((p) => p.stock_quantity <= p.low_stock_threshold);
+    },
+  });
+
   if (!merchant) return null;
+
+  const lowStockCount = lowStock.data?.length ?? 0;
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
