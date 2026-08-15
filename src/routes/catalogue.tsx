@@ -22,8 +22,8 @@ export const Route = createFileRoute("/catalogue")({
 
 function CataloguePage() {
   const { t } = useI18n();
-  const session = useRequireAuth();
-  if (!session) return null;
+  const merchant = useRequireAuth();
+  if (!merchant) return null;
 
   return (
     <AppShell title={t("catalogue")}>

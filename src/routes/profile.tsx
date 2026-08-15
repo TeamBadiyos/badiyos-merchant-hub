@@ -3,7 +3,7 @@ import { Building2, Globe, LogOut, ShieldCheck } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { useAuth, demoMerchant } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
@@ -27,8 +27,8 @@ function ProfilePage() {
   const { t, lang, setLang } = useI18n();
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const session = useRequireAuth();
-  if (!session) return null;
+  const merchant = useRequireAuth();
+  if (!merchant) return null;
 
   return (
     <AppShell title={t("profile")}>
@@ -40,10 +40,10 @@ function ProfilePage() {
             </div>
             <div className="min-w-0">
               <p className="truncate text-base font-extrabold text-foreground">
-                {session.shopName}
+                {merchant.store_name ?? "Your shop"}
               </p>
-              <p className="num text-sm text-muted-foreground">+91 {session.mobile}</p>
-              <p className="text-sm text-muted-foreground">{demoMerchant.area}</p>
+              <p className="num text-sm text-muted-foreground">+91 {merchant.phone}</p>
+              <p className="text-sm text-muted-foreground">{[merchant.city, merchant.state].filter(Boolean).join(", ") || "Latur, Maharashtra"}</p>
             </div>
           </div>
           <p className="mt-4 flex items-center gap-2 rounded-xl bg-primary-soft px-3 py-2 text-xs font-bold text-accent-foreground">
@@ -78,8 +78,7 @@ function ProfilePage() {
           variant="outline"
           size="lg"
           onClick={() => {
-            signOut();
-            navigate({ to: "/login", replace: true });
+            void signOut().then(() => navigate({ to: "/login", replace: true }));
           }}
           className="w-full rounded-2xl border-destructive/30 text-base font-bold text-destructive hover:bg-destructive/10"
         >
