@@ -1,17 +1,48 @@
-export function Wordmark({ className = "" }: { className?: string }) {
+import appIcon from "@/assets/badiyos-app-icon.png.asset.json";
+import wordmarkOnDark from "@/assets/badiyos-logo-on-dark.png.asset.json";
+import wordmarkOnLight from "@/assets/badiyos-logo-on-light.png.asset.json";
+
+/**
+ * The badiyos wordmark. `on` picks the variant that reads correctly against the
+ * background it sits on: white text on dark/green surfaces, green text on light ones.
+ */
+export function Wordmark({
+  className = "",
+  on = "dark",
+}: {
+  className?: string;
+  on?: "dark" | "light";
+}) {
   return (
-    <span className={`font-extrabold tracking-tight lowercase ${className}`}>
-      badiyo<span className="text-primary">s</span>
-    </span>
+    <img
+      src={on === "dark" ? wordmarkOnDark.url : wordmarkOnLight.url}
+      alt="badiyos"
+      className={`h-7 w-auto select-none ${className}`}
+      draggable={false}
+    />
   );
 }
 
-export function BrandMark({ className = "" }: { className?: string }) {
+export function BrandMark({
+  className = "",
+  on = "dark",
+}: {
+  className?: string;
+  /** On green/dark surfaces the icon sits on a white chip so the mark keeps contrast. */
+  on?: "dark" | "light";
+}) {
   return (
     <span
-      className={`bg-brand-gradient inline-flex items-center justify-center rounded-2xl font-extrabold text-primary-foreground shadow-brand ${className}`}
+      className={`shadow-brand inline-flex items-center justify-center overflow-hidden rounded-2xl ${
+        on === "dark" ? "bg-primary-foreground p-1" : ""
+      } ${className}`}
     >
-      b
+      <img
+        src={appIcon.url}
+        alt="badiyos"
+        className="size-full rounded-xl select-none"
+        draggable={false}
+      />
     </span>
   );
 }

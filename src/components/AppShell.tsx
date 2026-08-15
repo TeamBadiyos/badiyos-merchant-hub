@@ -86,7 +86,7 @@ export function AppShell({
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] p-0">
                 <div className="bg-brand-gradient px-6 pt-12 pb-6 text-primary-foreground">
-                  <BrandMark className="size-12 text-xl" />
+                  <BrandMark className="size-12" />
                   <p className="mt-4 text-base font-bold">{merchant?.store_name ?? "badiyos"}</p>
                   <p className="num text-sm opacity-80">
                     {merchant?.phone ? `+91 ${merchant.phone}` : t("tagline")}
