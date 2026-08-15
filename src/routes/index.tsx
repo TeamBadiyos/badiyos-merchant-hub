@@ -39,11 +39,10 @@ function Splash() {
 
   return (
     <div className="bg-brand-gradient safe-top safe-bottom flex h-full min-h-screen flex-col items-center justify-center gap-4 px-6 text-primary-foreground">
-      <BrandMark className="size-18 animate-in text-4xl zoom-in-75 duration-500" />
+      <BrandMark className="size-20 animate-in zoom-in-75 duration-500" />
       <div className="animate-in text-center fade-in duration-700">
-        <h1 className="text-4xl">
-          <Wordmark className="text-primary-foreground [&_span]:text-primary-foreground/70" />
-        </h1>
+        <h1 className="sr-only">badiyos Merchant Portal</h1>
+        <Wordmark on="dark" className="mx-auto h-9" />
         <p className="mt-2 text-sm font-semibold tracking-wide uppercase opacity-85">
           {t("tagline")}
         </p>

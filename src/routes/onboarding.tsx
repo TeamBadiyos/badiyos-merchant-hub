@@ -383,9 +383,7 @@ function OnboardingPage() {
       <header className="bg-brand-gradient px-6 pt-10 pb-12 text-primary-foreground">
         <div className="mx-auto w-full max-w-[520px]">
           <div className="flex items-center justify-between">
-            <span className="text-xl">
-              <Wordmark className="text-primary-foreground [&_span]:text-primary-foreground/70" />
-            </span>
+            <Wordmark on="dark" className="h-6" />
             <span className="num rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
               {t("onbStepOf")} {step} {t("onbOf")} {TOTAL_STEPS}
             </span>

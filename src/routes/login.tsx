@@ -173,10 +173,8 @@ function LoginPage() {
       <div className="bg-brand-gradient px-6 pt-12 pb-16 text-primary-foreground">
         <div className="mx-auto flex w-full max-w-[520px] items-center justify-between">
           <div className="flex items-center gap-3">
-            <BrandMark className="size-10 text-xl" />
-            <span className="text-2xl">
-              <Wordmark className="text-primary-foreground [&_span]:text-primary-foreground/70" />
-            </span>
+            <BrandMark className="size-10 rounded-xl" />
+            <Wordmark on="dark" className="h-6" />
           </div>
           <div className="flex overflow-hidden rounded-full bg-primary-foreground/15 p-1 text-xs font-bold">
             {(["en", "mr"] as const).map((l) => (
