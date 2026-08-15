@@ -126,7 +126,7 @@ function ProductsPage() {
     : products.data;
 
   return (
-    <AppShell title={t("products")}>
+    <AppShell title={t("products")} onRefresh={() => products.refetch()}>
       {merchant.status !== "approved" ? (
         <PendingApproval />
       ) : !can("manage_products") ? (

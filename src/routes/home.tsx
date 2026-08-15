@@ -135,7 +135,12 @@ function HomePage() {
   ];
 
   return (
-    <AppShell title={t("home")}>
+    <AppShell
+      title={t("home")}
+      onRefresh={() =>
+        Promise.all([live.refetch(), today.refetch(), lowStock.refetch(), openState.refetch?.()].filter(Boolean))
+      }
+    >
       <div className="space-y-6">
         <div>
           <h1 className="text-xl font-extrabold text-foreground">

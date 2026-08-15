@@ -63,7 +63,7 @@ function OrdersPage() {
   if (!merchant) return null;
 
   return (
-    <AppShell title={t("orders")}>
+    <AppShell title={t("orders")} onRefresh={() => orders.refetch()}>
       {merchant.status !== "approved" ? (
         <PendingApproval />
       ) : !allowed ? (

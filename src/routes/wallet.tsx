@@ -83,7 +83,10 @@ function WalletPage() {
   ];
 
   return (
-    <AppShell title={t("wallet")}>
+    <AppShell
+      title={t("wallet")}
+      onRefresh={() => Promise.all([completed.refetch(), ledger.refetch()])}
+    >
       {!approved ? (
         <PendingApproval />
       ) : !allowed ? (
