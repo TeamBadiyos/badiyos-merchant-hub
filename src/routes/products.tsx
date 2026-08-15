@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell, PlaceholderPanel } from "@/components/AppShell";
+import { SwipeRow } from "@/components/SwipeRow";
 import { CsvImportDialog } from "@/components/CsvImportDialog";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { ProductImage } from "@/components/ProductImage";
@@ -32,6 +33,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { useI18n, type Key } from "@/lib/i18n";
@@ -182,10 +184,23 @@ function ProductsPage() {
           )}
 
           {visible?.map((product) => (
-            <div
+            <SwipeRow
               key={product.id}
-              className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-card"
+              actions={[
+                {
+                  label: t("edit"),
+                  icon: <Pencil className="size-4" />,
+                  onSelect: () => setEditing(product),
+                },
+                {
+                  label: t("delete"),
+                  icon: <Trash2 className="size-4" />,
+                  tone: "destructive",
+                  onSelect: () => setDeleting(product),
+                },
+              ]}
             >
+            <div className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-card">
               <ProductImage path={product.image_url} className="size-16 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-foreground">{product.name}</p>
@@ -233,6 +248,7 @@ function ProductsPage() {
                 </button>
               </div>
             </div>
+            </SwipeRow>
           ))}
         </div>
       )}
@@ -264,7 +280,10 @@ function ProductsPage() {
               className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(e) => {
                 e.preventDefault();
-                if (deleting) remove.mutate(deleting);
+                if (deleting) {
+                  hapticNotify("warning");
+                  remove.mutate(deleting);
+                }
               }}
             >
               {t("delete")}
@@ -490,7 +509,10 @@ function ProductForm({
               className="flex-1 rounded-xl font-bold"
               disabled={save.isPending}
               onClick={() => {
-                if (validate()) save.mutate();
+                if (validate()) {
+                  hapticImpact("medium");
+                  save.mutate();
+                }
               }}
             >
               {save.isPending && <Loader2 className="size-4 animate-spin" />}
