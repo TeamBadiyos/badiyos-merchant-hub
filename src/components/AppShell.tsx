@@ -23,6 +23,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Wordmark } from "@/components/Wordmark";
 import { useAuth, type Permission } from "@/lib/auth";
+import { useNativeOrderActions } from "@/lib/native-order-actions";
+import { usePushRegistration } from "@/lib/push";
 import { hapticImpact } from "@/lib/haptics";
 import { useI18n, type Key } from "@/lib/i18n";
 import { useEdgeSwipeBack } from "@/lib/use-edge-swipe-back";
@@ -58,8 +60,10 @@ export function AppShell({
   onRefresh?: () => Promise<unknown> | void;
 }) {
   const { t } = useI18n();
-  const { merchant, signOut, can } = useAuth();
+  const { merchant, signOut, can, context } = useAuth();
   const navigate = useNavigate();
+  usePushRegistration(context.merchantId ?? merchant?.id);
+  useNativeOrderActions();
   const [open, setOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(true);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
