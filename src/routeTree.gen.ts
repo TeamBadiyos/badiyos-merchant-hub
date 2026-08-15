@@ -15,6 +15,7 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as PosRouteImport } from './routes/pos'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReportsRouteImport } from './routes/reports'
@@ -51,6 +52,11 @@ const OrdersRoute = OrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PosRoute = PosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
+  '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/orders'
+    | '/pos'
     | '/products'
     | '/profile'
     | '/reports'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/orders'
+    | '/pos'
     | '/products'
     | '/profile'
     | '/reports'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/orders'
+    | '/pos'
     | '/products'
     | '/profile'
     | '/reports'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRoute
+  PosRoute: typeof PosRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pos': {
+      id: '/pos'
+      path: '/pos'
+      fullPath: '/pos'
+      preLoaderRoute: typeof PosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products': {
       id: '/products'
       path: '/products'
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRoute,
+  PosRoute: PosRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
