@@ -79,7 +79,7 @@ function ReportsPage() {
   if (!merchant) return null;
   if (merchant.status !== "approved")
     return (
-      <AppShell title={t("reports")}>
+      <AppShell title={t("reports")} onRefresh={() => orders.refetch()}>
         <PendingApproval />
       </AppShell>
     );

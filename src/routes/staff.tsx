@@ -119,7 +119,10 @@ function StaffPage() {
   if (!merchant) return null;
 
   return (
-    <AppShell title={t("rolesStaff")}>
+    <AppShell
+      title={t("rolesStaff")}
+      onRefresh={() => Promise.all([roles.refetch(), staff.refetch()])}
+    >
       {merchant.status !== "approved" ? (
         <PendingApproval />
       ) : !allowed ? (

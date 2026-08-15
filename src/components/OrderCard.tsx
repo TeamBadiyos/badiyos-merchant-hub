@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import {
   inr,
@@ -87,7 +88,10 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
                 variant="outline"
                 className="flex-1 rounded-xl border-destructive/40 font-bold text-destructive"
                 disabled={busy}
-                onClick={() => decide.mutate("rejected")}
+                onClick={() => {
+                  hapticNotify("warning");
+                  decide.mutate("rejected");
+                }}
               >
                 <X className="size-4" />
                 {t("reject")}
@@ -95,7 +99,10 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
               <Button
                 className="flex-1 rounded-xl font-bold shadow-brand"
                 disabled={busy}
-                onClick={() => decide.mutate("accepted")}
+                onClick={() => {
+                  hapticNotify("success");
+                  decide.mutate("accepted");
+                }}
               >
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                 {t("accept")}
@@ -107,7 +114,10 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
             <Button
               className="mt-4 w-full rounded-xl font-bold"
               disabled={busy}
-              onClick={() => advance.mutate(next)}
+              onClick={() => {
+                hapticImpact("medium");
+                advance.mutate(next);
+              }}
             >
               {busy && <Loader2 className="size-4 animate-spin" />}
               {t(NEXT_STATUS_LABEL[next]!)}

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { BrandMark, Wordmark } from "@/components/Wordmark";
 import { supabase } from "@/integrations/supabase/client";
 import { routeForMerchant, useAuth } from "@/lib/auth";
+import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import {
   sendMerchantOtp,
@@ -168,7 +169,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="app-scroll safe-top safe-bottom flex h-full min-h-full flex-col bg-background">
       <div className="bg-brand-gradient px-6 pt-12 pb-16 text-primary-foreground">
         <div className="mx-auto flex w-full max-w-[520px] items-center justify-between">
           <div className="flex items-center gap-3">
@@ -231,7 +232,10 @@ function LoginPage() {
               <Button
                 size="lg"
                 disabled={mobile.length !== 10 || busy}
-                onClick={() => void handleContinue()}
+                onClick={() => {
+                  hapticImpact("light");
+                  void handleContinue();
+                }}
                 className="w-full rounded-2xl text-base font-bold shadow-brand"
               >
                 {busy ? <Loader2 className="size-5 animate-spin" /> : <MessageCircle className="size-5" />}
@@ -273,7 +277,10 @@ function LoginPage() {
               <Button
                 size="lg"
                 disabled={otp.length !== 6 || busy}
-                onClick={() => void handleVerifyOtp()}
+                onClick={() => {
+                  hapticNotify("success");
+                  void handleVerifyOtp();
+                }}
                 className="w-full rounded-2xl text-base font-bold shadow-brand"
               >
                 {busy && <Loader2 className="size-5 animate-spin" />}
@@ -321,7 +328,10 @@ function LoginPage() {
               <Button
                 size="lg"
                 disabled={pin.length !== 4 || busy}
-                onClick={() => void handlePinLogin()}
+                onClick={() => {
+                  hapticNotify("success");
+                  void handlePinLogin();
+                }}
                 className="w-full rounded-2xl text-base font-bold shadow-brand"
               >
                 {busy && <Loader2 className="size-5 animate-spin" />}
@@ -379,7 +389,10 @@ function LoginPage() {
               <Button
                 size="lg"
                 disabled={pin1.length !== 4 || pin1 !== pin2 || busy}
-                onClick={() => void handleSetPin()}
+                onClick={() => {
+                  hapticNotify("success");
+                  void handleSetPin();
+                }}
                 className="w-full rounded-2xl text-base font-bold shadow-brand"
               >
                 {busy && <Loader2 className="size-5 animate-spin" />}

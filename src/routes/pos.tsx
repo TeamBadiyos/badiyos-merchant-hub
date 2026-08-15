@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { hapticNotify } from "@/lib/haptics";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -197,7 +198,7 @@ function PosPage() {
 
   if (merchant.status !== "approved" || !allowed) {
     return (
-      <AppShell title={t("pos")}>
+      <AppShell title={t("pos")} onRefresh={() => Promise.all([products.refetch(), modes.refetch()])}>
         {merchant.status !== "approved" ? <PendingApproval /> : <AccessDenied />}
       </AppShell>
     );
@@ -442,7 +443,10 @@ function PosPage() {
             size="lg"
             className="w-full"
             disabled={!canConfirm || createSale.isPending}
-            onClick={() => createSale.mutate()}
+            onClick={() => {
+              hapticNotify("success");
+              createSale.mutate();
+            }}
           >
             {createSale.isPending ? (
               <Loader2 className="size-4 animate-spin" />

@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { verifyGstin } from "@/lib/gstin.functions";
+import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import { lookupRegionDefaults } from "@/lib/locale-config";
 import {
@@ -153,7 +154,7 @@ function OnboardingPage() {
 
   if (!ready || !merchant) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex h-full items-center justify-center bg-background">
         <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     );
@@ -378,7 +379,7 @@ function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-12">
+    <div className="app-scroll safe-top safe-bottom h-full bg-background pb-12">
       <header className="bg-brand-gradient px-6 pt-10 pb-12 text-primary-foreground">
         <div className="mx-auto w-full max-w-[520px]">
           <div className="flex items-center justify-between">
@@ -506,7 +507,10 @@ function OnboardingPage() {
               <Button
                 size="lg"
                 disabled={gstChoice === null || saving}
-                onClick={() => void submitStep1()}
+                onClick={() => {
+                    hapticImpact("light");
+                    void submitStep1();
+                  }}
                 className="w-full rounded-2xl text-base font-bold shadow-brand"
               >
                 {saving && <Loader2 className="size-5 animate-spin" />}
@@ -570,7 +574,10 @@ function OnboardingPage() {
                 <Button
                   size="lg"
                   disabled={saving}
-                  onClick={() => void submitStep2()}
+                  onClick={() => {
+                    hapticImpact("light");
+                    void submitStep2();
+                  }}
                   className="flex-1 rounded-2xl text-base font-bold shadow-brand"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
@@ -651,7 +658,10 @@ function OnboardingPage() {
                 <Button
                   size="lg"
                   disabled={saving}
-                  onClick={() => void submitStep3()}
+                  onClick={() => {
+                    hapticImpact("light");
+                    void submitStep3();
+                  }}
                   className="flex-1 rounded-2xl text-base font-bold shadow-brand"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
@@ -697,7 +707,10 @@ function OnboardingPage() {
                 <Button
                   size="lg"
                   disabled={saving}
-                  onClick={() => void submitApplication()}
+                  onClick={() => {
+                    hapticNotify("success");
+                    void submitApplication();
+                  }}
                   className="flex-1 rounded-2xl text-base font-bold shadow-brand"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
@@ -717,7 +730,7 @@ function ReviewScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+    <div className="safe-top safe-bottom flex h-full flex-col items-center justify-center gap-4 bg-background px-6 text-center">
       <div className="flex size-16 items-center justify-center rounded-3xl bg-primary-soft">
         <CheckCircle2 className="size-8 text-primary" />
       </div>
