@@ -1,0 +1,1 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-router" === undefined ? {} : (undefined as never);
