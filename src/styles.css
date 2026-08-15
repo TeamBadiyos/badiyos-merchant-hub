@@ -171,6 +171,86 @@
   }
 }
 
+/*
+ * Native app feel (this web app is wrapped with Capacitor).
+ * - no browser pull-to-refresh / rubber-band at the document level
+ * - momentum scrolling inside app scroll containers
+ * - no double-tap zoom or accidental text selection on UI chrome
+ */
+@layer base {
+  html,
+  body {
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #app,
+  body > div {
+    height: 100%;
+  }
+
+  /* Individual scroll containers keep their own inertia + local bounce. */
+  .app-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+  }
+
+  .app-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* UI chrome: never selectable, never zoomable on double tap. */
+  button,
+  [role="button"],
+  [role="tab"],
+  label,
+  nav,
+  header,
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  /* Readable content and inputs stay selectable. */
+  p,
+  h1,
+  h2,
+  h3,
+  li,
+  td,
+  .selectable,
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+@utility safe-top {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+@utility safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+@utility safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
 @media print {
   body * {
     visibility: hidden;
