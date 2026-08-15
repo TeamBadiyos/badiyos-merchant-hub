@@ -168,7 +168,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="app-scroll safe-top safe-bottom flex h-full min-h-full flex-col bg-background">
       <div className="bg-brand-gradient px-6 pt-12 pb-16 text-primary-foreground">
         <div className="mx-auto flex w-full max-w-[520px] items-center justify-between">
           <div className="flex items-center gap-3">

@@ -153,7 +153,7 @@ function OnboardingPage() {
 
   if (!ready || !merchant) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex h-full items-center justify-center bg-background">
         <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     );
@@ -378,7 +378,7 @@ function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-12">
+    <div className="app-scroll safe-top safe-bottom h-full bg-background pb-12">
       <header className="bg-brand-gradient px-6 pt-10 pb-12 text-primary-foreground">
         <div className="mx-auto w-full max-w-[520px]">
           <div className="flex items-center justify-between">
@@ -717,7 +717,7 @@ function ReviewScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+    <div className="safe-top safe-bottom flex h-full flex-col items-center justify-center gap-4 bg-background px-6 text-center">
       <div className="flex size-16 items-center justify-center rounded-3xl bg-primary-soft">
         <CheckCircle2 className="size-8 text-primary" />
       </div>
