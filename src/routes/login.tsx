@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
-import { BrandMark, Wordmark } from "@/components/Wordmark";
+import { Wordmark } from "@/components/Wordmark";
 import { supabase } from "@/integrations/supabase/client";
 import { routeForMerchant, useAuth } from "@/lib/auth";
 import { hapticImpact, hapticNotify } from "@/lib/haptics";
@@ -172,10 +172,7 @@ function LoginPage() {
     <div className="app-scroll safe-top safe-bottom flex h-full min-h-full flex-col bg-background">
       <div className="bg-brand-gradient px-6 pt-12 pb-16 text-primary-foreground">
         <div className="mx-auto flex w-full max-w-[520px] items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BrandMark className="size-10 rounded-xl" />
-            <Wordmark on="dark" className="h-6" />
-          </div>
+          <Wordmark on="dark" className="h-6" />
           <div className="flex overflow-hidden rounded-full bg-primary-foreground/15 p-1 text-xs font-bold">
             {(["en", "mr"] as const).map((l) => (
               <button
