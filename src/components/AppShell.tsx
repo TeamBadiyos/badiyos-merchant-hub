@@ -21,7 +21,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { PullIndicator } from "@/components/PullIndicator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { BrandMark, Wordmark } from "@/components/Wordmark";
+import { Wordmark } from "@/components/Wordmark";
 import { useAuth, type Permission } from "@/lib/auth";
 import { hapticImpact } from "@/lib/haptics";
 import { useI18n, type Key } from "@/lib/i18n";
@@ -86,7 +86,7 @@ export function AppShell({
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] p-0">
                 <div className="bg-brand-gradient px-6 pt-12 pb-6 text-primary-foreground">
-                  <BrandMark className="size-12" />
+                  <Wordmark on="dark" className="h-6" />
                   <p className="mt-4 text-base font-bold">{merchant?.store_name ?? "badiyos"}</p>
                   <p className="num text-sm opacity-80">
                     {merchant?.phone ? `+91 ${merchant.phone}` : t("tagline")}

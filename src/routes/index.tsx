@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { BrandMark, Wordmark } from "@/components/Wordmark";
+import { Wordmark } from "@/components/Wordmark";
 import { routeForMerchant, useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -39,10 +39,9 @@ function Splash() {
 
   return (
     <div className="bg-brand-gradient safe-top safe-bottom flex h-full min-h-screen flex-col items-center justify-center gap-4 px-6 text-primary-foreground">
-      <BrandMark className="size-20 animate-in zoom-in-75 duration-500" />
       <div className="animate-in text-center fade-in duration-700">
         <h1 className="sr-only">badiyos Merchant Portal</h1>
-        <Wordmark on="dark" className="mx-auto h-9" />
+        <Wordmark on="dark" className="mx-auto h-10 animate-in zoom-in-95 duration-500" />
         <p className="mt-2 text-sm font-semibold tracking-wide uppercase opacity-85">
           {t("tagline")}
         </p>
