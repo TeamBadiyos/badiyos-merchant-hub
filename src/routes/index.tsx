@@ -1,24 +1,57 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { BrandMark, Wordmark } from "@/components/Wordmark";
+import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
+
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "badiyos Merchant Portal — Run your shop in Latur" },
+      {
+        name: "description",
+        content:
+          "Login to the badiyos Merchant Portal to manage orders, catalogue, payouts and shop timings from your phone.",
+      },
+      { property: "og:title", content: "badiyos Merchant Portal" },
+      {
+        property: "og:description",
+        content: "Orders, catalogue and payouts for badiyos merchants in Latur.",
+      },
+    ],
+  }),
+  component: Splash,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Splash() {
+  const { session, ready } = useAuth();
+  const { t } = useI18n();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!ready) return;
+    const timer = setTimeout(() => {
+      navigate({ to: session ? "/home" : "/login", replace: true });
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [ready, session, navigate]);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="bg-brand-gradient flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-primary-foreground">
+      <BrandMark className="size-18 animate-in text-4xl zoom-in-75 duration-500" />
+      <div className="animate-in text-center fade-in duration-700">
+        <h1 className="text-4xl">
+          <Wordmark className="text-primary-foreground [&_span]:text-primary-foreground/70" />
+        </h1>
+        <p className="mt-2 text-sm font-semibold tracking-wide uppercase opacity-85">
+          {t("tagline")}
+        </p>
+      </div>
+      <div className="mt-6 h-2 w-24 overflow-hidden rounded-full bg-primary-foreground/25">
+        <div className="h-full w-1/3 animate-pulse rounded-full bg-primary-foreground" />
+      </div>
+      <p className="absolute bottom-8 text-xs opacity-75">Latur, Maharashtra</p>
     </div>
   );
 }
