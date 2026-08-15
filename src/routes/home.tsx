@@ -138,7 +138,7 @@ function HomePage() {
     <AppShell
       title={t("home")}
       onRefresh={() =>
-        Promise.all([live.refetch(), today.refetch(), lowStock.refetch(), openState.refetch?.()].filter(Boolean))
+        Promise.all([live.refetch(), today.refetch(), lowStock.refetch(), schedule.refetch()])
       }
     >
       <div className="space-y-6">
