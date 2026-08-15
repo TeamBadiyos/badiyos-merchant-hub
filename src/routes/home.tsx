@@ -189,7 +189,8 @@ function HomePage() {
               ))}
             </div>
 
-            {lowStockCount > 0 && can("manage_products") && (
+            {lowStockCount > 0 && can("manage_products") && !lowStockDismissed && (
+              <SwipeDismiss onDismiss={() => setLowStockDismissed(true)}>
               <Link
                 to="/products"
                 search={{ low: true }}
@@ -207,6 +208,7 @@ function HomePage() {
                   </p>
                 </div>
               </Link>
+              </SwipeDismiss>
             )}
 
             <div className="flex items-center justify-between">
