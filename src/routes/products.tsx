@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Package, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, FileUp, Loader2, Package, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell, PlaceholderPanel } from "@/components/AppShell";
+import { CsvImportDialog } from "@/components/CsvImportDialog";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { ProductImage } from "@/components/ProductImage";
 import {
@@ -48,6 +49,9 @@ const UNITS: { value: string; key: Key }[] = [
 ];
 
 export const Route = createFileRoute("/products")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    low: search["low"] === "1" || search["low"] === true,
+  }),
   head: () => ({
     meta: [
       { title: "Products — badiyos Merchant Portal" },
@@ -73,6 +77,9 @@ function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Product | null>(null);
+  const [importing, setImporting] = useState(false);
+  const { low } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const products = useQuery({
     queryKey: ["products", merchant?.id],
@@ -114,6 +121,10 @@ function ProductsPage() {
 
   if (!merchant) return null;
 
+  const visible = low
+    ? (products.data ?? []).filter((p) => p.is_active && p.stock_quantity <= p.low_stock_threshold)
+    : products.data;
+
   return (
     <AppShell title={t("products")}>
       {merchant.status !== "approved" ? (
@@ -131,13 +142,38 @@ function ProductsPage() {
             {t("addProduct")}
           </Button>
 
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setImporting(true)}
+            className="w-full rounded-2xl text-sm font-bold"
+          >
+            <FileUp className="size-5" />
+            {t("importCsv")}
+          </Button>
+
+          {low && (
+            <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+              <AlertTriangle className="size-5 shrink-0 text-destructive" />
+              <p className="flex-1 text-xs font-bold text-destructive">{t("lowStockOnly")}</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs font-bold"
+                onClick={() => void navigate({ search: { low: false } })}
+              >
+                {t("clearFilter")}
+              </Button>
+            </div>
+          )}
+
           {products.isLoading && (
             <div className="flex justify-center py-10">
               <Loader2 className="size-6 animate-spin text-primary" />
             </div>
           )}
 
-          {products.data?.length === 0 && (
+          {visible?.length === 0 && (
             <PlaceholderPanel
               title={t("noProducts")}
               description={t("noProductsSub")}
@@ -145,7 +181,7 @@ function ProductsPage() {
             />
           )}
 
-          {products.data?.map((product) => (
+          {visible?.map((product) => (
             <div
               key={product.id}
               className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-card"
@@ -163,6 +199,12 @@ function ProductsPage() {
                   {t("stock")}: {product.stock_quantity}
                   {product.category_label ? ` · ${product.category_label}` : ""}
                 </p>
+                {product.stock_quantity <= product.low_stock_threshold && (
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-1 text-[10px] font-bold text-destructive">
+                    <AlertTriangle className="size-3" />
+                    {t("lowStock")}
+                  </span>
+                )}
                 <div className="mt-2 flex items-center gap-3">
                   <Switch
                     checked={product.is_active}
@@ -204,6 +246,10 @@ function ProductsPage() {
             setEditing(null);
           }}
         />
+      )}
+
+      {importing && merchant.id && (
+        <CsvImportDialog merchantId={merchant.id} onClose={() => setImporting(false)} />
       )}
 
       <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}>
@@ -248,6 +294,7 @@ function ProductForm({
   const [price, setPrice] = useState(product ? String(product.price) : "");
   const [stock, setStock] = useState(product ? String(product.stock_quantity) : "0");
   const [unit, setUnit] = useState(product?.unit ?? "piece");
+  const [threshold, setThreshold] = useState(String(product?.low_stock_threshold ?? 5));
   const [imagePath, setImagePath] = useState<string | null>(product?.image_url ?? null);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -272,6 +319,7 @@ function ProductForm({
         price: Number(price),
         stock_quantity: Number(stock),
         unit,
+        low_stock_threshold: Number(threshold || 0),
         image_url: imagePath,
       };
       if (product) {
@@ -366,6 +414,15 @@ function ProductForm({
               onChange={(e) => setCategoryLabel(e.target.value)}
               className="rounded-xl"
               placeholder="Snacks, Dairy…"
+            />
+          </Field>
+
+          <Field label={t("lowStockThreshold")}>
+            <Input
+              inputMode="numeric"
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value.replace(/\D/g, ""))}
+              className="num rounded-xl"
             />
           </Field>
 
