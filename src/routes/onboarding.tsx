@@ -238,12 +238,12 @@ function OnboardingPage() {
     if (gstChoice === null) return;
     const next: Errors = {};
     if (gstChoice) {
-      next.gstin = validateGstin(gstin);
-      if (!gstLookupDone) next.gstin = next.gstin ?? "Please verify your GSTIN first";
-      if (!form.gst_legal_name.trim()) next.gst_legal_name = t("required");
+      next["gstin"] = validateGstin(gstin);
+      if (!gstLookupDone) next["gstin"] = next["gstin"] ?? "Please verify your GSTIN first";
+      if (!form.gst_legal_name.trim()) next["gst_legal_name"] = t("required");
     } else {
-      if (!form.store_name.trim()) next.store_name = t("required");
-      if (!form.owner_name.trim()) next.owner_name = t("required");
+      if (!form.store_name.trim()) next["store_name"] = t("required");
+      if (!form.owner_name.trim()) next["owner_name"] = t("required");
     }
     setErrors(next);
     if (Object.values(next).some(Boolean)) return;
@@ -448,8 +448,8 @@ function OnboardingPage() {
                       }}
                       className="num rounded-2xl text-base font-bold tracking-wide"
                     />
-                    {errors.gstin && (
-                      <p className="text-xs font-bold text-destructive">{errors.gstin}</p>
+                    {errors["gstin"] && (
+                      <p className="text-xs font-bold text-destructive">{errors["gstin"]}</p>
                     )}
                   </div>
                   <Button
@@ -540,8 +540,8 @@ function OnboardingPage() {
                     </button>
                   ))}
                 </div>
-                {errors.store_category_id && (
-                  <p className="text-xs font-bold text-destructive">{errors.store_category_id}</p>
+                {errors["store_category_id"] && (
+                  <p className="text-xs font-bold text-destructive">{errors["store_category_id"]}</p>
                 )}
               </div>
               {field("address", t("addressLine"), { placeholder: "Shop no, street, landmark" })}
@@ -614,7 +614,7 @@ function OnboardingPage() {
                     onUploaded={(path) => recordDocument(docType, path)}
                   />
                 ))}
-                {errors.docs && <p className="text-xs font-bold text-destructive">{errors.docs}</p>}
+                {errors["docs"] && <p className="text-xs font-bold text-destructive">{errors["docs"]}</p>}
               </div>
 
               {field("pan", t("panNumber"), {

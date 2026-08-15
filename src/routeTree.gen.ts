@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CatalogueRouteImport } from './routes/catalogue'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as ProfileRouteImport } from './routes/profile'
 
@@ -36,6 +37,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/catalogue': typeof CatalogueRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/catalogue': typeof CatalogueRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
 }
@@ -69,20 +77,36 @@ export interface FileRoutesById {
   '/catalogue': typeof CatalogueRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/catalogue' | '/home' | '/login' | '/orders' | '/profile'
+  fullPaths:
+    | '/'
+    | '/catalogue'
+    | '/home'
+    | '/login'
+    | '/onboarding'
+    | '/orders'
+    | '/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/catalogue' | '/home' | '/login' | '/orders' | '/profile'
+  to:
+    | '/'
+    | '/catalogue'
+    | '/home'
+    | '/login'
+    | '/onboarding'
+    | '/orders'
+    | '/profile'
   id:
     | '__root__'
     | '/'
     | '/catalogue'
     | '/home'
     | '/login'
+    | '/onboarding'
     | '/orders'
     | '/profile'
   fileRoutesById: FileRoutesById
@@ -92,6 +116,7 @@ export interface RootRouteChildren {
   CatalogueRoute: typeof CatalogueRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   OrdersRoute: typeof OrdersRoute
   ProfileRoute: typeof ProfileRoute
 }
@@ -126,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders': {
       id: '/orders'
       path: '/orders'
@@ -148,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogueRoute: CatalogueRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   OrdersRoute: OrdersRoute,
   ProfileRoute: ProfileRoute,
 }
