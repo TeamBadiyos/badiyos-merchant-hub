@@ -55,14 +55,14 @@ export function Markdown({ content }: { content: string }) {
     }
     const bullet = /^[-*+]\s+(.*)$/.exec(line);
     if (bullet) {
-      list.push(bullet[1]);
+      list.push(bullet[1] ?? "");
       return;
     }
     flushList(`${key}-l`);
     const heading = /^(#{1,6})\s+(.*)$/.exec(line);
     if (heading) {
-      const level = heading[1].length;
-      const text = inline(heading[2], key);
+      const level = (heading[1] ?? "#").length;
+      const text = inline(heading[2] ?? "", key);
       if (level <= 1)
         blocks.push(
           <h2 key={key} className="mt-6 text-lg font-extrabold text-foreground">
@@ -88,7 +88,7 @@ export function Markdown({ content }: { content: string }) {
       blocks.push(
         <p key={key} className="flex gap-2 text-sm leading-relaxed text-foreground">
           <span className="num font-bold text-primary">{numbered[1]}.</span>
-          <span>{inline(numbered[2], key)}</span>
+          <span>{inline(numbered[2] ?? "", key)}</span>
         </p>,
       );
       return;
