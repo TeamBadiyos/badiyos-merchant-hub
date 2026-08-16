@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="#00B97A"
+    android:background="#800080"
     android:padding="24dp">
 
     <TextView
@@ -32,7 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:gravity="center"
-        android:textColor="#EAFFF6"
+        android:textColor="#F3E8FF"
         android:textSize="16sp"
         android:text="Tap to accept" />
 
@@ -52,7 +52,7 @@
         android:layout_height="64dp"
         android:layout_marginTop="32dp"
         android:backgroundTint="#FFFFFF"
-        android:textColor="#00875A"
+        android:textColor="#800080"
         android:textSize="18sp"
         android:textStyle="bold"
         android:text="ACCEPT" />
@@ -62,7 +62,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="12dp"
-        android:backgroundTint="#0C7A55"
+        android:backgroundTint="#5B21B6"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
         android:text="REJECT" />

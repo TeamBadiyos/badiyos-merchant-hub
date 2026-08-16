@@ -1,9 +1,9 @@
-import wordmarkOnDark from "@/assets/badiyos-logo-on-dark.png.asset.json";
-import wordmarkOnLight from "@/assets/badiyos-logo-on-light.png.asset.json";
+import wordmarkOnDark from "@/assets/badiyos-wordmark-white.png.asset.json";
+import wordmarkOnLight from "@/assets/badiyos-wordmark-purple.png.asset.json";
 
 /**
  * The badiyos wordmark. `on` picks the variant that reads correctly against the
- * background it sits on: white text on dark/green surfaces, green text on light ones.
+ * background it sits on: white text on dark/purple surfaces, purple text on light ones.
  */
 export function Wordmark({
   className = "",

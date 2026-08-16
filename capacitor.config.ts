@@ -12,6 +12,13 @@ const config: CapacitorConfig = {
   android: {
     // Keeps the keyboard from resizing the safe-area padding on every focus.
     webContentsDebuggingEnabled: false,
+    backgroundColor: "#800080",
+  },
+  backgroundColor: "#800080",
+  plugins: {
+    SplashScreen: {
+      backgroundColor: "#800080",
+    },
   },
 };
 
