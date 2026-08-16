@@ -411,7 +411,6 @@ function LoginPage() {
             </div>
           )}
         </div>
-        <p className="py-6 text-center text-xs text-muted-foreground">badiyos · Latur, Maharashtra</p>
       </div>
     </div>
   );
