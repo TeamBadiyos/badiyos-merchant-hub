@@ -195,7 +195,7 @@ function LoginPage() {
         </p>
       </div>
 
-      <div className="mx-auto -mt-8 w-full max-w-[520px] flex-1 px-6">
+      <div className="mx-auto -mt-8 flex w-full max-w-[520px] flex-1 flex-col justify-center px-6">
         <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
           {step === "mobile" && (
             <div className="space-y-6">
