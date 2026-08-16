@@ -174,11 +174,13 @@ function LoginPage() {
   };
 
   return (
-    <div className="app-scroll safe-top safe-bottom flex h-full min-h-full flex-col bg-background">
-      <div className="bg-brand-gradient px-6 pt-12 pb-16 text-primary-foreground">
-        <div className="mx-auto flex w-full max-w-[520px] items-center justify-between">
-          <Wordmark on="dark" className="h-6" />
-          <div className="flex overflow-hidden rounded-full bg-primary-foreground/15 p-1 text-xs font-bold">
+    <div className="app-scroll safe-top safe-bottom flex h-full min-h-full flex-col bg-primary">
+      <div className="bg-brand-gradient px-5 pt-6 pb-10 text-primary-foreground">
+        <div className="relative mx-auto w-full max-w-[520px]">
+          <div className="flex justify-center">
+            <Wordmark on="dark" className="h-8" />
+          </div>
+          <div className="absolute top-0 right-0 flex items-center rounded-full bg-primary-foreground/20 p-0.5 text-[11px] font-extrabold">
             {(["en", "mr"] as const).map((l) => (
               <button
                 key={l}
@@ -187,18 +189,18 @@ function LoginPage() {
                   lang === l ? "bg-primary-foreground text-primary" : "text-primary-foreground"
                 }`}
               >
-                {l === "en" ? "English" : "मराठी"}
+                {l === "en" ? "EN" : "MR"}
               </button>
             ))}
           </div>
         </div>
-        <p className="mx-auto mt-6 w-full max-w-[520px] text-sm font-semibold opacity-90">
+        <p className="mx-auto mt-4 w-full max-w-[520px] text-center text-sm font-bold opacity-95">
           {t("subTagline")}
         </p>
       </div>
 
-      <div className="mx-auto -mt-8 flex w-full max-w-[520px] flex-1 flex-col justify-center px-6">
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+      <div className="flex flex-1 flex-col rounded-t-3xl bg-card">
+        <div className="mx-auto flex w-full max-w-[520px] flex-1 flex-col px-5 pt-5 pb-6">
           {step === "mobile" && (
             <div className="space-y-6">
               <div>
