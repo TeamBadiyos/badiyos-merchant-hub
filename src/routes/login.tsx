@@ -242,6 +242,7 @@ function LoginPage() {
                 <ShieldCheck className="size-4 text-primary" />
                 {t("verified")}
               </p>
+              <LegalConsent />
             </div>
           )}
 
