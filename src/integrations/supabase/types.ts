@@ -425,6 +425,60 @@ export type Database = {
           },
         ]
       }
+      business_interest_leads: {
+        Row: {
+          business_name: string | null
+          category_interested: string
+          city: string
+          created_at: string
+          id: string
+          owner_name: string
+          phone: string
+        }
+        Insert: {
+          business_name?: string | null
+          category_interested: string
+          city?: string
+          created_at?: string
+          id?: string
+          owner_name: string
+          phone: string
+        }
+        Update: {
+          business_name?: string | null
+          category_interested?: string
+          city?: string
+          created_at?: string
+          id?: string
+          owner_name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
+      city_interest_leads: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       device_sessions: {
         Row: {
           created_at: string
@@ -1950,6 +2004,50 @@ export type Database = {
           },
         ]
       }
+      service_task_details: {
+        Row: {
+          excluded_items: string[]
+          icon_url: string | null
+          id: string
+          included_items: string[]
+          is_active: boolean
+          rank: number
+          segment_id: string
+          task_name: string
+          task_slug: string
+        }
+        Insert: {
+          excluded_items: string[]
+          icon_url?: string | null
+          id?: string
+          included_items: string[]
+          is_active?: boolean
+          rank?: number
+          segment_id: string
+          task_name: string
+          task_slug: string
+        }
+        Update: {
+          excluded_items?: string[]
+          icon_url?: string | null
+          id?: string
+          included_items?: string[]
+          is_active?: boolean
+          rank?: number
+          segment_id?: string
+          task_name?: string
+          task_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_task_details_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_users: {
         Row: {
           auth_user_id: string
@@ -2603,6 +2701,7 @@ export type Database = {
         Args: { _id: string }
         Returns: undefined
       }
+      staff_delete_task_detail: { Args: { _id: string }; Returns: undefined }
       staff_edit_booking: {
         Args: { _booking_id: string; _payload: Json }
         Returns: undefined
@@ -2639,6 +2738,10 @@ export type Database = {
         Returns: undefined
       }
       staff_reorder_homepage_sections: {
+        Args: { _orders: Json }
+        Returns: undefined
+      }
+      staff_reorder_task_details: {
         Args: { _orders: Json }
         Returns: undefined
       }
@@ -2690,6 +2793,7 @@ export type Database = {
         Returns: string
       }
       staff_upsert_legal_page: { Args: { _payload: Json }; Returns: string }
+      staff_upsert_task_detail: { Args: { _payload: Json }; Returns: string }
       staff_verify_end_otp: {
         Args: { _booking_id: string; _otp: string }
         Returns: undefined
