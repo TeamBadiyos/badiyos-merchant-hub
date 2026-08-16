@@ -1,6 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { CalendarOff, Clock, CreditCard, Loader2, Plus, Trash2 } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  CalendarOff,
+  ChevronRight,
+  Clock,
+  CreditCard,
+  Loader2,
+  Plus,
+  ScrollText,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -402,6 +412,29 @@ function SettingsPage() {
               ))
             )}
           </ul>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-card">
+          <h2 className="text-base font-bold text-foreground">{t("legal")}</h2>
+          <div className="mt-3 flex flex-col">
+            {(
+              [
+                { slug: "privacy-policy", label: t("privacyPolicy"), Icon: ShieldCheck },
+                { slug: "terms", label: t("termsTitle"), Icon: ScrollText },
+              ] as const
+            ).map(({ slug, label, Icon }) => (
+              <Link
+                key={slug}
+                to="/legal/$slug"
+                params={{ slug }}
+                className="flex items-center gap-3 rounded-xl px-2 py-4 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+              >
+                <Icon className="size-5 text-primary" />
+                <span className="flex-1">{label}</span>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
         </section>
       </div>
     </AppShell>
