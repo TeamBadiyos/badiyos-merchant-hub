@@ -4,6 +4,7 @@ import { ArrowLeft, KeyRound, Loader2, MessageCircle, ShieldCheck } from "lucide
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { LegalConsent } from "@/components/LegalConsent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";

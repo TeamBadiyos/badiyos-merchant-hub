@@ -715,6 +715,7 @@ function OnboardingPage() {
                   {t("submitApplication")}
                 </Button>
               </div>
+              <LegalConsent />
             </div>
           )}
         </div>
