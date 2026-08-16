@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { DocumentUpload, type DocType } from "@/components/DocumentUpload";
+import { LegalConsent } from "@/components/LegalConsent";
 import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
