@@ -15,7 +15,7 @@ function inline(text: string, keyPrefix: string) {
       nodes.push(
         <a
           key={key}
-          href={match[4]}
+          href={match[4] ?? "#"}
           target="_blank"
           rel="noreferrer"
           className="font-semibold text-primary underline"
