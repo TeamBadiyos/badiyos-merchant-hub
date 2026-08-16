@@ -202,16 +202,25 @@ function LoginPage() {
       <div className="flex flex-1 flex-col rounded-t-3xl bg-card">
         <div className="mx-auto flex w-full max-w-[520px] flex-1 flex-col px-5 pt-5 pb-6">
           {step === "mobile" && (
-            <div className="space-y-6">
+            <div className="flex flex-1 flex-col">
+              {canGoBack && (
+                <button
+                  onClick={() => router.history.back()}
+                  aria-label="Go back"
+                  className="-ml-1 mb-3 flex size-8 items-center justify-center text-foreground"
+                >
+                  <ChevronLeft className="size-6" />
+                </button>
+              )}
               <div>
-                <h1 className="text-xl font-extrabold text-foreground">{t("loginTitle")}</h1>
+                <h1 className="text-2xl font-extrabold text-foreground">{t("loginTitle")}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">{t("loginSub")}</p>
               </div>
-              <div className="space-y-2">
+              <div className="mt-6 space-y-2">
                 <Label htmlFor="mobile" className="text-sm font-bold">
                   {t("mobile")}
                 </Label>
-                <div className="flex items-center gap-3 rounded-2xl border border-input bg-background px-4 focus-within:ring-2 focus-within:ring-ring/40">
+                <div className="flex items-center gap-3 rounded-2xl border border-input bg-muted/40 px-4 py-1 focus-within:ring-2 focus-within:ring-ring/40">
                   <span className="num text-sm font-bold text-muted-foreground">+91</span>
                   <Input
                     id="mobile"
@@ -231,6 +240,7 @@ function LoginPage() {
                   <p className="text-xs font-bold text-destructive">{phoneError}</p>
                 )}
               </div>
+              <div className="mt-auto pt-8">
               <Button
                 size="lg"
                 disabled={mobile.length !== 10 || busy}
@@ -238,16 +248,13 @@ function LoginPage() {
                   hapticImpact("light");
                   void handleContinue();
                 }}
-                className="w-full rounded-2xl text-base font-bold shadow-brand"
+                className="h-14 w-full rounded-2xl text-base font-bold shadow-brand"
               >
                 {busy ? <Loader2 className="size-5 animate-spin" /> : <MessageCircle className="size-5" />}
                 {t("sendOtp")}
               </Button>
-              <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="size-4 text-primary" />
-                {t("verified")}
-              </p>
-              <LegalConsent />
+                <LegalConsent className="mt-3" />
+              </div>
             </div>
           )}
 
