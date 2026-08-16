@@ -9,6 +9,8 @@ import {
   Menu,
   Receipt,
   ScanLine,
+  ScrollText,
+  ShieldCheck,
   Settings,
   ShoppingBag,
   Store,
@@ -49,6 +51,12 @@ const links: { to: string; key: Key; icon: typeof Home; permission?: Permission 
 ];
 
 const menuItems: { key: Key; icon: typeof Home }[] = [{ key: "support", icon: LifeBuoy }];
+
+/** Legal documents fetched from the shared legal_pages table. */
+const legalLinks: { slug: string; key: Key; icon: typeof Home }[] = [
+  { slug: "privacy-policy", key: "privacyPolicy", icon: ShieldCheck },
+  { slug: "terms", key: "termsTitle", icon: ScrollText },
+];
 
 export function AppShell({
   title,
@@ -123,6 +131,23 @@ export function AppShell({
                         {t("comingSoon")}
                       </span>
                     </button>
+                  ))}
+                  <div className="my-4 h-px bg-border" />
+                  <p className="px-4 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    {t("legal")}
+                  </p>
+                  {legalLinks.map(({ slug, key, icon: Icon }) => (
+                    <Link
+                      key={slug}
+                      to="/legal/$slug"
+                      params={{ slug }}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                    >
+                      <Icon className="size-5 text-primary" />
+                      <span className="flex-1">{t(key)}</span>
+                      <ChevronRight className="size-4 text-muted-foreground" />
+                    </Link>
                   ))}
                   <div className="my-4 h-px bg-border" />
                   <button
