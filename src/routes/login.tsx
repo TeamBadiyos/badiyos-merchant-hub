@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, KeyRound, Loader2, MessageCircle, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ChevronLeft, KeyRound, Loader2, MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -44,6 +44,8 @@ function LoginPage() {
   const { t, lang, setLang } = useI18n();
   const { ensureDraft, refresh } = useAuth();
   const navigate = useNavigate();
+  const router = useRouter();
+  const canGoBack = router.history.canGoBack();
 
   const sendOtpFn = useServerFn(sendMerchantOtp);
   const verifyOtpFn = useServerFn(verifyMerchantOtp);
