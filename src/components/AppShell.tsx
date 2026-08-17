@@ -14,6 +14,7 @@ import {
   Settings,
   ShoppingBag,
   Store,
+  Gift,
   User,
   Users,
   Wallet,
@@ -46,6 +47,7 @@ const links: { to: string; key: Key; icon: typeof Home; permission?: Permission 
   { to: "/catalogue", key: "catalogue", icon: ShoppingBag },
   { to: "/reports", key: "reports", icon: BarChart3, permission: "view_reports" },
   { to: "/wallet", key: "wallet", icon: Wallet, permission: "view_reports" },
+  { to: "/rewards", key: "rewards", icon: Gift, permission: "view_reports" },
   { to: "/staff", key: "rolesStaff", icon: Users, permission: "manage_staff" },
   { to: "/settings", key: "settings", icon: Settings },
 ];
