@@ -6,7 +6,7 @@ import { AppShell, PlaceholderPanel } from "@/components/AppShell";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useI18n, type Key } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { inr } from "@/lib/order-status";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
@@ -115,15 +115,14 @@ function RewardsPage() {
     queryKey: ["rewards", "counts", merchant?.id],
     enabled,
     queryFn: async () => {
-      const [weekly, monthly] = await Promise.all(
-        (["weekly", "monthly"] as const).map((period) =>
-          supabase
-            .from("merchant_orders")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "completed")
-            .gte("created_at", periodStart(period).toISOString()),
-        ),
-      );
+      const countFor = (period: "weekly" | "monthly") =>
+        supabase
+          .from("merchant_orders")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "completed")
+          .gte("created_at", periodStart(period).toISOString());
+      const weekly = await countFor("weekly");
+      const monthly = await countFor("monthly");
       if (weekly.error) throw weekly.error;
       if (monthly.error) throw monthly.error;
       return { weekly: weekly.count ?? 0, monthly: monthly.count ?? 0 };
