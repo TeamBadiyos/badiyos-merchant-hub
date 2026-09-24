@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ const actionable = (row: OrderRow | null | undefined) =>
  */
 export function useOrderRealtime(merchantId: string | null | undefined, alert = false) {
   const queryClient = useQueryClient();
+  const alerted = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!merchantId) return;
@@ -43,12 +44,12 @@ export function useOrderRealtime(merchantId: string | null | undefined, alert = 
         },
         (payload) => {
           void queryClient.invalidateQueries({ queryKey: ["orders"] });
-          const row = payload.new as OrderRow | null;
-          const prev = payload.old as OrderRow | null;
-          // Ring once, and only when the order is really the shop's to act on:
+          const row = payload.new as (OrderRow & { id?: string }) | null;
+          // Ring once per order, and only when it is really the shop's to act on:
           // cash orders, or online orders whose payment has been captured.
-          if (alert && actionable(row) && !actionable(prev)) {
-            toast.success(`New order ${row?.order_number ?? ""}`.trim());
+          if (alert && row?.id && actionable(row) && !alerted.current.has(row.id)) {
+            alerted.current.add(row.id);
+            toast.success(`New order ${row.order_number ?? ""}`.trim());
           }
         },
       )
