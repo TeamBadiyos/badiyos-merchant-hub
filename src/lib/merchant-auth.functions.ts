@@ -5,6 +5,16 @@ import { z } from "zod";
 import { PHONE_RE, PIN_RE, OTP_RE } from "./validation";
 
 /**
+ * Static app-store review account (Google Play / App Store reviewers).
+ * Fixed phone with a fixed PIN and OTP: no WhatsApp message is ever sent and
+ * PIN lockouts never apply, so a reviewer can always get in.
+ */
+const REVIEW_PHONE = "9999900000";
+const REVIEW_PIN = "1234";
+const REVIEW_OTP = "123456";
+const isReviewPhone = (phone: string) => phone.replace(/\D/g, "").slice(-10) === REVIEW_PHONE;
+
+/**
  * Pre-login check: does this number already have a PIN? Runs server-side with the
  * admin client so the underlying RPC stays unreachable from an anonymous browser session.
  */
