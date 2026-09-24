@@ -140,6 +140,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const ensureDraft = useCallback(
     async (phone: string) => {
+      // Invited staff: link this login to their staff row instead of creating a new shop.
+      const { data: staffMerchantId, error: claimError } = await supabase.rpc(
+        "merchant_claim_staff_invite",
+      );
+      if (claimError) console.error("[auth] staff claim failed", claimError.message);
+      if (staffMerchantId) return refresh();
+
+      const existing = await fetchContext();
+      if (existing.merchantId) return refresh();
+
       const { error } = await supabase.rpc("merchant_ensure_draft", { _phone: phone });
       if (error) {
         console.error("[auth] ensure draft failed", error.message);

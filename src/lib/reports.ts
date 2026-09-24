@@ -74,25 +74,31 @@ export function summarise(orders: CompletedOrder[]) {
   };
 }
 
-const dayKey = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+/** Local-calendar yyyy-mm-dd key (never UTC). */
+const localKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const dayKey = (iso: string) => localKey(new Date(iso));
 
 /** Revenue bucketed per day across the range, including empty days. */
 export function revenueSeries(orders: CompletedOrder[], range: Range) {
-  const buckets = new Map<string, number>();
+  const buckets = new Map<string, { label: string; revenue: number }>();
   const cursor = startOfDay(range.from);
   const last = startOfDay(range.to);
   while (cursor <= last && buckets.size < 400) {
-    buckets.set(cursor.toISOString().slice(0, 10), 0);
+    buckets.set(localKey(cursor), {
+      label: cursor.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
+      revenue: 0,
+    });
     cursor.setDate(cursor.getDate() + 1);
   }
   for (const order of orders) {
-    const key = dayKey(order.created_at);
-    buckets.set(key, (buckets.get(key) ?? 0) + Number(order.total_amount ?? 0));
+    const bucket = buckets.get(dayKey(order.created_at));
+    if (bucket) bucket.revenue += Number(order.total_amount ?? 0);
   }
-  return [...buckets.entries()].map(([date, revenue]) => ({
+  return [...buckets.entries()].map(([date, b]) => ({
     date,
-    label: new Date(date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
-    revenue: Math.round(revenue),
+    label: b.label,
+    revenue: Math.round(b.revenue),
   }));
 }
 
