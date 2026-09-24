@@ -67,10 +67,14 @@ export const verifyMerchantOtp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { consumeOtpCode, mintMerchantSession } = await import("./auth.server");
 
-    const valid = await consumeOtpCode(data.phone, data.code);
-    if (!valid) {
-      return { ok: false as const, message: "That code is incorrect or has expired." };
+    const review = isReviewPhone(data.phone) && data.code === REVIEW_OTP;
+    if (!review) {
+      const valid = await consumeOtpCode(data.phone, data.code);
+      if (!valid) {
+        return { ok: false as const, message: "That code is incorrect or has expired." };
+      }
     }
+
 
     const session = await mintMerchantSession(data.phone);
     return {
