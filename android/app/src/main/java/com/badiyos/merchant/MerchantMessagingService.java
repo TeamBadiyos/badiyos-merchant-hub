@@ -39,8 +39,7 @@ public class MerchantMessagingService extends MessagingService {
     public static final String EXTRA_AMOUNT = "amount";
     public static final String EXTRA_TIMEOUT = "timeout_seconds";
 
-    public static final String ACTION_ACCEPT = "com.badiyos.merchant.ORDER_ACCEPT";
-    public static final String ACTION_REJECT = "com.badiyos.merchant.ORDER_REJECT";
+    public static final String ACTION_OPEN = "com.badiyos.merchant.ORDER_OPEN";
 
     @Override
     public void onMessageReceived(RemoteMessage message) {
@@ -100,16 +99,10 @@ public class MerchantMessagingService extends MessagingService {
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent fullScreen = PendingIntent.getActivity(this, 1001, ring, flags);
 
-        PendingIntent accept = PendingIntent.getActivity(this, 1002,
+        PendingIntent open = PendingIntent.getActivity(this, 1002,
                 new Intent(this, OrderRingActivity.class)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        .setAction(ACTION_ACCEPT)
-                        .putExtra(EXTRA_ORDER_ID, orderId), flags);
-
-        PendingIntent reject = PendingIntent.getActivity(this, 1003,
-                new Intent(this, OrderRingActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        .setAction(ACTION_REJECT)
+                        .setAction(ACTION_OPEN)
                         .putExtra(EXTRA_ORDER_ID, orderId), flags);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -124,8 +117,7 @@ public class MerchantMessagingService extends MessagingService {
                 .setTimeoutAfter(timeout * 1000L)
                 .setFullScreenIntent(fullScreen, true)
                 .setContentIntent(fullScreen)
-                .addAction(0, "Accept", accept)
-                .addAction(0, "Reject", reject);
+                .addAction(0, "Open", open);
 
         NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, builder.build());
     }
