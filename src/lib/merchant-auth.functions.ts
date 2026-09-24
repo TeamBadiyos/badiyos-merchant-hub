@@ -38,6 +38,11 @@ export const merchantHasPin = createServerFn({ method: "POST" })
 export const sendMerchantOtp = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ phone: z.string().regex(PHONE_RE) }).parse(input))
   .handler(async ({ data }) => {
+    // Review account: never send a real WhatsApp OTP, the code is fixed.
+    if (isReviewPhone(data.phone)) {
+      return { ok: true as const, message: "Use the review test code to continue." };
+    }
+
     const { checkOtpRateLimit, createOtpCode, sendWhatsappOtp } = await import("./auth.server");
 
     const ip =
