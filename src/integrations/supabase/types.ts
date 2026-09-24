@@ -2596,39 +2596,97 @@ export type Database = {
       }
       merchant_orders: {
         Row: {
+          address_id: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
           commission_amount: number | null
           created_at: string
+          customer_name: string | null
+          customer_note: string | null
+          customer_phone: string | null
+          delivery_address: string | null
+          delivery_fee: number
+          delivery_lat: number | null
+          delivery_lng: number | null
           id: string
+          items_total: number
           merchant_id: string
           order_number: string
+          paid_at: string | null
+          payment_mode: string
+          payment_status: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          source: string
           status: string
           total_amount: number
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          address_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           commission_amount?: number | null
           created_at?: string
+          customer_name?: string | null
+          customer_note?: string | null
+          customer_phone?: string | null
+          delivery_address?: string | null
+          delivery_fee?: number
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           id?: string
+          items_total?: number
           merchant_id: string
           order_number: string
+          paid_at?: string | null
+          payment_mode?: string
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          source?: string
           status?: string
           total_amount?: number
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          address_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           commission_amount?: number | null
           created_at?: string
+          customer_name?: string | null
+          customer_note?: string | null
+          customer_phone?: string | null
+          delivery_address?: string | null
+          delivery_fee?: number
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           id?: string
+          items_total?: number
           merchant_id?: string
           order_number?: string
+          paid_at?: string | null
+          payment_mode?: string
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          source?: string
           status?: string
           total_amount?: number
           updated_at?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "merchant_orders_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "merchant_orders_merchant_id_fkey"
             columns: ["merchant_id"]
@@ -6649,8 +6707,36 @@ export type Database = {
       }
       staff_zone_ids: { Args: { _auth_user_id: string }; Returns: string[] }
       start_service: { Args: { _booking_id: string }; Returns: string }
+      store_attach_payment: {
+        Args: { _order_id: string; _rzp_order_id: string }
+        Returns: Json
+      }
+      store_cancel_order: {
+        Args: { _order_id: string; _reason?: string }
+        Returns: Json
+      }
+      store_confirm_payment: {
+        Args: { _order_id: string; _payment_id: string; _rzp_order_id: string }
+        Returns: Json
+      }
+      store_create_order: {
+        Args: {
+          _address_id: string
+          _items: Json
+          _merchant_id: string
+          _note?: string
+          _payment_mode?: string
+        }
+        Returns: Json
+      }
+      store_delivery_quote: { Args: { _items_total: number }; Returns: Json }
       store_is_open_now: { Args: { _merchant_id: string }; Returns: boolean }
       store_max_radius_km: { Args: never; Returns: number }
+      store_my_orders: { Args: never; Returns: Json }
+      store_setting: {
+        Args: { _default: number; _key: string }
+        Returns: number
+      }
       submit_booking_review: {
         Args: { _booking_id: string; _rating: number; _review: string }
         Returns: undefined
@@ -6748,6 +6834,10 @@ export type Database = {
           _refund_status: string
         }
         Returns: undefined
+      }
+      system_store_mark_paid: {
+        Args: { _payment_id: string; _rzp_order_id: string }
+        Returns: boolean
       }
       verify_commission_parity: {
         Args: never
