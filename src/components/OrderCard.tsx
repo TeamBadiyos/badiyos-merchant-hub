@@ -1,4 +1,4 @@
-import { Bike, Check, KeyRound, Loader2, X } from "lucide-react";
+import { Bike, Check, KeyRound, Loader2, Phone, X } from "lucide-react";
 import { useState } from "react";
 
 import { RejectReasonDialog } from "@/components/RejectReasonDialog";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { useI18n, type Key } from "@/lib/i18n";
-import { useDecideOrder, useMarkReady, usePickupInfo } from "@/lib/order-actions";
+import { useDecideOrder, useMarkReady, useOrderRider, usePickupInfo } from "@/lib/order-actions";
 import {
   inr,
   isNewOrder,
@@ -126,6 +126,7 @@ function DeliveryStatus({ order }: { order: OrderWithItems }) {
   const pickedUp = done || Boolean(order.picked_up_at);
   const cancelled = order.status === "cancelled" || order.status === "rejected";
   const pickup = usePickupInfo(order.id, !pickedUp && !cancelled);
+  const rider = useOrderRider(order.id, !done && !cancelled);
 
   const courier = pickup.data?.courier_status?.toUpperCase() ?? "";
   let step = 0;
@@ -152,6 +153,20 @@ function DeliveryStatus({ order }: { order: OrderWithItems }) {
               className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-primary" : "bg-border"}`}
             />
           ))}
+        </div>
+      )}
+
+      {rider.data?.name && (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-card p-3">
+          <p className="min-w-0 truncate text-sm font-bold text-foreground">{rider.data.name}</p>
+          {rider.data.phone && (
+            <Button asChild size="sm" className="shrink-0 rounded-xl font-bold">
+              <a href={`tel:${rider.data.phone}`}>
+                <Phone className="size-4" />
+                {t("callRider")}
+              </a>
+            </Button>
+          )}
         </div>
       )}
 
