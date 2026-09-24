@@ -35,8 +35,8 @@ export const isNewOrder = (s: string) => NEW_STATUSES.includes(s);
 
 type PaymentShape = {
   status: string;
-  payment_mode?: string | null | undefined;
-  payment_status?: string | null | undefined;
+  payment_mode: string | null | undefined;
+  payment_status: string | null | undefined;
 };
 
 /**
