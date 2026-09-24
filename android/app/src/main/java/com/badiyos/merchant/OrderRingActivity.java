@@ -40,12 +40,8 @@ public class OrderRingActivity extends AppCompatActivity {
 
         // Notification action buttons route straight through without ringing.
         String action = intent.getAction();
-        if (MerchantMessagingService.ACTION_ACCEPT.equals(action)) {
-            finishWithDecision("accepted");
-            return;
-        }
-        if (MerchantMessagingService.ACTION_REJECT.equals(action)) {
-            finishWithDecision("rejected");
+        if (MerchantMessagingService.ACTION_OPEN.equals(action)) {
+            finishWithDecision("open");
             return;
         }
 
@@ -64,9 +60,8 @@ public class OrderRingActivity extends AppCompatActivity {
 
         final TextView countdown = findViewById(R.id.ring_countdown);
         Button accept = findViewById(R.id.ring_accept);
-        Button reject = findViewById(R.id.ring_reject);
-        accept.setOnClickListener(v -> finishWithDecision("accepted"));
-        reject.setOnClickListener(v -> finishWithDecision("rejected"));
+        // Only "Open": Accept/Reject always happen in-app (reject needs a reason).
+        accept.setOnClickListener(v -> finishWithDecision("open"));
 
         startAlert();
 

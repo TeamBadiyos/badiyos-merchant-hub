@@ -4,6 +4,7 @@ export const ORDER_STATUSES = [
   "placed",
   "pending",
   "accepted",
+  "expert_assigned",
   "preparing",
   "ready",
   "delivered",
@@ -19,6 +20,7 @@ export const STATUS_LABEL: Record<OrderStatus, Key> = {
   paid: "statusPlaced",
   pending: "statusPending",
   accepted: "statusAccepted",
+  expert_assigned: "statusRiderAssigned",
   preparing: "statusPreparing",
   ready: "statusReady",
   delivered: "statusDelivered",
@@ -35,6 +37,7 @@ export const isNewOrder = (s: string) => NEW_STATUSES.includes(s);
 export const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   accepted: "ready",
   preparing: "ready",
+  expert_assigned: "ready",
 };
 
 export const NEXT_STATUS_LABEL: Record<string, Key> = {

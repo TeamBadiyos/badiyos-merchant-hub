@@ -65,3 +65,19 @@ export function usePickupInfo(orderId: string, enabled: boolean) {
     },
   });
 }
+
+export type OrderRider = { name: string | null; phone: string | null };
+
+/** Rider details while assigned → picked up (backend returns null otherwise). */
+export function useOrderRider(orderId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["orders", "rider", orderId],
+    enabled,
+    refetchInterval: enabled ? 10_000 : false,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("merchant_get_order_rider", { _order_id: orderId });
+      if (error) throw error;
+      return (data ?? null) as unknown as OrderRider | null;
+    },
+  });
+}

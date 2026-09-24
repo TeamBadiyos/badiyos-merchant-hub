@@ -55,15 +55,6 @@
         android:textColor="#800080"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:text="ACCEPT" />
+        android:text="OPEN" />
 
-    <Button
-        android:id="@+id/ring_reject"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="12dp"
-        android:backgroundTint="#5B21B6"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:text="REJECT" />
 </LinearLayout>
