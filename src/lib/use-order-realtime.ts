@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { playOrderChime } from "@/lib/alert-sound";
 
 /**
  * Live merchant_orders subscription: refreshes order lists and fires the
@@ -16,7 +15,7 @@ export function useOrderRealtime(merchantId: string | null | undefined, alert = 
     if (!merchantId) return;
 
     const channel = supabase
-      .channel(`merchant-orders-${merchantId}`)
+      .channel(`merchant-orders-${merchantId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {
@@ -28,8 +27,7 @@ export function useOrderRealtime(merchantId: string | null | undefined, alert = 
         (payload) => {
           void queryClient.invalidateQueries({ queryKey: ["orders"] });
           const row = payload.new as { status?: string; order_number?: string } | null;
-          if (alert && payload.eventType === "INSERT" && row?.status === "pending") {
-            playOrderChime();
+          if (alert && payload.eventType === "INSERT" && ["pending", "placed", "paid"].includes(row?.status ?? "")) {
             toast.success(`New order ${row.order_number ?? ""}`.trim());
           }
         },

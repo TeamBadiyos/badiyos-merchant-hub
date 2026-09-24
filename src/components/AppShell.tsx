@@ -21,7 +21,9 @@ import {
 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
+import { NewOrderSheet } from "@/components/NewOrderSheet";
 import { PullIndicator } from "@/components/PullIndicator";
+import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Wordmark } from "@/components/Wordmark";
@@ -75,6 +77,7 @@ export function AppShell({
   const navigate = useNavigate();
   usePushRegistration(context.merchantId ?? merchant?.id);
   useNativeOrderActions();
+  useOrderRealtime(merchant?.status === "approved" ? merchant.id : null);
   const [open, setOpen] = useState(false);
   const { availability, accepting, scheduleBlocked, setAccepting } = useAvailability();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -84,6 +87,7 @@ export function AppShell({
 
   return (
     <div className="h-full overflow-hidden bg-background">
+      <NewOrderSheet />
       <div
         className={`safe-x mx-auto flex h-full w-full max-w-[520px] flex-col border-border bg-background sm:border-x ${
           animating ? "transition-transform duration-200 ease-out" : ""
