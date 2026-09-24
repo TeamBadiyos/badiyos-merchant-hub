@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, FileUp, Loader2, Package, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, EyeOff, FileUp, Loader2, Package, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -203,7 +203,15 @@ function ProductsPage() {
             <div className="flex gap-4 rounded-2xl border border-border bg-card p-4 shadow-card">
               <ProductImage path={product.image_url} className="size-16 shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-foreground">{product.name}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate text-sm font-bold text-foreground">{product.name}</p>
+                  {product.admin_hidden && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                      <EyeOff className="size-3" />
+                      {t("hiddenByAdmin")}
+                    </span>
+                  )}
+                </div>
                 <p className="num text-sm font-extrabold text-primary">
                   {inr(product.price)}
                   <span className="text-xs font-semibold text-muted-foreground">
@@ -214,22 +222,30 @@ function ProductsPage() {
                   {t("stock")}: {product.stock_quantity}
                   {product.category_label ? ` · ${product.category_label}` : ""}
                 </p>
-                {product.stock_quantity <= product.low_stock_threshold && (
+                {product.admin_hidden ? (
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                    {product.admin_hidden_reason || t("adminHiddenContact")}
+                  </p>
+                ) : product.stock_quantity <= product.low_stock_threshold && (
                   <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-1 text-[10px] font-bold text-destructive">
                     <AlertTriangle className="size-3" />
                     {t("lowStock")}
                   </span>
                 )}
-                <div className="mt-2 flex items-center gap-3">
-                  <Switch
-                    checked={product.is_active}
-                    onCheckedChange={() => toggleActive.mutate(product)}
-                    aria-label={t("active")}
-                  />
-                  <span className="text-xs font-bold text-muted-foreground">
-                    {product.is_active ? t("active") : t("inactive")}
-                  </span>
-                </div>
+                {product.admin_hidden ? (
+                  <p className="mt-2 text-xs font-bold text-muted-foreground">{t("adminHiddenContact")}</p>
+                ) : (
+                  <div className="mt-2 flex items-center gap-3">
+                    <Switch
+                      checked={product.is_active}
+                      onCheckedChange={() => toggleActive.mutate(product)}
+                      aria-label={t("active")}
+                    />
+                    <span className="text-xs font-bold text-muted-foreground">
+                      {product.is_active ? t("active") : t("inactive")}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <button
