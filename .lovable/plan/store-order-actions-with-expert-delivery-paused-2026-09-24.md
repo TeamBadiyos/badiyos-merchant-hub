@@ -6,7 +6,7 @@ Waiting on the Customer App project to finish the delivery backend (rider link, 
 1. Read the live schema and the new backend functions (accept/reject/ready, delivery status, pickup OTP).
 2. Build only the merchant screens on top of them:
    - Remove the "Mark completed"/"Delivered" button. Merchant can only Accept, Reject (reason: OUT_OF_STOCK, STORE_CLOSED, TECHNICAL_ISSUE, OTHER) and Mark Ready.
-   - New order bottom sheet: sound, item list, total, 5-minute countdown. At 0 the order is auto-rejected (via the backend, if it provides this; otherwise flagged to you).
+   - New order bottom sheet: sound, item list, total, 5-minute countdown. The countdown is DISPLAY ONLY — the backend auto-rejects at 0; this app never rejects on timer. When the backend rejects, the order updates via the existing realtime subscription and the sheet/card refreshes.
    - After Accept, the order card shows delivery progress: "Finding rider…" → rider name + phone + "Arriving" → "Picked up" → "Delivered", updating live.
    - Pickup OTP in large text on the card with the note "Rider ko saman dete waqt ye OTP batayein".
    - Every action goes through backend functions, no direct table writes.
