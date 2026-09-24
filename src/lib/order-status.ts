@@ -16,7 +16,7 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number] | "paid";
 
 export const STATUS_LABEL: Record<OrderStatus, Key> = {
   placed: "statusPlaced",
-  paid: "statusPaid",
+  paid: "statusPlaced",
   pending: "statusPending",
   accepted: "statusAccepted",
   preparing: "statusPreparing",
