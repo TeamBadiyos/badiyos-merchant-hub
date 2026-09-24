@@ -21,6 +21,8 @@ const isReviewPhone = (phone: string) => phone.replace(/\D/g, "").slice(-10) ===
 export const merchantHasPin = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ phone: z.string().regex(PHONE_RE) }).parse(input))
   .handler(async ({ data }) => {
+    if (isReviewPhone(data.phone)) return { hasPin: true };
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: hasPin, error } = await supabaseAdmin.rpc("merchant_has_login_pin", {
