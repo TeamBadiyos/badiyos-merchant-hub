@@ -9,7 +9,8 @@ import { useI18n, type Key } from "@/lib/i18n";
 import { useDecideOrder, useMarkReady, useOrderRider, usePickupInfo } from "@/lib/order-actions";
 import {
   inr,
-  isNewOrder,
+  isActionableNewOrder,
+  isAwaitingPayment,
   NEXT_STATUS,
   NEXT_STATUS_LABEL,
   STATUS_LABEL,

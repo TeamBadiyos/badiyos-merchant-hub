@@ -19,7 +19,7 @@ import { OrderCard } from "@/components/OrderCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { inr, isNewOrder } from "@/lib/order-status";
+import { inr, isActionableNewOrder, isAwaitingPayment, isNewOrder } from "@/lib/order-status";
 import { fetchOrders } from "@/lib/orders";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvailability } from "@/lib/use-availability";
@@ -120,8 +120,12 @@ function HomePage() {
     .filter((o) => !["rejected", "cancelled"].includes(o.status))
     .reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0);
 
-  const pending = (live.data ?? []).filter((o) => isNewOrder(o.status));
-  const inProgress = (live.data ?? []).filter((o) => !isNewOrder(o.status));
+  // Online checkouts still waiting on the customer's payment are not the shop's
+  // orders yet — the backend refuses accept/reject on them, so keep them out.
+  const pending = (live.data ?? []).filter((o) => isActionableNewOrder(o));
+  const inProgress = (live.data ?? []).filter(
+    (o) => !isNewOrder(o.status) && !isAwaitingPayment(o),
+  );
 
   const stats = [
     { label: t("todayOrders"), value: String(todays.length), icon: PackageOpen },
