@@ -120,6 +120,7 @@ function RewardsPage() {
           .from("merchant_orders")
           .select("id", { count: "exact", head: true })
           .eq("status", "completed")
+    .or("payment_mode.eq.cod,payment_status.eq.paid")
           .gte("created_at", periodStart(period).toISOString());
       const weekly = await countFor("weekly");
       const monthly = await countFor("monthly");

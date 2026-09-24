@@ -10,7 +10,6 @@ import { useDecideOrder, useMarkReady, useOrderRider, usePickupInfo } from "@/li
 import {
   inr,
   isActionableNewOrder,
-  isAwaitingPayment,
   NEXT_STATUS,
   NEXT_STATUS_LABEL,
   STATUS_LABEL,
@@ -65,13 +64,6 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
 
       {can("manage_orders") && (
         <>
-          {isAwaitingPayment(order) && (
-            <div className="mt-4 rounded-xl bg-muted p-3">
-              <p className="text-xs font-bold text-foreground">{t("awaitingPayment")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{t("awaitingPaymentNote")}</p>
-            </div>
-          )}
-
           {isActionableNewOrder(order) && (
             <div className="mt-4 flex gap-3">
               <Button

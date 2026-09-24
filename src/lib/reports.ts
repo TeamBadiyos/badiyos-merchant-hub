@@ -55,6 +55,7 @@ export async function fetchCompletedOrders(range: Range): Promise<CompletedOrder
       "id, created_at, total_amount, commission_amount, merchant_order_items(product_id, product_name_snapshot, quantity, price_snapshot)",
     )
     .eq("status", "completed")
+    .or("payment_mode.eq.cod,payment_status.eq.paid")
     .gte("created_at", range.from.toISOString())
     .lte("created_at", range.to.toISOString())
     .order("created_at", { ascending: true });
