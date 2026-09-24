@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 export function friendlyOrderError(message: string): string {
   if (message.includes("order_not_found_or_not_pending"))
     return "This order is no longer waiting — refresh to see its latest status.";
+  if (message.includes("delivery_unavailable"))
+    return "Delivery is not available for this order right now.";
   if (message.includes("reason_required")) return "Please pick a reason to reject.";
   if (message.includes("delivery_managed_by_expert"))
     return "Delivery is managed by the rider for this order.";
