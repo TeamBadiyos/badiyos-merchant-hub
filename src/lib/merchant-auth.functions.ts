@@ -90,7 +90,22 @@ export const verifyMerchantPin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { mintMerchantSession } = await import("./auth.server");
+
+    // Review account: fixed PIN, no lockout counters.
+    if (isReviewPhone(data.phone)) {
+      if (data.pin !== REVIEW_PIN) {
+        return { ok: false as const, code: "BAD_PIN", message: "Incorrect PIN." };
+      }
+      const session = await mintMerchantSession(REVIEW_PHONE);
+      return {
+        ok: true as const,
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      };
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
 
     const { data: result, error } = await supabaseAdmin.rpc("merchant_verify_pin_internal", {
       p_phone: data.phone,
