@@ -65,7 +65,14 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
 
       {can("manage_orders") && (
         <>
-          {isNewOrder(status) && (
+          {isAwaitingPayment(order) && (
+            <div className="mt-4 rounded-xl bg-muted p-3">
+              <p className="text-xs font-bold text-foreground">{t("awaitingPayment")}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("awaitingPaymentNote")}</p>
+            </div>
+          )}
+
+          {isActionableNewOrder(order) && (
             <div className="mt-4 flex gap-3">
               <Button
                 variant="outline"
