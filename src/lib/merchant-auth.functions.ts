@@ -5,12 +5,24 @@ import { z } from "zod";
 import { PHONE_RE, PIN_RE, OTP_RE } from "./validation";
 
 /**
+ * Static app-store review account (Google Play / App Store reviewers).
+ * Fixed phone with a fixed PIN and OTP: no WhatsApp message is ever sent and
+ * PIN lockouts never apply, so a reviewer can always get in.
+ */
+const REVIEW_PHONE = "9999900000";
+const REVIEW_PIN = "1234";
+const REVIEW_OTP = "123456";
+const isReviewPhone = (phone: string) => phone.replace(/\D/g, "").slice(-10) === REVIEW_PHONE;
+
+/**
  * Pre-login check: does this number already have a PIN? Runs server-side with the
  * admin client so the underlying RPC stays unreachable from an anonymous browser session.
  */
 export const merchantHasPin = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ phone: z.string().regex(PHONE_RE) }).parse(input))
   .handler(async ({ data }) => {
+    if (isReviewPhone(data.phone)) return { hasPin: true };
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: hasPin, error } = await supabaseAdmin.rpc("merchant_has_login_pin", {
@@ -26,6 +38,11 @@ export const merchantHasPin = createServerFn({ method: "POST" })
 export const sendMerchantOtp = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ phone: z.string().regex(PHONE_RE) }).parse(input))
   .handler(async ({ data }) => {
+    // Review account: never send a real WhatsApp OTP, the code is fixed.
+    if (isReviewPhone(data.phone)) {
+      return { ok: true as const, message: "Use the review test code to continue." };
+    }
+
     const { checkOtpRateLimit, createOtpCode, sendWhatsappOtp } = await import("./auth.server");
 
     const ip =
@@ -50,10 +67,14 @@ export const verifyMerchantOtp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { consumeOtpCode, mintMerchantSession } = await import("./auth.server");
 
-    const valid = await consumeOtpCode(data.phone, data.code);
-    if (!valid) {
-      return { ok: false as const, message: "That code is incorrect or has expired." };
+    const review = isReviewPhone(data.phone) && data.code === REVIEW_OTP;
+    if (!review) {
+      const valid = await consumeOtpCode(data.phone, data.code);
+      if (!valid) {
+        return { ok: false as const, message: "That code is incorrect or has expired." };
+      }
     }
+
 
     const session = await mintMerchantSession(data.phone);
     return {
@@ -69,7 +90,22 @@ export const verifyMerchantPin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { mintMerchantSession } = await import("./auth.server");
+
+    // Review account: fixed PIN, no lockout counters.
+    if (isReviewPhone(data.phone)) {
+      if (data.pin !== REVIEW_PIN) {
+        return { ok: false as const, code: "BAD_PIN", message: "Incorrect PIN." };
+      }
+      const session = await mintMerchantSession(REVIEW_PHONE);
+      return {
+        ok: true as const,
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      };
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
 
     const { data: result, error } = await supabaseAdmin.rpc("merchant_verify_pin_internal", {
       p_phone: data.phone,
