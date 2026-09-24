@@ -1,14 +1,15 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, X } from "lucide-react";
-import { toast } from "sonner";
+import { Bike, Check, KeyRound, Loader2, X } from "lucide-react";
+import { useState } from "react";
 
+import { RejectReasonDialog } from "@/components/RejectReasonDialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { hapticImpact, hapticNotify } from "@/lib/haptics";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type Key } from "@/lib/i18n";
+import { useDecideOrder, useMarkReady, usePickupInfo } from "@/lib/order-actions";
 import {
   inr,
+  isNewOrder,
   NEXT_STATUS,
   NEXT_STATUS_LABEL,
   STATUS_LABEL,
@@ -20,37 +21,13 @@ import { itemsSummary, type OrderWithItems } from "@/lib/orders";
 export function OrderCard({ order }: { order: OrderWithItems }) {
   const { t } = useI18n();
   const { can } = useAuth();
-  const queryClient = useQueryClient();
   const status = order.status as OrderStatus;
   const next = NEXT_STATUS[status];
+  const [rejectOpen, setRejectOpen] = useState(false);
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["orders"] });
-
-  const decide = useMutation({
-    mutationFn: async (decision: "accepted" | "rejected") => {
-      const { error } = await supabase.rpc("merchant_decide_order", {
-        _order_id: order.id,
-        _decision: decision,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => void invalidate(),
-    onError: (error: Error) => toast.error(friendlyError(error.message)),
-  });
-
-  const advance = useMutation({
-    mutationFn: async (newStatus: string) => {
-      const { error } = await supabase.rpc("merchant_advance_order", {
-        _order_id: order.id,
-        _new_status: newStatus,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => void invalidate(),
-    onError: (error: Error) => toast.error(friendlyError(error.message)),
-  });
-
-  const busy = decide.isPending || advance.isPending;
+  const decide = useDecideOrder(order.id, () => setRejectOpen(false));
+  const ready = useMarkReady(order.id);
+  const busy = decide.isPending || ready.isPending;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
@@ -79,10 +56,15 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
       <p className="num mt-2 text-base font-extrabold text-primary">
         {t("total")}: {inr(order.total_amount)}
       </p>
+      {order.reject_reason && status === "rejected" && (
+        <p className="mt-1 text-xs font-semibold text-destructive">{order.reject_reason}</p>
+      )}
+
+      {order.courier_order_id && <DeliveryStatus order={order} />}
 
       {can("manage_orders") && (
         <>
-          {status === "pending" && (
+          {isNewOrder(status) && (
             <div className="mt-4 flex gap-3">
               <Button
                 variant="outline"
@@ -90,7 +72,7 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
                 disabled={busy}
                 onClick={() => {
                   hapticNotify("warning");
-                  decide.mutate("rejected");
+                  setRejectOpen(true);
                 }}
               >
                 <X className="size-4" />
@@ -101,7 +83,7 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
                 disabled={busy}
                 onClick={() => {
                   hapticNotify("success");
-                  decide.mutate("accepted");
+                  decide.mutate({ decision: "accepted" });
                 }}
               >
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
@@ -116,7 +98,7 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
               disabled={busy}
               onClick={() => {
                 hapticImpact("medium");
-                advance.mutate(next);
+                ready.mutate();
               }}
             >
               {busy && <Loader2 className="size-4 animate-spin" />}
@@ -125,14 +107,66 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
           )}
         </>
       )}
+
+      <RejectReasonDialog
+        open={rejectOpen}
+        onOpenChange={setRejectOpen}
+        busy={decide.isPending}
+        onConfirm={(reason) => decide.mutate({ decision: "rejected", reason })}
+      />
     </div>
   );
 }
 
-function friendlyError(message: string): string {
-  if (message.includes("order_not_found_or_not_pending"))
-    return "This order is no longer pending — refresh to see its latest status.";
-  if (message.includes("invalid_transition")) return "That status change is not allowed right now.";
-  if (message.includes("not_permitted")) return "Your role cannot update orders.";
-  return "Could not update the order. Please try again.";
+const STEPS: Key[] = ["riderFinding", "riderArriving", "riderAtShop", "riderPickedUp", "riderDelivered"];
+
+function DeliveryStatus({ order }: { order: OrderWithItems }) {
+  const { t } = useI18n();
+  const done = Boolean(order.delivered_at) || order.status === "delivered";
+  const pickedUp = done || Boolean(order.picked_up_at);
+  const cancelled = order.status === "cancelled" || order.status === "rejected";
+  const pickup = usePickupInfo(order.id, !pickedUp && !cancelled);
+
+  const courier = pickup.data?.courier_status?.toUpperCase() ?? "";
+  let step = 0;
+  if (done) step = 4;
+  else if (pickedUp) step = 3;
+  else if (pickup.data?.ok) step = 2;
+  else if (/ASSIGNED|ACCEPTED|EN_ROUTE|ARRIVING|ON_THE_WAY/.test(courier)) step = 1;
+  const courierCancelled = /CANCEL/.test(courier);
+
+  return (
+    <div className="mt-4 rounded-xl border border-primary/20 bg-primary-soft p-3">
+      <p className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+        <Bike className="size-4 text-primary" />
+        {t("deliveryStatus")}
+      </p>
+      <p className="mt-1 text-sm font-extrabold text-foreground">
+        {cancelled || courierCancelled ? t("riderCancelled") : t(STEPS[step]!)}
+      </p>
+      {!cancelled && !courierCancelled && (
+        <div className="mt-2 flex gap-1">
+          {STEPS.map((k, i) => (
+            <span
+              key={k}
+              className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-primary" : "bg-border"}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {step === 2 && pickup.data?.otp && (
+        <div className="mt-3 rounded-xl bg-card p-3 text-center">
+          <p className="flex items-center justify-center gap-1 text-[11px] font-bold text-muted-foreground">
+            <KeyRound className="size-3.5" />
+            {t("pickupOtp")}
+          </p>
+          <p className="num mt-1 text-4xl font-extrabold tracking-[0.3em] text-primary">
+            {pickup.data.otp}
+          </p>
+          <p className="mt-1 text-xs font-semibold text-foreground">{t("pickupOtpNote")}</p>
+        </div>
+      )}
+    </div>
+  );
 }

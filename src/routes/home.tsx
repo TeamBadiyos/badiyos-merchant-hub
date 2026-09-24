@@ -19,7 +19,7 @@ import { OrderCard } from "@/components/OrderCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { inr } from "@/lib/order-status";
+import { inr, isNewOrder } from "@/lib/order-status";
 import { fetchOrders } from "@/lib/orders";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvailability } from "@/lib/use-availability";
@@ -54,7 +54,7 @@ function greetingKey() {
   return "greetingEvening" as const;
 }
 
-const LIVE = ["pending", "accepted", "preparing", "ready"];
+const LIVE = ["placed", "paid", "pending", "accepted", "preparing", "ready"];
 
 function HomePage() {
   const { t } = useI18n();
@@ -117,11 +117,11 @@ function HomePage() {
   startOfDay.setHours(0, 0, 0, 0);
   const todays = (today.data ?? []).filter((o) => new Date(o.created_at) >= startOfDay);
   const sales = todays
-    .filter((o) => o.status !== "rejected")
+    .filter((o) => !["rejected", "cancelled"].includes(o.status))
     .reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0);
 
-  const pending = (live.data ?? []).filter((o) => o.status === "pending");
-  const inProgress = (live.data ?? []).filter((o) => o.status !== "pending");
+  const pending = (live.data ?? []).filter((o) => isNewOrder(o.status));
+  const inProgress = (live.data ?? []).filter((o) => !isNewOrder(o.status));
 
   const stats = [
     { label: t("todayOrders"), value: String(todays.length), icon: PackageOpen },
