@@ -13,6 +13,7 @@ export async function fetchOrders(statuses?: string[]): Promise<OrderWithItems[]
   let query = supabase
     .from("merchant_orders")
     .select(SELECT)
+    .or("payment_mode.eq.cod,payment_status.eq.paid")
     .order("created_at", { ascending: false });
   if (statuses?.length) query = query.in("status", statuses);
   const { data, error } = await query;

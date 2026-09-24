@@ -54,11 +54,6 @@ export function isActionableNewOrder(order: PaymentShape): boolean {
   return isNewOrder(order.status) && isPaymentSettled(order);
 }
 
-/** New order still waiting on the customer's payment — show, but no actions. */
-export function isAwaitingPayment(order: PaymentShape): boolean {
-  return isNewOrder(order.status) && !isPaymentSettled(order);
-}
-
 /** Merchant can only move an order to Ready — delivery is owned by the Expert. */
 export const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   accepted: "ready",

@@ -42,7 +42,8 @@ function WalletPage() {
       const { data, error } = await supabase
         .from("merchant_orders")
         .select("total_amount, commission_amount")
-        .eq("status", "completed");
+        .eq("status", "completed")
+    .or("payment_mode.eq.cod,payment_status.eq.paid");
       if (error) throw error;
       return data;
     },

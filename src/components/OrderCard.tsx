@@ -10,7 +10,6 @@ import { useDecideOrder, useMarkReady, useOrderRider, usePickupInfo } from "@/li
 import {
   inr,
   isActionableNewOrder,
-  isAwaitingPayment,
   NEXT_STATUS,
   NEXT_STATUS_LABEL,
   STATUS_LABEL,
