@@ -29,7 +29,7 @@ export function useNativeOrderActions() {
       const { error } = await supabase.rpc("merchant_decide_order", {
         _order_id: detail.order_id,
         _decision: detail.decision,
-        _reason: detail.decision === "rejected" ? "OTHER" : undefined,
+        ...(detail.decision === "rejected" ? { _reason: "OTHER" } : {}),
       });
       if (error) {
         toast.error(error.message);

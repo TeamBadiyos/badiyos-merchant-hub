@@ -23,7 +23,7 @@ export function useDecideOrder(orderId: string, onDone?: () => void) {
       const { error } = await supabase.rpc("merchant_decide_order", {
         _order_id: orderId,
         _decision: decision,
-        _reason: reason,
+        ...(reason ? { _reason: reason } : {}),
       });
       if (error) throw error;
     },

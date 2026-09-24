@@ -28,7 +28,7 @@ export function useOrderRealtime(merchantId: string | null | undefined, alert = 
           void queryClient.invalidateQueries({ queryKey: ["orders"] });
           const row = payload.new as { status?: string; order_number?: string } | null;
           if (alert && payload.eventType === "INSERT" && ["pending", "placed", "paid"].includes(row?.status ?? "")) {
-            toast.success(`New order ${row.order_number ?? ""}`.trim());
+            toast.success(`New order ${row?.order_number ?? ""}`.trim());
           }
         },
       )
