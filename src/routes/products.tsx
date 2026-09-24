@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, FileUp, Loader2, Package, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, EyeOff, FileUp, Loader2, Package, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
