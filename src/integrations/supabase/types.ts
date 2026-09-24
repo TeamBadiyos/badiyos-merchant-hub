@@ -1191,6 +1191,75 @@ export type Database = {
           },
         ]
       }
+      courier_order_charges: {
+        Row: {
+          amount: number
+          charge_type: string
+          created_at: string
+          distance_km: number
+          gst_amount: number
+          gst_percent: number
+          id: string
+          order_id: string
+          paid_at: string | null
+          parcel_id: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          charge_type: string
+          created_at?: string
+          distance_km?: number
+          gst_amount?: number
+          gst_percent?: number
+          id?: string
+          order_id: string
+          paid_at?: string | null
+          parcel_id?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          charge_type?: string
+          created_at?: string
+          distance_km?: number
+          gst_amount?: number
+          gst_percent?: number
+          id?: string
+          order_id?: string
+          paid_at?: string | null
+          parcel_id?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_order_charges_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_charges_parcel_id_fkey"
+            columns: ["parcel_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_parcels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courier_order_events: {
         Row: {
           actor_id: string | null
@@ -1228,6 +1297,71 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_order_parcels: {
+        Row: {
+          created_at: string
+          description: string | null
+          drop_stop_id: string
+          id: string
+          order_id: string
+          pickup_stop_id: string
+          return_stop_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          drop_stop_id: string
+          id?: string
+          order_id: string
+          pickup_stop_id: string
+          return_stop_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          drop_stop_id?: string
+          id?: string
+          order_id?: string
+          pickup_stop_id?: string
+          return_stop_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_order_parcels_drop_stop_id_fkey"
+            columns: ["drop_stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_parcels_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_parcels_pickup_stop_id_fkey"
+            columns: ["pickup_stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_order_parcels_return_stop_id_fkey"
+            columns: ["return_stop_id"]
+            isOneToOne: false
+            referencedRelation: "courier_order_stops"
             referencedColumns: ["id"]
           },
         ]
@@ -1303,6 +1437,74 @@ export type Database = {
           },
         ]
       }
+      courier_order_stops: {
+        Row: {
+          address: string
+          arrived_at: string | null
+          completed_at: string | null
+          contact_edit_count: number
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          fail_reason_code: string | null
+          failed_at: string | null
+          id: string
+          lat: number
+          lng: number
+          order_id: string
+          sequence: number
+          status: string
+          stop_type: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          arrived_at?: string | null
+          completed_at?: string | null
+          contact_edit_count?: number
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          fail_reason_code?: string | null
+          failed_at?: string | null
+          id?: string
+          lat: number
+          lng: number
+          order_id: string
+          sequence: number
+          status?: string
+          stop_type: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          arrived_at?: string | null
+          completed_at?: string | null
+          contact_edit_count?: number
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          fail_reason_code?: string | null
+          failed_at?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          order_id?: string
+          sequence?: number
+          status?: string
+          stop_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_order_stops_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "courier_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courier_orders: {
         Row: {
           arrived_pickup_at: string | null
@@ -1330,6 +1532,7 @@ export type Database = {
           drop_contact_edit_count: number
           drop_contact_name: string
           drop_contact_phone: string
+          drop_count: number
           drop_lat: number
           drop_lng: number
           earnings_credited_at: string | null
@@ -1353,6 +1556,7 @@ export type Database = {
           pickup_contact_edit_count: number
           pickup_contact_name: string
           pickup_contact_phone: string
+          pickup_count: number
           pickup_lat: number
           pickup_lng: number
           platform_fee: number
@@ -1371,6 +1575,7 @@ export type Database = {
           search_started_at: string | null
           source: string
           status: string
+          stops_fee: number
           store_order_id: string | null
           total_amount: number
           updated_at: string
@@ -1404,6 +1609,7 @@ export type Database = {
           drop_contact_edit_count?: number
           drop_contact_name: string
           drop_contact_phone: string
+          drop_count?: number
           drop_lat: number
           drop_lng: number
           earnings_credited_at?: string | null
@@ -1427,6 +1633,7 @@ export type Database = {
           pickup_contact_edit_count?: number
           pickup_contact_name: string
           pickup_contact_phone: string
+          pickup_count?: number
           pickup_lat: number
           pickup_lng: number
           platform_fee?: number
@@ -1445,6 +1652,7 @@ export type Database = {
           search_started_at?: string | null
           source?: string
           status?: string
+          stops_fee?: number
           store_order_id?: string | null
           total_amount?: number
           updated_at?: string
@@ -1478,6 +1686,7 @@ export type Database = {
           drop_contact_edit_count?: number
           drop_contact_name?: string
           drop_contact_phone?: string
+          drop_count?: number
           drop_lat?: number
           drop_lng?: number
           earnings_credited_at?: string | null
@@ -1501,6 +1710,7 @@ export type Database = {
           pickup_contact_edit_count?: number
           pickup_contact_name?: string
           pickup_contact_phone?: string
+          pickup_count?: number
           pickup_lat?: number
           pickup_lng?: number
           platform_fee?: number
@@ -1519,6 +1729,7 @@ export type Database = {
           search_started_at?: string | null
           source?: string
           status?: string
+          stops_fee?: number
           store_order_id?: string | null
           total_amount?: number
           updated_at?: string
@@ -1588,6 +1799,56 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      courier_stop_secrets: {
+        Row: {
+          attempts: number
+          created_at: string
+          last_sent_at: string | null
+          locked_until: string | null
+          otp_expires_at: string | null
+          otp_hash: string | null
+          otp_issued_at: string | null
+          send_count: number
+          stop_id: string
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          last_sent_at?: string | null
+          locked_until?: string | null
+          otp_expires_at?: string | null
+          otp_hash?: string | null
+          otp_issued_at?: string | null
+          send_count?: number
+          stop_id: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          last_sent_at?: string | null
+          locked_until?: string | null
+          otp_expires_at?: string | null
+          otp_hash?: string | null
+          otp_issued_at?: string | null
+          send_count?: number
+          stop_id?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_stop_secrets_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: true
+            referencedRelation: "courier_order_stops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       courier_types: {
         Row: {
@@ -1670,12 +1931,18 @@ export type Database = {
           city: string
           commission_pct: number
           created_at: string
+          customer_segment: string
+          extra_drop_fee: number
+          extra_pickup_fee: number
           id: string
           included_km: number
           is_placeholder: boolean
+          max_drops: number | null
+          max_pickups: number | null
           min_fare: number
           per_km: number
           platform_fee: number
+          return_per_km: number
           updated_at: string
           vehicle_type_id: string
         }
@@ -1684,12 +1951,18 @@ export type Database = {
           city: string
           commission_pct?: number
           created_at?: string
+          customer_segment?: string
+          extra_drop_fee?: number
+          extra_pickup_fee?: number
           id?: string
           included_km?: number
           is_placeholder?: boolean
+          max_drops?: number | null
+          max_pickups?: number | null
           min_fare?: number
           per_km?: number
           platform_fee?: number
+          return_per_km?: number
           updated_at?: string
           vehicle_type_id: string
         }
@@ -1698,12 +1971,18 @@ export type Database = {
           city?: string
           commission_pct?: number
           created_at?: string
+          customer_segment?: string
+          extra_drop_fee?: number
+          extra_pickup_fee?: number
           id?: string
           included_km?: number
           is_placeholder?: boolean
+          max_drops?: number | null
+          max_pickups?: number | null
           min_fare?: number
           per_km?: number
           platform_fee?: number
+          return_per_km?: number
           updated_at?: string
           vehicle_type_id?: string
         }
@@ -5447,6 +5726,7 @@ export type Database = {
         Args: { _d: string; _slot: string }
         Returns: string
       }
+      courier_can_read_order: { Args: { _order_id: string }; Returns: boolean }
       courier_cancel_order: {
         Args: { _order_id: string; _reason?: string }
         Returns: Json
@@ -5454,6 +5734,34 @@ export type Database = {
       courier_check_serviceability: {
         Args: { _lat: number; _lng: number }
         Returns: Json
+      }
+      courier_contact_stop_gate: {
+        Args: { _stop_id: string }
+        Returns: {
+          address: string
+          arrived_at: string | null
+          completed_at: string | null
+          contact_edit_count: number
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          fail_reason_code: string | null
+          failed_at: string | null
+          id: string
+          lat: number
+          lng: number
+          order_id: string
+          sequence: number
+          status: string
+          stop_type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "courier_order_stops"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       courier_create_order: {
         Args: { _customer_id: string; _payload: Json }
@@ -5472,19 +5780,27 @@ export type Database = {
           expert_id: string
         }[]
       }
+      courier_get_contact_view: { Args: { _stop_id: string }; Returns: Json }
+      courier_get_order_otps: { Args: { _order_id: string }; Returns: Json }
       courier_get_otp: {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
       courier_get_rider_info: { Args: { _order_id: string }; Returns: Json }
       courier_get_rider_location: { Args: { _order_id: string }; Returns: Json }
+      courier_get_rider_location_for_stop: {
+        Args: { _stop_id: string }
+        Returns: Json
+      }
       courier_hash_otp: { Args: { _otp: string }; Returns: string }
+      courier_is_next_stop: { Args: { _stop_id: string }; Returns: boolean }
       courier_is_ops_staff: { Args: never; Returns: boolean }
       courier_is_super_admin: { Args: never; Returns: boolean }
       courier_issue_otp: {
         Args: { _order_id: string; _purpose: string }
         Returns: string
       }
+      courier_issue_stop_otp: { Args: { _stop_id: string }; Returns: string }
       courier_log_otp_send: {
         Args: {
           _detail: string
@@ -5494,13 +5810,28 @@ export type Database = {
         }
         Returns: undefined
       }
+      courier_mark_charge_paid: {
+        Args: { _payment_id: string; _razorpay_order_id: string }
+        Returns: boolean
+      }
       courier_mark_refund_pending: {
         Args: { _amount: number; _order_id: string; _reason: string }
+        Returns: undefined
+      }
+      courier_min_route_km: { Args: { _stops: Json }; Returns: number }
+      courier_my_contact_deliveries: { Args: never; Returns: Json }
+      courier_my_phone10: { Args: never; Returns: string }
+      courier_notify_stop_contact: {
+        Args: { _stop_id: string }
         Returns: undefined
       }
       courier_offer_respond: {
         Args: { _accept: boolean; _offer_id: string }
         Returns: Json
+      }
+      courier_order_clean_return: {
+        Args: { _order_id: string }
+        Returns: boolean
       }
       courier_otp_key: { Args: never; Returns: string }
       courier_otp_owner_gate: {
@@ -5531,6 +5862,7 @@ export type Database = {
           drop_contact_edit_count: number
           drop_contact_name: string
           drop_contact_phone: string
+          drop_count: number
           drop_lat: number
           drop_lng: number
           earnings_credited_at: string | null
@@ -5554,6 +5886,7 @@ export type Database = {
           pickup_contact_edit_count: number
           pickup_contact_name: string
           pickup_contact_phone: string
+          pickup_count: number
           pickup_lat: number
           pickup_lng: number
           platform_fee: number
@@ -5572,6 +5905,7 @@ export type Database = {
           search_started_at: string | null
           source: string
           status: string
+          stops_fee: number
           store_order_id: string | null
           total_amount: number
           updated_at: string
@@ -5586,6 +5920,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      courier_plan_stops: { Args: { _stops: Json }; Returns: Json }
       courier_quote_internal: {
         Args: {
           _city: string
@@ -5593,9 +5928,15 @@ export type Database = {
           _courier_type_id: string
           _customer_id: string
           _distance_km: number
+          _drop_count?: number
+          _pickup_count?: number
           _vehicle_type_id: string
           _weight_kg: number
         }
+        Returns: Json
+      }
+      courier_recompute_order_progress: {
+        Args: { _order_id: string }
         Returns: Json
       }
       courier_refresh_otp: {
@@ -5610,6 +5951,10 @@ export type Database = {
         Args: { _order_id: string; _purpose: string }
         Returns: Json
       }
+      courier_resolve_stop: {
+        Args: { _order_id: string; _purpose: string }
+        Returns: string
+      }
       courier_rider_advance: {
         Args: {
           _accuracy_m?: number
@@ -5621,8 +5966,27 @@ export type Database = {
         }
         Returns: Json
       }
+      courier_rider_arrive_stop: {
+        Args: {
+          _accuracy_m?: number
+          _fix_at?: string
+          _lat?: number
+          _lng?: number
+          _stop_id: string
+        }
+        Returns: Json
+      }
       courier_rider_cancel: {
         Args: { _order_id: string; _reason: string }
+        Returns: Json
+      }
+      courier_rider_fail_stop: {
+        Args: {
+          _notes?: string
+          _reason_code: string
+          _return_distances?: Json
+          _stop_id: string
+        }
         Returns: Json
       }
       courier_rider_offers: { Args: never; Returns: Json }
@@ -5635,11 +5999,17 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      courier_stop_purpose: { Args: { _stop_type: string }; Returns: string }
+      courier_stop_visible_otp: { Args: { _stop_id: string }; Returns: string }
       courier_store_info: { Args: { _order_id: string }; Returns: Json }
       courier_sweeper: { Args: never; Returns: undefined }
       courier_sweeper_tick: { Args: never; Returns: undefined }
       courier_update_contact: {
         Args: { _new_phone: string; _order_id: string; _purpose: string }
+        Returns: Json
+      }
+      courier_update_stop_contact: {
+        Args: { _name: string; _phone: string; _stop_id: string }
         Returns: Json
       }
       courier_validate_local_route: {
@@ -5660,6 +6030,10 @@ export type Database = {
           _proof_url?: string
           _purpose: string
         }
+        Returns: Json
+      }
+      courier_verify_stop_otp: {
+        Args: { _otp: string; _proof_url?: string; _stop_id: string }
         Returns: Json
       }
       credit_booking_completion: {
@@ -5747,6 +6121,13 @@ export type Database = {
         Returns: {
           end_otp: string
           start_otp: string
+        }[]
+      }
+      expert_get_booking_customer: {
+        Args: { _booking_id: string }
+        Returns: {
+          full_name: string
+          phone: string
         }[]
       }
       expert_register_device: {
@@ -6241,6 +6622,10 @@ export type Database = {
         Args: { _city: string; _is_active: boolean; _service_key: string }
         Returns: Json
       }
+      staff_courier_set_setting: {
+        Args: { _key: string; _value: number }
+        Returns: Json
+      }
       staff_courier_set_vehicle_courier_type: {
         Args: {
           _courier_type_id: string
@@ -6274,11 +6659,17 @@ export type Database = {
           _base_fare: number
           _city: string
           _commission_pct: number
+          _customer_segment?: string
+          _extra_drop_fee?: number
+          _extra_pickup_fee?: number
           _id: string
           _included_km: number
+          _max_drops?: number
+          _max_pickups?: number
           _min_fare: number
           _per_km: number
           _platform_fee: number
+          _return_per_km?: number
           _vehicle_type_id: string
         }
         Returns: string
@@ -6297,6 +6688,14 @@ export type Database = {
           _sort_order: number
         }
         Returns: string
+      }
+      staff_courier_verify_stop: {
+        Args: { _reason: string; _stop_id: string }
+        Returns: Json
+      }
+      staff_courier_waive_charge: {
+        Args: { _charge_id: string; _reason: string }
+        Returns: Json
       }
       staff_create_service_catalogue_row: {
         Args: { _payload: Json }
@@ -6849,6 +7248,7 @@ export type Database = {
       }
       store_delivery_quote: { Args: { _items_total: number }; Returns: Json }
       store_dispatch_refund_job: { Args: never; Returns: undefined }
+      store_expire_unpaid: { Args: never; Returns: number }
       store_get_delivery_otp: { Args: { _order_id: string }; Returns: Json }
       store_is_open_now: { Args: { _merchant_id: string }; Returns: boolean }
       store_mark_refund: {
