@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { hapticNotify } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
 import { useDecideOrder } from "@/lib/order-actions";
-import { ACCEPT_WINDOW_MS, inr, NEW_STATUSES } from "@/lib/order-status";
+import { ACCEPT_WINDOW_MS, inr, isActionableNewOrder, NEW_STATUSES } from "@/lib/order-status";
 import { fetchOrders, type OrderWithItems } from "@/lib/orders";
 
 /** Pops up for every order waiting on the shop. The countdown is display-only — the backend auto-rejects. */
@@ -29,7 +29,8 @@ export function NewOrderSheet() {
   const current = (orders.data ?? [])
     .slice()
     .reverse()
-    .find((o) => !dismissed.has(o.id));
+    // Unpaid online checkouts are not real orders yet — never ring for them.
+    .find((o) => isActionableNewOrder(o) && !dismissed.has(o.id));
 
   useEffect(() => {
     if (current && !chimed.current.has(current.id)) {

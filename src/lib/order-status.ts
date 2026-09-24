@@ -33,6 +33,32 @@ export const STATUS_LABEL: Record<OrderStatus, Key> = {
 export const NEW_STATUSES = ["placed", "paid", "pending"];
 export const isNewOrder = (s: string) => NEW_STATUSES.includes(s);
 
+type PaymentShape = {
+  status: string;
+  payment_mode: string | null | undefined;
+  payment_status: string | null | undefined;
+};
+
+/**
+ * An online order only reaches the shop once the customer's payment is captured.
+ * Abandoned checkouts sit at payment_status 'pending' — the backend refuses
+ * accept/reject on those, so they must never ring or show action buttons.
+ */
+export function isPaymentSettled(order: PaymentShape): boolean {
+  if (order.payment_mode === "cod") return true;
+  return order.payment_status === "paid";
+}
+
+/** New order the shop can actually act on right now. */
+export function isActionableNewOrder(order: PaymentShape): boolean {
+  return isNewOrder(order.status) && isPaymentSettled(order);
+}
+
+/** New order still waiting on the customer's payment — show, but no actions. */
+export function isAwaitingPayment(order: PaymentShape): boolean {
+  return isNewOrder(order.status) && !isPaymentSettled(order);
+}
+
 /** Merchant can only move an order to Ready — delivery is owned by the Expert. */
 export const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   accepted: "ready",
