@@ -133,6 +133,7 @@ function DeliveryStatus({ order }: { order: OrderWithItems }) {
   if (done) step = 4;
   else if (pickedUp) step = 3;
   else if (pickup.data?.ok) step = 2;
+  else if (rider.data?.name) step = 1;
   else if (/ASSIGNED|ACCEPTED|EN_ROUTE|ARRIVING|ON_THE_WAY/.test(courier)) step = 1;
   const courierCancelled = /CANCEL/.test(courier);
 
