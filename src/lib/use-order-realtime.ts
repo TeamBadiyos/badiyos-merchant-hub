@@ -3,6 +3,23 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { isActionableNewOrder } from "@/lib/order-status";
+
+type OrderRow = {
+  status?: string;
+  order_number?: string;
+  payment_mode?: string | null;
+  payment_status?: string | null;
+};
+
+const actionable = (row: OrderRow | null | undefined) =>
+  row
+    ? isActionableNewOrder({
+        status: row.status ?? "",
+        payment_mode: row.payment_mode,
+        payment_status: row.payment_status,
+      })
+    : false;
 
 /**
  * Live merchant_orders subscription: refreshes order lists and fires the
@@ -26,21 +43,11 @@ export function useOrderRealtime(merchantId: string | null | undefined, alert = 
         },
         (payload) => {
           void queryClient.invalidateQueries({ queryKey: ["orders"] });
-          const row = payload.new as {
-            status?: string;
-            order_number?: string;
-            payment_mode?: string | null;
-            payment_status?: string | null;
-          } | null;
-          // Only a settled order (cash, or online payment captured) is a real new order.
-          const actionable = row
-            ? isActionableNewOrder({
-                status: row.status ?? "",
-                payment_mode: row.payment_mode,
-                payment_status: row.payment_status,
-              })
-            : false;
-          if (alert && actionable) {
+          const row = payload.new as OrderRow | null;
+          const prev = payload.old as OrderRow | null;
+          // Ring once, and only when the order is really the shop's to act on:
+          // cash orders, or online orders whose payment has been captured.
+          if (alert && actionable(row) && !actionable(prev)) {
             toast.success(`New order ${row?.order_number ?? ""}`.trim());
           }
         },
