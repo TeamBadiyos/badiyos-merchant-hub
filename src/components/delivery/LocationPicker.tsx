@@ -1,12 +1,13 @@
 import { Crosshair } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useDT } from "@/lib/delivery/i18n";
+import { loadGoogleMaps } from "@/lib/google-maps";
 
-const LATUR: [number, number] = [18.4088, 76.5604];
+const LATUR = { lat: 18.4088, lng: 76.5604 };
 
-/** Tap-to-pin map (OpenStreetMap). Leaflet is loaded only in the browser. */
+/** Tap-to-pin Google map. The Maps script is loaded only in the browser. */
 export function LocationPicker({
   lat,
   lng,
@@ -21,41 +22,67 @@ export function LocationPicker({
   const api = useRef<{ set: (lat: number, lng: number) => void } | null>(null);
   const cb = useRef(onChange);
   cb.current = onChange;
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    let map: import("leaflet").Map | null = null;
     let disposed = false;
-    void (async () => {
-      const L = (await import("leaflet")).default;
-      await import("leaflet/dist/leaflet.css");
-      if (disposed || !el.current) return;
-      const start: [number, number] = lat != null && lng != null ? [lat, lng] : LATUR;
-      map = L.map(el.current).setView(start, lat != null ? 16 : 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap",
-        maxZoom: 19,
-      }).addTo(map);
-      const marker = L.circleMarker(start, { radius: 10, color: "#800080", fillOpacity: 0.8 });
-      if (lat != null) marker.addTo(map);
-      const set = (a: number, b: number) => {
-        marker.setLatLng([a, b]);
-        if (map && !map.hasLayer(marker)) marker.addTo(map);
-        map?.setView([a, b], Math.max(map.getZoom(), 16));
-        cb.current(Number(a.toFixed(6)), Number(b.toFixed(6)));
-      };
-      api.current = { set };
-      map.on("click", (e) => set(e.latlng.lat, e.latlng.lng));
-    })();
+    let marker: google.maps.Marker | null = null;
+
+    void loadGoogleMaps()
+      .then(() => {
+        if (disposed || !el.current || !window.google?.maps) return;
+        const g = window.google.maps;
+        const start = lat != null && lng != null ? { lat, lng } : LATUR;
+        const map = new g.Map(el.current, {
+          center: start,
+          zoom: lat != null ? 17 : 13,
+          clickableIcons: false,
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: "greedy",
+        });
+        marker = new g.Marker({
+          position: start,
+          map: lat != null ? map : null,
+          draggable: true,
+        });
+
+        const set = (a: number, b: number) => {
+          const p = { lat: a, lng: b };
+          marker?.setPosition(p);
+          marker?.setMap(map);
+          map.panTo(p);
+          if ((map.getZoom() ?? 13) < 16) map.setZoom(16);
+          cb.current(Number(a.toFixed(6)), Number(b.toFixed(6)));
+        };
+        api.current = { set };
+
+        map.addListener("click", (e: google.maps.MapMouseEvent) => {
+          if (e.latLng) set(e.latLng.lat(), e.latLng.lng());
+        });
+        marker.addListener("dragend", () => {
+          const p = marker?.getPosition();
+          if (p) set(p.lat(), p.lng());
+        });
+      })
+      .catch(() => {
+        if (!disposed) setError(true);
+      });
+
     return () => {
       disposed = true;
-      map?.remove();
+      marker?.setMap(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="space-y-2">
-      <div ref={el} className="h-56 w-full overflow-hidden rounded-xl border border-border" />
+      <div
+        ref={el}
+        className="h-56 w-full overflow-hidden rounded-xl border border-border bg-muted"
+      />
+      {error && <p className="text-xs text-destructive">{dt("mapUnavailable")}</p>}
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">{dt("pinOnMap")}</p>
         <Button
