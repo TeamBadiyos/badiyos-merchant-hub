@@ -47,12 +47,6 @@ export const Route = createFileRoute("/home")({
   component: HomePage,
 });
 
-function greetingKey() {
-  const h = new Date().getHours();
-  if (h < 12) return "greetingMorning" as const;
-  if (h < 17) return "greetingAfternoon" as const;
-  return "greetingEvening" as const;
-}
 
 const LIVE = ["placed", "paid", "pending", "accepted", "preparing", "ready"];
 
