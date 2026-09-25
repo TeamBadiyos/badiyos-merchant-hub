@@ -157,7 +157,7 @@ function HomePage() {
                     availability.open ? "text-foreground" : "text-destructive"
                   }`}
                 >
-                  {availLabel}
+                  {availability.open ? t("openNow") : availLabel}
                 </span>
               </span>
               <span className="num flex shrink-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground">
