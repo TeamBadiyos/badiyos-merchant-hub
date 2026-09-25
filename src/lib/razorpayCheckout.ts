@@ -33,7 +33,7 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
   if (Capacitor.isNativePlatform()) {
     const { Checkout } = await import("capacitor-razorpay");
     try {
-      const res = (await Checkout.open({
+      const options: Record<string, unknown> = {
         key: opts.keyId,
         order_id: opts.orderId,
         amount: String(opts.amountPaise),
@@ -43,7 +43,10 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
         prefill: {},
         notes: opts.notes ?? {},
         theme: { color: "#800080" },
-      } as Parameters<typeof Checkout.open>[0])) as { response?: { razorpay_payment_id?: string } };
+      };
+      const res = (await Checkout.open(options as Parameters<typeof Checkout.open>[0])) as {
+        response?: { razorpay_payment_id?: string };
+      };
       const paymentId = res?.response?.razorpay_payment_id;
       if (!paymentId) throw new Error("Payment could not be confirmed");
       return paymentId;
