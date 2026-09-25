@@ -140,66 +140,98 @@ function HomePage() {
         Promise.all([live.refetch(), today.refetch(), lowStock.refetch(), schedule.refetch()])
       }
     >
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-xl font-extrabold text-foreground">
-            {t(greetingKey())},{" "}
-            {(context.staffName ?? merchant.owner_name ?? "Merchant").split(" ")[0]}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {[merchant.address, merchant.city].filter(Boolean).join(", ") || "Latur, Maharashtra"}
-          </p>
-        </div>
-
+      <div className="space-y-5">
         {merchant.status !== "approved" ? (
           <PendingApproval />
         ) : !allowed ? (
           <AccessDenied />
         ) : (
           <>
-            <div
-              className={`rounded-2xl border p-4 ${
-                availability.open
-                  ? "border-primary/30 bg-primary-soft"
-                  : "border-destructive/30 bg-destructive/5"
-              }`}
-            >
-              <p
-                className={`text-sm font-bold ${
-                  availability.open ? "text-foreground" : "text-destructive"
-                }`}
-              >
-                {availLabel}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                {availability.open ? t("availOpenHint") : t("availPausedHint")}
-              </p>
-            </div>
-
+            {/* Compact status strip — replaces the old greeting + status + timings cards */}
             <Link
               to="/settings"
-              className={`flex items-center gap-4 rounded-2xl border p-4 ${
-                openState.kind === "open"
-                  ? "border-primary/30 bg-primary-soft"
-                  : "border-border bg-card shadow-card"
-              }`}
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 shadow-card"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-background/60">
-                <Clock
-                  className={`size-5 ${openState.kind === "open" ? "text-primary" : "text-muted-foreground"}`}
+              <span className="flex min-w-0 items-center gap-2">
+                <span
+                  className={`size-2 shrink-0 rounded-full ${
+                    availability.open ? "bg-primary" : "bg-destructive"
+                  }`}
                 />
+                <span
+                  className={`truncate text-xs font-bold ${
+                    availability.open ? "text-foreground" : "text-destructive"
+                  }`}
+                >
+                  {availLabel}
+                </span>
               </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold text-muted-foreground">{t("todaySchedule")}</p>
-                <p className="num text-sm font-bold text-foreground">{openLabel}</p>
-              </div>
+              <span className="num flex shrink-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                <Clock className="size-3.5" />
+                {openLabel}
+              </span>
             </Link>
 
+            {/* New orders — the merchant's primary job, kept at the top */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+                  <TrendingUp className="size-5 text-primary" />
+                  {t("newOrders")}
+                  {pending.length > 0 && (
+                    <span className="num rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+                      {pending.length}
+                    </span>
+                  )}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-primary"
+                  onClick={() => void live.refetch()}
+                >
+                  {live.isFetching ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="size-4" />
+                  )}
+                  {t("refresh")}
+                </Button>
+              </div>
+
+              {pending.length === 0 ? (
+                <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary-soft">
+                    <PackageOpen className="size-5 text-primary" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-foreground">{t("noOrders")}</p>
+                    <p className="truncate text-xs text-muted-foreground">{t("noOrdersSub")}</p>
+                  </div>
+                </div>
+              ) : (
+                pending.map((order) => <OrderCard key={order.id} order={order} />)
+              )}
+            </div>
+
+            {inProgress.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-base font-bold text-foreground">{t("inProgress")}</h2>
+                {inProgress.map((order) => (
+                  <OrderCard key={order.id} order={order} />
+                ))}
+              </div>
+            )}
+
+            {/* Secondary: today's numbers */}
             <div className="grid grid-cols-3 gap-3">
               {stats.map(({ label, value, icon: Icon }) => (
-                <div key={label} className="rounded-2xl border border-border bg-card p-4 shadow-card">
-                  <Icon className="size-5 text-primary" />
-                  <p className="num mt-2 text-lg font-extrabold text-foreground">{value}</p>
+                <div
+                  key={label}
+                  className="rounded-2xl border border-border bg-card p-3 shadow-card"
+                >
+                  <Icon className="size-4 text-primary" />
+                  <p className="num mt-1.5 text-base font-extrabold text-foreground">{value}</p>
                   <p className="text-[11px] leading-tight font-semibold text-muted-foreground">
                     {label}
                   </p>
@@ -209,71 +241,17 @@ function HomePage() {
 
             {lowStockCount > 0 && can("manage_products") && !lowStockDismissed && (
               <SwipeDismiss onDismiss={() => setLowStockDismissed(true)}>
-              <Link
-                to="/products"
-                search={{ low: true }}
-                className="flex items-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4"
-              >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-destructive/10">
-                  <AlertTriangle className="size-5 text-destructive" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="num text-sm font-bold text-destructive">
+                <Link
+                  to="/products"
+                  search={{ low: true }}
+                  className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2"
+                >
+                  <AlertTriangle className="size-4 shrink-0 text-destructive" />
+                  <p className="num min-w-0 truncate text-xs font-bold text-destructive">
                     {lowStockCount} {t("lowStockBanner")}
                   </p>
-                  <p className="text-xs font-semibold text-muted-foreground">
-                    {t("viewLowStock")}
-                  </p>
-                </div>
-              </Link>
+                </Link>
               </SwipeDismiss>
-            )}
-
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
-                <TrendingUp className="size-5 text-primary" />
-                {t("newOrders")}
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary"
-                onClick={() => void live.refetch()}
-              >
-                {live.isFetching ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="size-4" />
-                )}
-                {t("refresh")}
-              </Button>
-            </div>
-
-            {pending.length === 0 ? (
-              <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-card">
-                <div className="mx-auto flex size-16 items-center justify-center rounded-3xl bg-primary-soft">
-                  <PackageOpen className="size-8 text-primary" />
-                </div>
-                <h3 className="mt-4 text-base font-bold text-foreground">{t("noOrders")}</h3>
-                <p className="mx-auto mt-2 max-w-[32ch] text-sm text-muted-foreground">
-                  {t("noOrdersSub")}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {pending.map((order) => (
-                  <OrderCard key={order.id} order={order} />
-                ))}
-              </div>
-            )}
-
-            {inProgress.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="text-base font-bold text-foreground">{t("inProgress")}</h2>
-                {inProgress.map((order) => (
-                  <OrderCard key={order.id} order={order} />
-                ))}
-              </div>
             )}
           </>
         )}
