@@ -48,8 +48,8 @@ function NewOrder() {
   const chosen = (receivers.data ?? []).find((r) => r.id === receiverId);
 
   const save = async (again: boolean) => {
-    if (!receiverId) return toast.error(dt("chooseReceiver"));
-    if (!pickupId) return toast.error(dt("pickupPoint"));
+    if (!receiverId) { toast.error(dt("chooseReceiver")); return; }
+    if (!pickupId) { toast.error(dt("pickupPoint")); return; }
     setBusy(true);
     try {
       await bizRpc("business_create_order", {

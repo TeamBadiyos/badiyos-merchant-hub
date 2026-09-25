@@ -25,7 +25,7 @@ export function PlaceForm({
   kind: Kind;
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  initial?: Partial<Receiver & PickupPoint> | null;
+  initial?: Partial<Omit<Receiver, "address"> & Omit<PickupPoint, "address"> & { address: string | null }> | null;
   onSaved: (id: string) => void;
 }) {
   const dt = useDT();
@@ -44,10 +44,10 @@ export function PlaceForm({
 
   const submit = async () => {
     const phone = phone10(f.contact_phone);
-    if (!f.name.trim() || !f.address.trim()) return toast.error(dt("required"));
-    if (kind === "receiver" && !isPhone10(phone)) return toast.error(dt("phoneInvalid"));
-    if (kind === "pickup" && phone && !isPhone10(phone)) return toast.error(dt("phoneInvalid"));
-    if (f.lat == null || f.lng == null) return toast.error(dt("pinRequired"));
+    if (!f.name.trim() || !f.address.trim()) { toast.error(dt("required")); return; }
+    if (kind === "receiver" && !isPhone10(phone)) { toast.error(dt("phoneInvalid")); return; }
+    if (kind === "pickup" && phone && !isPhone10(phone)) { toast.error(dt("phoneInvalid")); return; }
+    if (f.lat == null || f.lng == null) { toast.error(dt("pinRequired")); return; }
     setBusy(true);
     try {
       const base = {
