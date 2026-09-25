@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { hapticImpact } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n";
@@ -178,7 +179,7 @@ function ProfilePage() {
           ? t("statusDraftLabel")
           : t("statusUnderReview");
 
-  const save = async (patch: Record<string, unknown>, done: () => void) => {
+  const save = async (patch: TablesUpdate<"merchants">, done: () => void) => {
     setSaving(true);
     try {
       const { error } = await supabase.from("merchants").update(patch).eq("id", merchant.id);
@@ -207,7 +208,7 @@ function ProfilePage() {
     };
     setErrors(next);
     if (Object.values(next).some(Boolean)) return;
-    const patch: Record<string, unknown> = {
+    const patch: TablesUpdate<"merchants"> = {
       store_name: shop.store_name.trim(),
       owner_name: shop.owner_name.trim(),
       address: shop.address.trim(),
@@ -215,7 +216,7 @@ function ProfilePage() {
       state: shop.state.trim(),
       pincode: shop.pincode,
     };
-    if (!approved && shop.store_category_id) patch["store_category_id"] = shop.store_category_id;
+    if (!approved && shop.store_category_id) patch.store_category_id = shop.store_category_id;
     await save(patch, () => setEditShop(false));
   };
 
