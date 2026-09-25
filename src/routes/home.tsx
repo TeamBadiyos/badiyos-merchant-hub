@@ -52,7 +52,7 @@ const LIVE = ["placed", "paid", "pending", "accepted", "preparing", "ready"];
 
 function HomePage() {
   const { t } = useI18n();
-  const { can, context } = useAuth();
+  const { can } = useAuth();
   const merchant = useRequireAuth();
   const [lowStockDismissed, setLowStockDismissed] = useState(false);
   const allowed = can("view_orders");
