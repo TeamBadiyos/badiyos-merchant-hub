@@ -94,7 +94,8 @@ export const Route = createFileRoute("/api/public/merchant-send-push")({
 
         try {
           const payload = (await request.json()) as Payload;
-          if (!payload.order_id || !payload.merchant_id) {
+          const isOrderAlert = (payload.alert_type ?? "new_order") === "new_order";
+          if (!payload.merchant_id || (isOrderAlert && !payload.order_id)) {
             return Response.json({ error: "order_id_and_merchant_id_required" }, { status: 400 });
           }
 
