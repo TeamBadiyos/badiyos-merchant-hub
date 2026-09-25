@@ -20,6 +20,7 @@ export const ALL_PERMISSIONS = [
   "manage_products",
   "view_reports",
   "manage_staff",
+  "manage_delivery",
 ] as const;
 
 export type Permission = (typeof ALL_PERMISSIONS)[number];
@@ -29,6 +30,9 @@ export type MerchantContext = {
   isOwner: boolean;
   permissions: Permission[];
   staffName: string | null;
+  storeEnabled: boolean;
+  deliveryEnabled: boolean;
+  deliveryStatus: string | null;
 };
 
 const EMPTY_CONTEXT: MerchantContext = {
@@ -36,6 +40,9 @@ const EMPTY_CONTEXT: MerchantContext = {
   isOwner: false,
   permissions: [],
   staffName: null,
+  storeEnabled: true,
+  deliveryEnabled: false,
+  deliveryStatus: null,
 };
 
 type AuthState = {
@@ -82,6 +89,9 @@ async function fetchContext(): Promise<MerchantContext> {
     is_owner?: boolean;
     permissions?: string[];
     staff_name?: string | null;
+    store_enabled?: boolean | null;
+    delivery_enabled?: boolean | null;
+    delivery_status?: string | null;
   };
   return {
     merchantId: payload.merchant_id ?? null,
@@ -90,6 +100,9 @@ async function fetchContext(): Promise<MerchantContext> {
       (ALL_PERMISSIONS as readonly string[]).includes(p),
     ),
     staffName: payload.staff_name ?? null,
+    storeEnabled: payload.store_enabled !== false,
+    deliveryEnabled: Boolean(payload.delivery_enabled),
+    deliveryStatus: payload.delivery_status ?? null,
   };
 }
 
