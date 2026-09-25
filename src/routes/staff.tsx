@@ -4,7 +4,7 @@ import { Loader2, Pencil, Plus, ShieldCheck, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/AppShell";
+import { ModeShell } from "@/components/ModeShell";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -120,7 +120,7 @@ function StaffPage() {
   if (!merchant) return null;
 
   return (
-    <AppShell
+    <ModeShell
       title={t("rolesStaff")}
       onRefresh={() => Promise.all([roles.refetch(), staff.refetch()])}
     >
@@ -262,7 +262,7 @@ function StaffPage() {
           onClose={() => setInviteOpen(false)}
         />
       )}
-    </AppShell>
+    </ModeShell>
   );
 }
 

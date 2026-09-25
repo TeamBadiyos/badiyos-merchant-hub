@@ -15,7 +15,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/AppShell";
+import { ModeShell } from "@/components/ModeShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -296,7 +296,7 @@ function ProfilePage() {
   );
 
   return (
-    <AppShell title={t("profile")}>
+    <ModeShell title={t("profile")}>
       <div className="space-y-4 pb-4">
         {/* Shop header */}
         <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
@@ -638,6 +638,6 @@ function ProfilePage() {
           {t("logout")}
         </Button>
       </div>
-    </AppShell>
+    </ModeShell>
   );
 }
