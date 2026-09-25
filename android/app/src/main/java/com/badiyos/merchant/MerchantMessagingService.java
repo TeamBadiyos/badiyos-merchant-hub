@@ -46,6 +46,15 @@ public class MerchantMessagingService extends MessagingService {
         Map<String, String> data = message.getData();
         String type = data.get("type");
 
+        if ("business_delivery".equals(type) && !MerchantAppState.isForeground()) {
+            try {
+                showDeliveryNotification(data);
+            } catch (Exception e) {
+                Log.e(TAG, "delivery notification failed", e);
+            }
+            return;
+        }
+
         if (!"new_order".equals(type) || MerchantAppState.isForeground()) {
             // Foreground or unrelated push: normal Capacitor handling.
             super.onMessageReceived(message);
@@ -120,6 +129,36 @@ public class MerchantMessagingService extends MessagingService {
                 .addAction(0, "Open", open);
 
         NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, builder.build());
+    }
+
+    public static final String DELIVERY_CHANNEL_ID = "delivery_alerts";
+    public static final String EXTRA_DEEP_LINK = "deep_link";
+
+    /** Normal (non-ringing) notification for delivery alerts: low balance, failed drop. */
+    private void showDeliveryNotification(Map<String, String> data) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            if (nm.getNotificationChannel(DELIVERY_CHANNEL_ID) == null) {
+                nm.createNotificationChannel(new NotificationChannel(
+                        DELIVERY_CHANNEL_ID, "Delivery alerts", NotificationManager.IMPORTANCE_HIGH));
+            }
+        }
+        String tripId = data.get("courier_order_id");
+        String link = tripId != null && !tripId.isEmpty() ? "/delivery/trip/" + tripId : "/delivery/wallet";
+        Intent open = new Intent(this, MainActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(EXTRA_DEEP_LINK, link);
+        PendingIntent pi = PendingIntent.getActivity(this, (int) (System.currentTimeMillis() & 0xffff), open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder b = new NotificationCompat.Builder(this, DELIVERY_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(data.get(EXTRA_TITLE) != null ? data.get(EXTRA_TITLE) : "badiyos")
+                .setContentText(data.get(EXTRA_BODY))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(data.get(EXTRA_BODY)))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pi);
+        NotificationManagerCompat.from(this).notify((int) (System.currentTimeMillis() & 0xfffff), b.build());
     }
 
     static int parseInt(String value, int fallback) {
