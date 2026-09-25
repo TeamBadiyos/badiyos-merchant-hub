@@ -86,10 +86,10 @@ export function PlaceForm({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <Field label={dt("name")}>
+          <Field label={kind === "receiver" ? dt("businessName") : dt("pickupName")}>
             <Input value={f.name} onChange={(e) => set("name", e.target.value)} />
           </Field>
-          <Field label={dt("contactName")}>
+          <Field label={dt("contactPerson")}>
             <Input value={f.contact_name} onChange={(e) => set("contact_name", e.target.value)} />
           </Field>
           <Field label={dt("phone")}>
