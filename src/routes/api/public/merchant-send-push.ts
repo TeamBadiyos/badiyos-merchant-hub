@@ -23,6 +23,8 @@ type Payload = {
   body?: string;
   amount?: number | string | null;
   timeout_seconds?: number;
+  /** Extra keys for delivery alerts (courier_order_id, batch_id, ...). */
+  data?: Record<string, unknown>;
 };
 
 function b64url(bytes: Uint8Array): string {
@@ -122,9 +124,14 @@ export const Route = createFileRoute("/api/public/merchant-send-push")({
             private_key: sa.private_key,
           });
 
+          const extra: Record<string, string> = {};
+          for (const [k, v] of Object.entries(payload.data ?? {})) {
+            if (v != null) extra[k] = typeof v === "string" ? v : JSON.stringify(v);
+          }
           const data: Record<string, string> = {
+            ...extra,
             type: payload.alert_type ?? "new_order",
-            order_id: payload.order_id,
+            order_id: payload.order_id ?? "",
             title: payload.title ?? "New order",
             body: payload.body ?? "You have a new order waiting.",
             amount: payload.amount == null ? "" : String(payload.amount),
