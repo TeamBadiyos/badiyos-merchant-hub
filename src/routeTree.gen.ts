@@ -24,6 +24,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as DeliveryIndexRouteImport } from './routes/delivery.index'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
 import { Route as ApiPublicMerchantSendPushRouteImport } from './routes/api/public/merchant-send-push'
 
@@ -102,6 +103,11 @@ const WalletRoute = WalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeliveryIndexRoute = DeliveryIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DeliveryRoute,
+} as any)
 const LegalSlugRoute = LegalSlugRouteImport.update({
   id: '/legal/$slug',
   path: '/legal/$slug',
@@ -116,7 +122,7 @@ const ApiPublicMerchantSendPushRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/delivery': typeof DeliveryRoute
+  '/delivery': typeof DeliveryRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -131,11 +137,11 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/delivery/': typeof DeliveryIndexRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/delivery': typeof DeliveryRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -150,12 +156,13 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/delivery': typeof DeliveryIndexRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/delivery': typeof DeliveryRoute
+  '/delivery': typeof DeliveryRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -170,6 +177,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/delivery/': typeof DeliveryIndexRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
 }
 export interface FileRouteTypes {
@@ -191,11 +199,11 @@ export interface FileRouteTypes {
     | '/support'
     | '/wallet'
     | '/legal/$slug'
+    | '/delivery/'
     | '/api/public/merchant-send-push'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/delivery'
     | '/home'
     | '/login'
     | '/onboarding'
@@ -210,6 +218,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/wallet'
     | '/legal/$slug'
+    | '/delivery'
     | '/api/public/merchant-send-push'
   id:
     | '__root__'
@@ -229,12 +238,13 @@ export interface FileRouteTypes {
     | '/support'
     | '/wallet'
     | '/legal/$slug'
+    | '/delivery/'
     | '/api/public/merchant-send-push'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DeliveryRoute: typeof DeliveryRoute
+  DeliveryRoute: typeof DeliveryRouteWithChildren
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -359,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delivery/': {
+      id: '/delivery/'
+      path: '/'
+      fullPath: '/delivery/'
+      preLoaderRoute: typeof DeliveryIndexRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
     '/legal/$slug': {
       id: '/legal/$slug'
       path: '/legal/$slug'
@@ -376,9 +393,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DeliveryRouteChildren {
+  DeliveryIndexRoute: typeof DeliveryIndexRoute
+}
+
+const DeliveryRouteChildren: DeliveryRouteChildren = {
+  DeliveryIndexRoute: DeliveryIndexRoute,
+}
+
+const DeliveryRouteWithChildren = DeliveryRoute._addFileChildren(
+  DeliveryRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DeliveryRoute: DeliveryRoute,
+  DeliveryRoute: DeliveryRouteWithChildren,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
