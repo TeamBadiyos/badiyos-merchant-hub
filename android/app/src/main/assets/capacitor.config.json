@@ -1,0 +1,19 @@
+{
+	"appId": "com.badiyos.merchant",
+	"appName": "badiyos Merchant",
+	"webDir": "dist",
+	"ios": {
+		"scrollEnabled": true,
+		"contentInset": "always"
+	},
+	"android": {
+		"webContentsDebuggingEnabled": false,
+		"backgroundColor": "#800080"
+	},
+	"backgroundColor": "#800080",
+	"plugins": {
+		"SplashScreen": {
+			"backgroundColor": "#800080"
+		}
+	}
+}

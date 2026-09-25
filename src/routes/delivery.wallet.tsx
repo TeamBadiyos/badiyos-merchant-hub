@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { bizRpc, getWallet, inr, listTopups } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
 import { createTopupOrder, getTopupLimits } from "@/lib/delivery/topup.functions";
+import { openRazorpayCheckout } from "@/lib/razorpayCheckout";
 
 export const Route = createFileRoute("/delivery/wallet")({
   validateSearch: z.object({ topup: z.boolean().optional() }),
@@ -20,21 +21,6 @@ export const Route = createFileRoute("/delivery/wallet")({
   component: WalletPage,
 });
 
-type RzpWindow = Window & {
-  Razorpay?: new (o: Record<string, unknown>) => { open: () => void; on: (e: string, cb: () => void) => void };
-};
-
-function loadCheckout(): Promise<boolean> {
-  const w = window as RzpWindow;
-  if (w.Razorpay) return Promise.resolve(true);
-  return new Promise((resolve) => {
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-}
 
 function WalletPage() {
   const dt = useDT();
@@ -86,29 +72,16 @@ function WalletPage() {
       const res = await createOrder({ data: { amount: amt } });
       if ("error" in res) throw new Error(res.error);
       await bizRpc("business_create_topup_intent", { _amount: amt, _razorpay_order_id: res.orderId });
-      if (!(await loadCheckout())) throw new Error(dt("paymentFailed"));
       const before = bal;
-      const Rzp = (window as RzpWindow).Razorpay!;
-      const rzp = new Rzp({
-        key: res.keyId,
-        order_id: res.orderId,
-        amount: res.amountPaise,
-        currency: "INR",
-        name: "badiyos",
+      await openRazorpayCheckout({
+        keyId: res.keyId,
+        orderId: res.orderId,
+        amountPaise: res.amountPaise,
         description: dt("balance"),
         notes: { purpose: "merchant_wallet_topup", merchant_id: res.merchantId },
-        theme: { color: "#800080" },
-        handler: () => {
-          setOpen(false);
-          void pollCredit(before);
-        },
-        modal: { ondismiss: () => setStage("idle") },
       });
-      rzp.on("payment.failed", () => {
-        toast.error(dt("paymentFailed"));
-        setStage("idle");
-      });
-      rzp.open();
+      setOpen(false);
+      void pollCredit(before);
     } catch (e) {
       toast.error((e as Error).message);
       setStage("idle");
