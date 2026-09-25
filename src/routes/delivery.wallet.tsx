@@ -73,6 +73,10 @@ function WalletPage() {
       if ("error" in res) throw new Error(res.error);
       await bizRpc("business_create_topup_intent", { _amount: amt, _razorpay_order_id: res.orderId });
       const before = bal;
+      // Close our own dialog first: its overlay/focus trap would otherwise sit
+      // on top of the payment window and swallow taps on the Pay button.
+      setOpen(false);
+      await new Promise((r) => setTimeout(r, 250));
       await openRazorpayCheckout({
         keyId: res.keyId,
         orderId: res.orderId,
