@@ -25,8 +25,16 @@ import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as DeliveryIndexRouteImport } from './routes/delivery.index'
+import { Route as DeliveryBulkRouteImport } from './routes/delivery.bulk'
+import { Route as DeliveryNewRouteImport } from './routes/delivery.new'
+import { Route as DeliveryOrdersRouteImport } from './routes/delivery.orders'
+import { Route as DeliveryPickupPointsRouteImport } from './routes/delivery.pickup-points'
+import { Route as DeliveryReceiversRouteImport } from './routes/delivery.receivers'
+import { Route as DeliverySettingsRouteImport } from './routes/delivery.settings'
+import { Route as DeliveryWalletRouteImport } from './routes/delivery.wallet'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
 import { Route as ApiPublicMerchantSendPushRouteImport } from './routes/api/public/merchant-send-push'
+import { Route as DeliveryTripIdRouteImport } from './routes/delivery.trip.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -108,6 +116,41 @@ const DeliveryIndexRoute = DeliveryIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DeliveryRoute,
 } as any)
+const DeliveryBulkRoute = DeliveryBulkRouteImport.update({
+  id: '/bulk',
+  path: '/bulk',
+  getParentRoute: () => DeliveryRoute,
+} as any)
+const DeliveryNewRoute = DeliveryNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => DeliveryRoute,
+} as any)
+const DeliveryOrdersRoute = DeliveryOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => DeliveryRoute,
+} as any)
+const DeliveryPickupPointsRoute = DeliveryPickupPointsRouteImport.update({
+  id: '/pickup-points',
+  path: '/pickup-points',
+  getParentRoute: () => DeliveryRoute,
+} as any)
+const DeliveryReceiversRoute = DeliveryReceiversRouteImport.update({
+  id: '/receivers',
+  path: '/receivers',
+  getParentRoute: () => DeliveryRoute,
+} as any)
+const DeliverySettingsRoute = DeliverySettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DeliveryRoute,
+} as any)
+const DeliveryWalletRoute = DeliveryWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => DeliveryRoute,
+} as any)
 const LegalSlugRoute = LegalSlugRouteImport.update({
   id: '/legal/$slug',
   path: '/legal/$slug',
@@ -119,6 +162,11 @@ const ApiPublicMerchantSendPushRoute =
     path: '/api/public/merchant-send-push',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DeliveryTripIdRoute = DeliveryTripIdRouteImport.update({
+  id: '/trip/$id',
+  path: '/trip/$id',
+  getParentRoute: () => DeliveryRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -136,9 +184,17 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
+  '/delivery/bulk': typeof DeliveryBulkRoute
+  '/delivery/new': typeof DeliveryNewRoute
+  '/delivery/orders': typeof DeliveryOrdersRoute
+  '/delivery/pickup-points': typeof DeliveryPickupPointsRoute
+  '/delivery/receivers': typeof DeliveryReceiversRoute
+  '/delivery/settings': typeof DeliverySettingsRoute
+  '/delivery/wallet': typeof DeliveryWalletRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/delivery/': typeof DeliveryIndexRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
+  '/delivery/trip/$id': typeof DeliveryTripIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,9 +211,17 @@ export interface FileRoutesByTo {
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
+  '/delivery/bulk': typeof DeliveryBulkRoute
+  '/delivery/new': typeof DeliveryNewRoute
+  '/delivery/orders': typeof DeliveryOrdersRoute
+  '/delivery/pickup-points': typeof DeliveryPickupPointsRoute
+  '/delivery/receivers': typeof DeliveryReceiversRoute
+  '/delivery/settings': typeof DeliverySettingsRoute
+  '/delivery/wallet': typeof DeliveryWalletRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/delivery': typeof DeliveryIndexRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
+  '/delivery/trip/$id': typeof DeliveryTripIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,9 +240,17 @@ export interface FileRoutesById {
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
+  '/delivery/bulk': typeof DeliveryBulkRoute
+  '/delivery/new': typeof DeliveryNewRoute
+  '/delivery/orders': typeof DeliveryOrdersRoute
+  '/delivery/pickup-points': typeof DeliveryPickupPointsRoute
+  '/delivery/receivers': typeof DeliveryReceiversRoute
+  '/delivery/settings': typeof DeliverySettingsRoute
+  '/delivery/wallet': typeof DeliveryWalletRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/delivery/': typeof DeliveryIndexRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
+  '/delivery/trip/$id': typeof DeliveryTripIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -198,9 +270,17 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/wallet'
+    | '/delivery/bulk'
+    | '/delivery/new'
+    | '/delivery/orders'
+    | '/delivery/pickup-points'
+    | '/delivery/receivers'
+    | '/delivery/settings'
+    | '/delivery/wallet'
     | '/legal/$slug'
     | '/delivery/'
     | '/api/public/merchant-send-push'
+    | '/delivery/trip/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -217,9 +297,17 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/wallet'
+    | '/delivery/bulk'
+    | '/delivery/new'
+    | '/delivery/orders'
+    | '/delivery/pickup-points'
+    | '/delivery/receivers'
+    | '/delivery/settings'
+    | '/delivery/wallet'
     | '/legal/$slug'
     | '/delivery'
     | '/api/public/merchant-send-push'
+    | '/delivery/trip/$id'
   id:
     | '__root__'
     | '/'
@@ -237,9 +325,17 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/wallet'
+    | '/delivery/bulk'
+    | '/delivery/new'
+    | '/delivery/orders'
+    | '/delivery/pickup-points'
+    | '/delivery/receivers'
+    | '/delivery/settings'
+    | '/delivery/wallet'
     | '/legal/$slug'
     | '/delivery/'
     | '/api/public/merchant-send-push'
+    | '/delivery/trip/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -376,6 +472,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeliveryIndexRouteImport
       parentRoute: typeof DeliveryRoute
     }
+    '/delivery/bulk': {
+      id: '/delivery/bulk'
+      path: '/bulk'
+      fullPath: '/delivery/bulk'
+      preLoaderRoute: typeof DeliveryBulkRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
+    '/delivery/new': {
+      id: '/delivery/new'
+      path: '/new'
+      fullPath: '/delivery/new'
+      preLoaderRoute: typeof DeliveryNewRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
+    '/delivery/orders': {
+      id: '/delivery/orders'
+      path: '/orders'
+      fullPath: '/delivery/orders'
+      preLoaderRoute: typeof DeliveryOrdersRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
+    '/delivery/pickup-points': {
+      id: '/delivery/pickup-points'
+      path: '/pickup-points'
+      fullPath: '/delivery/pickup-points'
+      preLoaderRoute: typeof DeliveryPickupPointsRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
+    '/delivery/receivers': {
+      id: '/delivery/receivers'
+      path: '/receivers'
+      fullPath: '/delivery/receivers'
+      preLoaderRoute: typeof DeliveryReceiversRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
+    '/delivery/settings': {
+      id: '/delivery/settings'
+      path: '/settings'
+      fullPath: '/delivery/settings'
+      preLoaderRoute: typeof DeliverySettingsRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
+    '/delivery/wallet': {
+      id: '/delivery/wallet'
+      path: '/wallet'
+      fullPath: '/delivery/wallet'
+      preLoaderRoute: typeof DeliveryWalletRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
     '/legal/$slug': {
       id: '/legal/$slug'
       path: '/legal/$slug'
@@ -390,15 +535,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMerchantSendPushRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delivery/trip/$id': {
+      id: '/delivery/trip/$id'
+      path: '/trip/$id'
+      fullPath: '/delivery/trip/$id'
+      preLoaderRoute: typeof DeliveryTripIdRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
   }
 }
 
 interface DeliveryRouteChildren {
+  DeliveryBulkRoute: typeof DeliveryBulkRoute
+  DeliveryNewRoute: typeof DeliveryNewRoute
+  DeliveryOrdersRoute: typeof DeliveryOrdersRoute
+  DeliveryPickupPointsRoute: typeof DeliveryPickupPointsRoute
+  DeliveryReceiversRoute: typeof DeliveryReceiversRoute
+  DeliverySettingsRoute: typeof DeliverySettingsRoute
+  DeliveryWalletRoute: typeof DeliveryWalletRoute
   DeliveryIndexRoute: typeof DeliveryIndexRoute
+  DeliveryTripIdRoute: typeof DeliveryTripIdRoute
 }
 
 const DeliveryRouteChildren: DeliveryRouteChildren = {
+  DeliveryBulkRoute: DeliveryBulkRoute,
+  DeliveryNewRoute: DeliveryNewRoute,
+  DeliveryOrdersRoute: DeliveryOrdersRoute,
+  DeliveryPickupPointsRoute: DeliveryPickupPointsRoute,
+  DeliveryReceiversRoute: DeliveryReceiversRoute,
+  DeliverySettingsRoute: DeliverySettingsRoute,
+  DeliveryWalletRoute: DeliveryWalletRoute,
   DeliveryIndexRoute: DeliveryIndexRoute,
+  DeliveryTripIdRoute: DeliveryTripIdRoute,
 }
 
 const DeliveryRouteWithChildren = DeliveryRoute._addFileChildren(

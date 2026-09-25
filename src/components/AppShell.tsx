@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
+import { ModeSwitch } from "@/components/delivery/ModeSwitch";
 import { NewOrderSheet } from "@/components/NewOrderSheet";
+import { useDeliveryDeepLinks } from "@/lib/delivery/deep-links";
 import { PullIndicator } from "@/components/PullIndicator";
 import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -66,6 +68,7 @@ export function AppShell({
   const navigate = useNavigate();
   usePushRegistration(context.merchantId ?? merchant?.id);
   useNativeOrderActions();
+  useDeliveryDeepLinks();
   useOrderRealtime(merchant?.status === "approved" ? merchant.id : null);
   const [open, setOpen] = useState(false);
   const { availability, accepting, scheduleBlocked, setAccepting } = useAvailability();
@@ -137,6 +140,7 @@ export function AppShell({
               <p className="truncate text-base font-bold">{merchant?.store_name ?? "badiyos"}</p>
             </div>
 
+            <ModeSwitch current="store" />
             <label className="flex items-center gap-2 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold">
               <Store className="size-4" />
               <span className="hidden sm:inline">

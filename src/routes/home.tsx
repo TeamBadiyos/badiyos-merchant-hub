@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useAppMode } from "@/lib/delivery/mode";
 import {
   AlertTriangle,
   Clock,
@@ -56,6 +57,13 @@ function HomePage() {
   const merchant = useRequireAuth();
   const [lowStockDismissed, setLowStockDismissed] = useState(false);
   const allowed = can("view_orders");
+  const { mode } = useAppMode();
+  const navigate = useNavigate();
+
+  // Delivery-only businesses, or the last chosen mode, open the delivery app.
+  useEffect(() => {
+    if (merchant && mode === "delivery") void navigate({ to: "/delivery", replace: true });
+  }, [merchant, mode, navigate]);
 
   useOrderRealtime(merchant?.id, allowed);
 
