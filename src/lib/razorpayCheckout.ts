@@ -85,10 +85,16 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
       notes: opts.notes ?? {},
       theme: { color: "#800080" },
       handler: (resp: { razorpay_payment_id?: string }) =>
-        resp.razorpay_payment_id ? resolve(resp.razorpay_payment_id) : reject(new Error("Payment could not be confirmed")),
-      modal: { ondismiss: () => reject(new Error("Payment was cancelled")) },
+        resp.razorpay_payment_id
+          ? done(resp.razorpay_payment_id)
+          : fail(new Error("Payment could not be confirmed")),
+      modal: {
+        escape: true,
+        backdropclose: false,
+        ondismiss: () => fail(new Error("Payment was cancelled")),
+      },
     });
-    rzp.on("payment.failed", () => reject(new Error("Payment failed. Try again.")));
+    rzp.on("payment.failed", () => fail(new Error("Payment failed. Try again.")));
     rzp.open();
   });
 }
