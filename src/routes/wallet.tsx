@@ -50,13 +50,14 @@ function WalletPage() {
   });
 
   const ledger = useQuery({
-    queryKey: ["wallet", "ledger", merchant?.id],
+    queryKey: ["wallet", "ledger", "earnings", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && approved,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("wallet_ledger")
         .select("*")
         .eq("owner_type", "merchant")
+        .eq("wallet_type", "earnings")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
