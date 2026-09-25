@@ -9,10 +9,7 @@ import {
   Menu,
   Receipt,
   ScanLine,
-  ScrollText,
-  ShieldCheck,
   Settings,
-  ShoppingBag,
   Store,
   Gift,
   User,
@@ -46,20 +43,12 @@ const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }
 /** Live screens in the side menu, gated by role permissions. */
 const links: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
   { to: "/products", key: "products", icon: Boxes, permission: "manage_products" },
-  { to: "/catalogue", key: "catalogue", icon: ShoppingBag },
   { to: "/reports", key: "reports", icon: BarChart3, permission: "view_reports" },
   { to: "/wallet", key: "wallet", icon: Wallet, permission: "view_reports" },
   { to: "/rewards", key: "rewards", icon: Gift, permission: "view_reports" },
   { to: "/staff", key: "rolesStaff", icon: Users, permission: "manage_staff" },
   { to: "/settings", key: "settings", icon: Settings },
-];
-
-const menuItems: { key: Key; icon: typeof Home }[] = [{ key: "support", icon: LifeBuoy }];
-
-/** Legal documents fetched from the shared legal_pages table. */
-const legalLinks: { slug: string; key: Key; icon: typeof Home }[] = [
-  { slug: "privacy-policy", key: "privacyPolicy", icon: ShieldCheck },
-  { slug: "terms", key: "termsTitle", icon: ScrollText },
+  { to: "/support", key: "support", icon: LifeBuoy },
 ];
 
 export function AppShell({
@@ -126,35 +115,6 @@ export function AppShell({
                         <ChevronRight className="size-4 text-muted-foreground" />
                       </Link>
                     ))}
-                  {menuItems.map(({ key, icon: Icon }) => (
-                    <button
-                      key={key}
-                      className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-                    >
-                      <Icon className="size-5 text-primary" />
-                      <span className="flex-1">{t(key)}</span>
-                      <span className="rounded-full bg-muted px-3 py-1 text-[10px] font-bold text-muted-foreground">
-                        {t("comingSoon")}
-                      </span>
-                    </button>
-                  ))}
-                  <div className="my-4 h-px bg-border" />
-                  <p className="px-4 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                    {t("legal")}
-                  </p>
-                  {legalLinks.map(({ slug, key, icon: Icon }) => (
-                    <Link
-                      key={slug}
-                      to="/legal/$slug"
-                      params={{ slug }}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent"
-                    >
-                      <Icon className="size-5 text-primary" />
-                      <span className="flex-1">{t(key)}</span>
-                      <ChevronRight className="size-4 text-muted-foreground" />
-                    </Link>
-                  ))}
                   <div className="my-4 h-px bg-border" />
                   <button
                     onClick={() => {
