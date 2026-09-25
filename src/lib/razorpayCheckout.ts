@@ -59,6 +59,22 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
   if (!(await loadWebCheckout())) throw new Error("Payment page could not load. Check your internet.");
   const Rzp = (window as RzpWindow).Razorpay!;
   return new Promise((resolve, reject) => {
+    // A dialog that was open just before this point can leave the page
+    // non-interactive; make sure the payment window can receive taps.
+    const prevPointer = document.body.style.pointerEvents;
+    document.body.style.pointerEvents = "auto";
+    document.body.removeAttribute("aria-hidden");
+    const restore = () => {
+      document.body.style.pointerEvents = prevPointer;
+    };
+    const done = (id: string) => {
+      restore();
+      resolve(id);
+    };
+    const fail = (e: Error) => {
+      restore();
+      reject(e);
+    };
     const rzp = new Rzp({
       key: opts.keyId,
       order_id: opts.orderId,
@@ -69,10 +85,16 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
       notes: opts.notes ?? {},
       theme: { color: "#800080" },
       handler: (resp: { razorpay_payment_id?: string }) =>
-        resp.razorpay_payment_id ? resolve(resp.razorpay_payment_id) : reject(new Error("Payment could not be confirmed")),
-      modal: { ondismiss: () => reject(new Error("Payment was cancelled")) },
+        resp.razorpay_payment_id
+          ? done(resp.razorpay_payment_id)
+          : fail(new Error("Payment could not be confirmed")),
+      modal: {
+        escape: true,
+        backdropclose: false,
+        ondismiss: () => fail(new Error("Payment was cancelled")),
+      },
     });
-    rzp.on("payment.failed", () => reject(new Error("Payment failed. Try again.")));
+    rzp.on("payment.failed", () => fail(new Error("Payment failed. Try again.")));
     rzp.open();
   });
 }

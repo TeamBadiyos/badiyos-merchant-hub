@@ -121,6 +121,10 @@ const en = {
   pickup: "Pickup",
   needName: "Enter your name",
   noEntries: "No entries yet",
+  businessName: "Business name",
+  contactPerson: "Contact person name",
+  pickupName: "Pickup point name",
+  mapUnavailable: "Map could not be loaded",
 };
 
 type DKey = keyof typeof en;
@@ -243,6 +247,10 @@ const mr: Record<DKey, string> = {
   pickup: "पिकअप",
   needName: "तुमचे नाव टाका",
   noEntries: "अजून नोंदी नाहीत",
+  businessName: "व्यवसायाचे नाव",
+  contactPerson: "संपर्क व्यक्तीचे नाव",
+  pickupName: "पिकअप ठिकाणाचे नाव",
+  mapUnavailable: "नकाशा लोड होऊ शकला नाही",
 };
 
 export function useDT() {
