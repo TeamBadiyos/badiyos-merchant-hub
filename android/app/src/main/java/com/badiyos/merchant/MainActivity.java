@@ -43,8 +43,19 @@ public class MainActivity extends BridgeActivity {
         super.onPause();
     }
 
+    private void handleDeepLink(Intent intent) {
+        final String link = intent.getStringExtra(MerchantMessagingService.EXTRA_DEEP_LINK);
+        if (link == null || !link.matches("^/delivery/[A-Za-z0-9/_-]*$")) return;
+        intent.removeExtra(MerchantMessagingService.EXTRA_DEEP_LINK);
+        final String js = "(function(){var l='" + link + "';try{window.dispatchEvent(new CustomEvent('badiyos:deepLink',{detail:l}));}"
+                + "catch(e){}window.__badiyosPendingDeepLink=l;})();";
+        getBridge().getWebView().postDelayed(
+                () -> getBridge().getWebView().evaluateJavascript(js, null), 1200);
+    }
+
     private void handleOrderAction(Intent intent) {
         if (intent == null) return;
+        handleDeepLink(intent);
         final String orderId = intent.getStringExtra(MerchantMessagingService.EXTRA_ORDER_ID);
         final String decision = intent.getStringExtra(EXTRA_DECISION);
         if (orderId == null || decision == null) return;

@@ -34,6 +34,7 @@ const PERM_LABEL: Record<Permission, Key> = {
   manage_products: "permManageProducts",
   view_reports: "permViewReports",
   manage_staff: "permManageStaff",
+  manage_delivery: "permManageDelivery",
 };
 
 export const Route = createFileRoute("/staff")({
