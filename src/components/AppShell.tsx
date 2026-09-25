@@ -46,20 +46,12 @@ const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }
 /** Live screens in the side menu, gated by role permissions. */
 const links: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
   { to: "/products", key: "products", icon: Boxes, permission: "manage_products" },
-  { to: "/catalogue", key: "catalogue", icon: ShoppingBag },
   { to: "/reports", key: "reports", icon: BarChart3, permission: "view_reports" },
   { to: "/wallet", key: "wallet", icon: Wallet, permission: "view_reports" },
   { to: "/rewards", key: "rewards", icon: Gift, permission: "view_reports" },
   { to: "/staff", key: "rolesStaff", icon: Users, permission: "manage_staff" },
   { to: "/settings", key: "settings", icon: Settings },
-];
-
-const menuItems: { key: Key; icon: typeof Home }[] = [{ key: "support", icon: LifeBuoy }];
-
-/** Legal documents fetched from the shared legal_pages table. */
-const legalLinks: { slug: string; key: Key; icon: typeof Home }[] = [
-  { slug: "privacy-policy", key: "privacyPolicy", icon: ShieldCheck },
-  { slug: "terms", key: "termsTitle", icon: ScrollText },
+  { to: "/support", key: "support", icon: LifeBuoy },
 ];
 
 export function AppShell({

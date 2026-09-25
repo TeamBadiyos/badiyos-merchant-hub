@@ -22,6 +22,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RewardsRouteImport } from './routes/rewards'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StaffRouteImport } from './routes/staff'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
 import { Route as ApiPublicMerchantSendPushRouteImport } from './routes/api/public/merchant-send-push'
@@ -91,6 +92,11 @@ const StaffRoute = StaffRouteImport.update({
   path: '/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
+  '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
+  '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
+  '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/api/public/merchant-send-push': typeof ApiPublicMerchantSendPushRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/rewards'
     | '/settings'
     | '/staff'
+    | '/support'
     | '/wallet'
     | '/legal/$slug'
     | '/api/public/merchant-send-push'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/rewards'
     | '/settings'
     | '/staff'
+    | '/support'
     | '/wallet'
     | '/legal/$slug'
     | '/api/public/merchant-send-push'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/rewards'
     | '/settings'
     | '/staff'
+    | '/support'
     | '/wallet'
     | '/legal/$slug'
     | '/api/public/merchant-send-push'
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   RewardsRoute: typeof RewardsRoute
   SettingsRoute: typeof SettingsRoute
   StaffRoute: typeof StaffRoute
+  SupportRoute: typeof SupportRoute
   WalletRoute: typeof WalletRoute
   LegalSlugRoute: typeof LegalSlugRoute
   ApiPublicMerchantSendPushRoute: typeof ApiPublicMerchantSendPushRoute
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wallet': {
       id: '/wallet'
       path: '/wallet'
@@ -370,6 +390,7 @@ const rootRouteChildren: RootRouteChildren = {
   RewardsRoute: RewardsRoute,
   SettingsRoute: SettingsRoute,
   StaffRoute: StaffRoute,
+  SupportRoute: SupportRoute,
   WalletRoute: WalletRoute,
   LegalSlugRoute: LegalSlugRoute,
   ApiPublicMerchantSendPushRoute: ApiPublicMerchantSendPushRoute,
