@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 // Single place that loads the Google Maps JavaScript API in this app.
 // Never add a second maps.googleapis.com script tag anywhere else.
 
