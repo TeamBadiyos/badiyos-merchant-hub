@@ -43,7 +43,7 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
         prefill: {},
         notes: opts.notes ?? {},
         theme: { color: "#800080" },
-      })) as { response?: { razorpay_payment_id?: string } };
+      } as Parameters<typeof Checkout.open>[0])) as { response?: { razorpay_payment_id?: string } };
       const paymentId = res?.response?.razorpay_payment_id;
       if (!paymentId) throw new Error("Payment could not be confirmed");
       return paymentId;
