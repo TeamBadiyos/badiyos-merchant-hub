@@ -21,7 +21,7 @@ export function ModeShell({
   const { mode } = useAppMode();
   if (mode === "delivery") return <DeliveryShell title={title}>{children}</DeliveryShell>;
   return (
-    <AppShell title={title} onRefresh={onRefresh}>
+    <AppShell title={title} {...(onRefresh ? { onRefresh } : {})}>
       {children}
     </AppShell>
   );

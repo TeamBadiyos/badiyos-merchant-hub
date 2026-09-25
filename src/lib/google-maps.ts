@@ -36,7 +36,7 @@ export function loadGoogleMaps(): Promise<void> {
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__badiyosInitMap`;
     script.async = true;
-    script.dataset.badiyosGmaps = "1";
+    script.dataset["badiyosGmaps"] = "1";
     script.onerror = () => reject(new Error("Failed to load Google Maps."));
     document.head.appendChild(script);
   }).catch((e) => {
