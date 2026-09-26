@@ -160,14 +160,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const ensureDraft = useCallback(
     async (phone: string) => {
       // Invited staff: link this login to their staff row instead of creating a new shop.
-      const { data: staffMerchantId, error: claimError } = await supabase.rpc(
-        "merchant_claim_staff_invite",
-      );
-      if (claimError) console.error("[auth] staff claim failed", claimError.message);
-      if (staffMerchantId) return refresh();
+      // Claim and context run together — login used to wait for them one by one.
+      const [claim, existing] = await Promise.all([
+        supabase.rpc("merchant_claim_staff_invite"),
+        fetchContext(),
+      ]);
+      if (claim.error) console.error("[auth] staff claim failed", claim.error.message);
 
-      const existing = await fetchContext();
-      if (existing.merchantId) return refresh();
+      if (claim.data || existing.merchantId) {
+        const [next, ctx] = await Promise.all([
+          fetchMerchant(),
+          claim.data ? fetchContext() : Promise.resolve(existing),
+        ]);
+        setMerchant(next);
+        setContext(ctx);
+        return next;
+      }
 
       const { error } = await supabase.rpc("merchant_ensure_draft", { _phone: phone });
       if (error) {
