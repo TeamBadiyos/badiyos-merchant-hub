@@ -70,7 +70,9 @@ const AuthContext = createContext<AuthState>({
 });
 
 async function fetchMerchant(): Promise<Merchant | null> {
-  const { data, error } = await supabase.from("merchants").select("*").maybeSingle();
+  let res = await supabase.from("merchants").select("*").maybeSingle();
+  if (res.error) res = await supabase.from("merchants").select("*").maybeSingle();
+  const { data, error } = res;
   if (error) {
     console.error("[auth] merchant fetch failed", error.message);
     return null;
@@ -79,7 +81,11 @@ async function fetchMerchant(): Promise<Merchant | null> {
 }
 
 async function fetchContext(): Promise<MerchantContext> {
-  const { data, error } = await supabase.rpc("merchant_my_context");
+  // One retry: a dropped mobile connection here would otherwise leave the
+  // session with no permissions until the user restarted the app.
+  let res = await supabase.rpc("merchant_my_context");
+  if (res.error) res = await supabase.rpc("merchant_my_context");
+  const { data, error } = res;
   if (error) {
     console.error("[auth] context fetch failed", error.message);
     return EMPTY_CONTEXT;
