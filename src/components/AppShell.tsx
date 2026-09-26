@@ -16,11 +16,12 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { ModeSwitch } from "@/components/delivery/ModeSwitch";
 import { NewOrderSheet } from "@/components/NewOrderSheet";
 import { useDeliveryDeepLinks } from "@/lib/delivery/deep-links";
+import { useAppMode } from "@/lib/delivery/mode";
 import { PullIndicator } from "@/components/PullIndicator";
 import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -64,8 +65,9 @@ export function AppShell({
   onRefresh?: () => Promise<unknown> | void;
 }) {
   const { t } = useI18n();
-  const { merchant, signOut, can, context } = useAuth();
+  const { merchant, signOut, can, context, ready } = useAuth();
   const navigate = useNavigate();
+  const { hasStore, hasDelivery } = useAppMode();
   usePushRegistration(context.merchantId ?? merchant?.id);
   useNativeOrderActions();
   useDeliveryDeepLinks();
@@ -77,6 +79,16 @@ export function AppShell({
   const scrollRef = useRef<HTMLElement>(null);
   const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, onRefresh);
   const { dragX, animating } = useEdgeSwipeBack(!open);
+
+  // Delivery-only businesses must never land on a store screen.
+  useEffect(() => {
+    if (ready && merchant && !hasStore && hasDelivery) {
+      void navigate({ to: "/delivery", replace: true });
+    }
+  }, [ready, merchant, hasStore, hasDelivery, navigate]);
+
+  if (merchant && !hasStore && hasDelivery) return null;
+
 
   return (
     <div className="h-full overflow-hidden bg-background">
