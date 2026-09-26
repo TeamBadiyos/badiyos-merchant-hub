@@ -65,18 +65,21 @@ function HomePage() {
     if (merchant && mode === "delivery") void navigate({ to: "/delivery", replace: true });
   }, [merchant, mode, navigate]);
 
-  useOrderRealtime(merchant?.id, allowed);
+  // The shell already holds one live subscription for this shop; a second one
+  // here would double every realtime roundtrip.
+  useOrderRealtime(allowed ? null : null, allowed);
 
   const live = useQuery({
     queryKey: ["orders", "live", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(LIVE),
+    queryFn: () => fetchOrders(LIVE, { limit: 50 }),
   });
 
+  // Only today's rows: the old query downloaded the shop's whole history.
   const today = useQuery({
     queryKey: ["orders", "today", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(),
+    queryFn: () => fetchOrders(undefined, { since: startOfTodayIso(), limit: 200 }),
   });
 
   const lowStock = useQuery({

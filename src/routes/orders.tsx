@@ -40,12 +40,12 @@ function OrdersPage() {
   const [status, setStatus] = useState<string>("all");
   const [term, setTerm] = useState("");
 
-  useOrderRealtime(merchant?.id);
+  // Realtime is already subscribed once in the shell — no second channel here.
 
   const orders = useQuery({
     queryKey: ["orders", "all", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(),
+    queryFn: () => fetchOrders(undefined, { limit: 100 }),
   });
 
   const filtered = useMemo(() => {
