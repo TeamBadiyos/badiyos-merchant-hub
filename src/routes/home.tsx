@@ -21,10 +21,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { inr, isActionableNewOrder, isNewOrder } from "@/lib/order-status";
-import { fetchOrders } from "@/lib/orders";
+import { fetchOrders, startOfTodayIso } from "@/lib/orders";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvailability } from "@/lib/use-availability";
-import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
 export const Route = createFileRoute("/home")({
@@ -67,7 +66,6 @@ function HomePage() {
 
   // The shell already holds one live subscription for this shop; a second one
   // here would double every realtime roundtrip.
-  useOrderRealtime(allowed ? null : null, allowed);
 
   const live = useQuery({
     queryKey: ["orders", "live", merchant?.id],

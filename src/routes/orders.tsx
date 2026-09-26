@@ -11,7 +11,6 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { ORDER_STATUSES, STATUS_LABEL } from "@/lib/order-status";
 import { fetchOrders, itemsSummary } from "@/lib/orders";
-import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
 export const Route = createFileRoute("/orders")({
