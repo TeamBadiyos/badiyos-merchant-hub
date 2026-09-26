@@ -13,7 +13,10 @@
 	"backgroundColor": "#800080",
 	"plugins": {
 		"SplashScreen": {
-			"backgroundColor": "#800080"
+			"backgroundColor": "#800080",
+			"launchShowDuration": 0,
+			"launchAutoHide": true,
+			"showSpinner": false
 		}
 	}
 }
