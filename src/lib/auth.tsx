@@ -216,5 +216,7 @@ export function useAuth() {
 export function routeForMerchant(merchant: Merchant | null): string {
   if (!merchant) return "/login";
   if (merchant.status === "draft") return "/onboarding";
+  // Delivery-only businesses never see the store app: land them in delivery.
+  if (merchant.store_enabled === false && merchant.delivery_enabled) return "/delivery";
   return "/home";
 }
