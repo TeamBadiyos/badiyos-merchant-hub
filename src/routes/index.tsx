@@ -29,12 +29,10 @@ function Splash() {
   const { t } = useI18n();
   const navigate = useNavigate();
 
+  // No artificial splash delay: as soon as the session is known we move on.
   useEffect(() => {
     if (!ready) return;
-    const timer = setTimeout(() => {
-      void navigate({ to: userId ? routeForMerchant(merchant) : "/login", replace: true });
-    }, 1500);
-    return () => clearTimeout(timer);
+    void navigate({ to: userId ? routeForMerchant(merchant) : "/login", replace: true });
   }, [ready, userId, merchant, navigate]);
 
   return (

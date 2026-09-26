@@ -21,10 +21,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { inr, isActionableNewOrder, isNewOrder } from "@/lib/order-status";
-import { fetchOrders } from "@/lib/orders";
+import { fetchOrders, startOfTodayIso } from "@/lib/orders";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvailability } from "@/lib/use-availability";
-import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
 export const Route = createFileRoute("/home")({
@@ -65,18 +64,20 @@ function HomePage() {
     if (merchant && mode === "delivery") void navigate({ to: "/delivery", replace: true });
   }, [merchant, mode, navigate]);
 
-  useOrderRealtime(merchant?.id, allowed);
+  // The shell already holds one live subscription for this shop; a second one
+  // here would double every realtime roundtrip.
 
   const live = useQuery({
     queryKey: ["orders", "live", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(LIVE),
+    queryFn: () => fetchOrders(LIVE, { limit: 50 }),
   });
 
+  // Only today's rows: the old query downloaded the shop's whole history.
   const today = useQuery({
     queryKey: ["orders", "today", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(),
+    queryFn: () => fetchOrders(undefined, { since: startOfTodayIso(), limit: 200 }),
   });
 
   const lowStock = useQuery({

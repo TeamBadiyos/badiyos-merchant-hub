@@ -69,7 +69,8 @@ export function AppShell({
   usePushRegistration(context.merchantId ?? merchant?.id);
   useNativeOrderActions();
   useDeliveryDeepLinks();
-  useOrderRealtime(merchant?.status === "approved" ? merchant.id : null);
+  // Single live subscription for the whole store app (screens no longer add their own).
+  useOrderRealtime(merchant?.status === "approved" ? merchant.id : null, can("view_orders"));
   const [open, setOpen] = useState(false);
   const { availability, accepting, scheduleBlocked, setAccepting } = useAvailability();
   const pathname = useRouterState({ select: (s) => s.location.pathname });

@@ -11,7 +11,6 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { ORDER_STATUSES, STATUS_LABEL } from "@/lib/order-status";
 import { fetchOrders, itemsSummary } from "@/lib/orders";
-import { useOrderRealtime } from "@/lib/use-order-realtime";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
 export const Route = createFileRoute("/orders")({
@@ -40,12 +39,12 @@ function OrdersPage() {
   const [status, setStatus] = useState<string>("all");
   const [term, setTerm] = useState("");
 
-  useOrderRealtime(merchant?.id);
+  // Realtime is already subscribed once in the shell — no second channel here.
 
   const orders = useQuery({
     queryKey: ["orders", "all", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(),
+    queryFn: () => fetchOrders(undefined, { limit: 100 }),
   });
 
   const filtered = useMemo(() => {

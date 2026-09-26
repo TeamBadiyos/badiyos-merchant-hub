@@ -18,6 +18,10 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       backgroundColor: "#800080",
+      // Hand over to the app as soon as it is ready — no fixed waiting time.
+      launchShowDuration: 0,
+      launchAutoHide: true,
+      showSpinner: false,
     },
   },
 };
