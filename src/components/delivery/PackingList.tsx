@@ -19,11 +19,11 @@ export function PackingList({ trip, compact = false, showPrint = false }: Packin
     .filter((stop) => stop.stop_type === "drop")
     .sort((a, b) => a.sequence - b.sequence);
   const elementId = `packing-list-${trip.order_id}`;
-  const runLabel = trip.run_label?.replace(/ run$/, ` ${dt("run")}`) ?? null;
+  const runLabel = trip.run_label ? `${trip.run_label} ${dt("run")}` : null;
   const heading = [
     runLabel,
     trip.trip_no ? `${dt("trip")} ${trip.trip_no}` : dt("trip"),
-    trip.zone_name,
+    trip.trip_label,
     `${trip.parcel_count} ${dt("parcels")}`,
   ]
     .filter(Boolean)
