@@ -49,6 +49,8 @@ function loadWebCheckout(): Promise<boolean> {
  * Resolves with the payment id on success, rejects on cancel/failure.
  */
 export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promise<string> {
+  const prefill = buildPrefill(opts.prefill);
+
   if (Capacitor.isNativePlatform()) {
     const { Checkout } = await import("capacitor-razorpay");
     try {
@@ -59,7 +61,7 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
         currency: "INR",
         name: "badiyos",
         description: opts.description,
-        prefill: {},
+        prefill,
         notes: opts.notes ?? {},
         theme: { color: "#800080" },
       };
@@ -67,15 +69,14 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
         response?: { razorpay_payment_id?: string };
       };
       const paymentId = res?.response?.razorpay_payment_id;
-      if (!paymentId) throw new Error("Payment could not be confirmed");
+      if (!paymentId) throw new PaymentError("unknown");
       return paymentId;
     } catch (e) {
-      const msg = (e as { description?: string; message?: string })?.description ?? (e as Error)?.message;
-      throw new Error(msg || "Payment was cancelled");
+      throw toPaymentError(e);
     }
   }
 
-  if (!(await loadWebCheckout())) throw new Error("Payment page could not load. Check your internet.");
+  if (!(await loadWebCheckout())) throw new PaymentError("network");
   const Rzp = (window as RzpWindow).Razorpay!;
   return new Promise((resolve, reject) => {
     // A dialog that was open just before this point can leave the page
@@ -90,7 +91,7 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
       restore();
       resolve(id);
     };
-    const fail = (e: Error) => {
+    const fail = (e: PaymentError) => {
       restore();
       reject(e);
     };
@@ -101,19 +102,21 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
       currency: "INR",
       name: "badiyos",
       description: opts.description,
+      prefill,
       notes: opts.notes ?? {},
       theme: { color: "#800080" },
       handler: (resp: { razorpay_payment_id?: string }) =>
         resp.razorpay_payment_id
           ? done(resp.razorpay_payment_id)
-          : fail(new Error("Payment could not be confirmed")),
+          : fail(new PaymentError("unknown")),
       modal: {
         escape: true,
         backdropclose: false,
-        ondismiss: () => fail(new Error("Payment was cancelled")),
+        ondismiss: () => fail(new PaymentError("cancelled")),
       },
     });
-    rzp.on("payment.failed", () => fail(new Error("Payment failed. Try again.")));
+    rzp.on("payment.failed", () => fail(new PaymentError("declined")));
     rzp.open();
   });
 }
+
