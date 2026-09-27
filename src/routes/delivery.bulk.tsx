@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Download, Loader2, Upload } from "lucide-react";
+import { Download, FileText, Loader2, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -118,14 +118,25 @@ function Bulk() {
               />
             </label>
           </Button>
+          <Button variant="outline" className="flex-1" onClick={() => setText(SAMPLE)}>
+            <FileText className="size-4" />
+            {dt("fillSample")}
+          </Button>
           <Button
             variant="outline"
             className="flex-1"
             onClick={() => {
+              const url = URL.createObjectURL(new Blob([SAMPLE], { type: "text/csv;charset=utf-8" }));
               const a = document.createElement("a");
-              a.href = URL.createObjectURL(new Blob([SAMPLE], { type: "text/csv" }));
+              a.href = url;
               a.download = "badiyos-delivery-sample.csv";
+              a.rel = "noopener";
+              document.body.appendChild(a);
               a.click();
+              window.setTimeout(() => {
+                a.remove();
+                URL.revokeObjectURL(url);
+              }, 2_000);
             }}
           >
             <Download className="size-4" />
