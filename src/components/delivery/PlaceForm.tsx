@@ -109,6 +109,7 @@ export function PlaceForm({
             lat={f.lat}
             lng={f.lng}
             onChange={(a, b) => setF((s) => ({ ...s, lat: a, lng: b }))}
+            onAddress={(a) => setF((s) => ({ ...s, address: a }))}
           />
           {kind === "receiver" ? (
             <Field label={dt("notes")}>
