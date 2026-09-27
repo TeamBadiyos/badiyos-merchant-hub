@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { PaymentError, toPaymentError } from "./friendly-error";
 
 export type RazorpayCheckoutOptions = {
   keyId: string;
@@ -6,7 +7,25 @@ export type RazorpayCheckoutOptions = {
   amountPaise: number;
   description: string;
   notes?: Record<string, string>;
+  /** Logged-in merchant details, so Razorpay never asks for contact again. */
+  prefill?: { name?: string; contact?: string; email?: string };
 };
+
+/** "+91XXXXXXXXXX" from any stored phone shape, or undefined. */
+export function toRazorpayContact(phone?: string | null): string | undefined {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (digits.length < 10) return undefined;
+  return `+91${digits.slice(-10)}`;
+}
+
+function buildPrefill(p: RazorpayCheckoutOptions["prefill"]): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (p?.name) out["name"] = p.name;
+  if (p?.contact) out["contact"] = p.contact;
+  if (p?.email) out["email"] = p.email;
+  return out;
+}
+
 
 type RzpWindow = Window & {
   Razorpay?: new (o: Record<string, unknown>) => { open: () => void; on: (e: string, cb: () => void) => void };
