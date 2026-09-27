@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { parseCsv } from "@/lib/csv";
 import { bizRpc, getProfile, listReceivers, phone10 } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/bulk")({
   head: () => deliveryHead("Bulk delivery upload", "Create many delivery orders from a CSV."),
@@ -23,6 +24,7 @@ const SAMPLE = `receiver_phone,reference_no,description,packets
 
 function Bulk() {
   const dt = useDT();
+  const friendly = useFriendlyError();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const receivers = useQuery({ queryKey: ["biz", "receivers"], queryFn: listReceivers });
@@ -89,7 +91,7 @@ function Bulk() {
       void qc.invalidateQueries({ queryKey: ["biz"] });
       void navigate({ to: "/delivery/orders" });
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(friendly(e));
     } finally {
       setBusy(false);
     }

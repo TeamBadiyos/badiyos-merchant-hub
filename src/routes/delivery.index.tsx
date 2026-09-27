@@ -26,6 +26,7 @@ import {
   nextSlot,
 } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/")({
   head: () =>
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/delivery/")({
 
 function DeliveryHome() {
   const dt = useDT();
+  const friendly = useFriendlyError();
   const [confirm, setConfirm] = useState(false);
   const wallet = useQuery({ queryKey: ["biz", "wallet"], queryFn: getWallet });
   const profile = useQuery({ queryKey: ["biz", "profile"], queryFn: getProfile });
@@ -49,7 +51,7 @@ function DeliveryHome() {
       void trips.refetch();
       void wallet.refetch();
     },
-    onError: (e) => toast.error((e as Error).message),
+    onError: (e) => toast.error(friendly(e)),
   });
 
   const bal = Number(wallet.data?.delivery_wallet_balance ?? 0);

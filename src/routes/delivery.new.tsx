@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { bizRpc, getProfile, listReceivers } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/new")({
   head: () => deliveryHead("New delivery order", "Create a delivery order for a receiver."),
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/delivery/new")({
 
 function NewOrder() {
   const dt = useDT();
+  const friendly = useFriendlyError();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const receivers = useQuery({ queryKey: ["biz", "receivers"], queryFn: listReceivers });
@@ -69,7 +71,7 @@ function NewOrder() {
         setPackets(1);
       } else void navigate({ to: "/delivery/orders" });
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(friendly(e));
     } finally {
       setBusy(false);
     }

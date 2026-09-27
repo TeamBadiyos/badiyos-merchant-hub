@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { bizRpc, listOrders, type BizOrder } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/orders")({
   head: () => deliveryHead("Delivery orders", "Track pending, on-the-way, delivered and returned orders."),
@@ -28,6 +29,7 @@ const TABS = [
 
 function Orders() {
   const dt = useDT();
+  const friendly = useFriendlyError();
   const orders = useQuery({ queryKey: ["biz", "orders"], queryFn: listOrders, refetchInterval: 30_000 });
   const [tab, setTab] = useState<string>("pending");
   const [q, setQ] = useState("");
@@ -55,7 +57,7 @@ function Orders() {
       toast.success(ok);
       await orders.refetch();
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(friendly(e));
     } finally {
       setBusy(false);
     }

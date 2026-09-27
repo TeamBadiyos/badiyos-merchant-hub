@@ -9,6 +9,7 @@ import { PlaceForm } from "@/components/delivery/PlaceForm";
 import { Button } from "@/components/ui/button";
 import { bizRpc, getProfile, type PickupPoint } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/pickup-points")({
   head: () => deliveryHead("Pickup points", "Places where riders collect your parcels."),
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/delivery/pickup-points")({
 
 function Pickups() {
   const dt = useDT();
+  const friendly = useFriendlyError();
   const profile = useQuery({ queryKey: ["biz", "profile"], queryFn: getProfile });
   const [editing, setEditing] = useState<Partial<PickupPoint> | null>(null);
   const list = profile.data?.pickup_points ?? [];
@@ -36,7 +38,7 @@ function Pickups() {
       });
       await profile.refetch();
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(friendly(e));
     }
   };
 
