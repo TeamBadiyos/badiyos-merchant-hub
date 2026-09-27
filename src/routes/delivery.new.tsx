@@ -43,6 +43,8 @@ function NewOrder() {
   chipsRef.current = chips;
   const checking = useRef(new Set<string>());
   const [typing, setTyping] = useState(false);
+  const [cameraFailed, setCameraFailed] = useState(false);
+  const [cameraRetry, setCameraRetry] = useState(0);
   const [typed, setTyped] = useState("");
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
@@ -171,15 +173,46 @@ function NewOrder() {
   return (
     <DeliveryShell title={dt("newOrder")}>
       <div className="space-y-4 pb-28">
-        <QrScanner className="h-[45vh]" paused={typing || picking || adding} onCode={(t) => void addCode(t, "scan")} />
+        {cameraFailed ? (
+          <div className="flex h-[45vh] flex-col items-center justify-center gap-3 rounded-2xl bg-muted p-4 text-center">
+            <p className="text-sm font-bold text-foreground">{dt("cameraFailedTitle")}</p>
+            <Button size="lg" className="h-12 w-full font-bold" onClick={() => { setTyped(""); setTyping(true); }}>
+              <Keyboard className="size-4" />
+              {dt("typeNumber")}
+            </Button>
+            <button
+              className="text-xs font-semibold text-primary underline"
+              onClick={() => {
+                setCameraFailed(false);
+                setCameraRetry((n) => n + 1);
+              }}
+            >
+              {dt("tryCameraAgain")}
+            </button>
+          </div>
+        ) : (
+          <QrScanner
+            key={cameraRetry}
+            className="h-[45vh]"
+            paused={typing || picking || adding}
+            onCode={(t) => void addCode(t, "scan")}
+            onFailed={() => {
+              setCameraFailed(true);
+              setTyped("");
+              setTyping(true);
+            }}
+          />
+        )}
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-bold text-foreground">
             <span className="num text-lg font-extrabold text-primary">{chips.length}</span> {dt("packetsCount")}
           </p>
-          <Button variant="outline" size="sm" onClick={() => { setTyped(""); setTyping(true); }}>
-            <Keyboard className="size-4" />
-            {dt("typeNumber")}
-          </Button>
+          {!cameraFailed && (
+            <Button variant="outline" size="sm" onClick={() => { setTyped(""); setTyping(true); }}>
+              <Keyboard className="size-4" />
+              {dt("typeNumber")}
+            </Button>
+          )}
         </div>
         {chips.length === 0 ? (
           <p className="text-xs text-muted-foreground">{dt("scanStickers")}</p>
