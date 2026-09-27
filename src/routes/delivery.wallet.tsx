@@ -142,7 +142,7 @@ function WalletPage() {
               wallet.data!.entries.map((e) => (
                 <div key={e.id} className="flex items-center justify-between gap-3 p-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{e.reason ?? e.type}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{entryLabel(e, dt)}</p>
                     <p className="num text-[11px] text-muted-foreground">
                       {new Date(e.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </p>
@@ -166,7 +166,7 @@ function WalletPage() {
               topups.data!.map((t) => (
                 <div key={t.id} className="flex items-center justify-between gap-3 p-3">
                   <div>
-                    <p className="text-sm font-semibold capitalize text-foreground">{t.status}</p>
+                    <p className="text-sm font-semibold text-foreground">{topupLabel(t.status, dt)}</p>
                     <p className="num text-[11px] text-muted-foreground">
                       {new Date(t.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                       {t.created_by_label ? ` · ${t.created_by_label}` : ""}
