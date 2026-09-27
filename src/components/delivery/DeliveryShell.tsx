@@ -64,6 +64,10 @@ export function DeliveryShell({
   const [draft, setDraft] = useState("");
   usePushRegistration(context.merchantId ?? merchant?.id);
   useDeliveryDeepLinks();
+  const scrollRef = useRef<HTMLElement>(null);
+  const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, onRefresh);
+  const { dragX, animating } = useEdgeSwipeBack(!open, "/delivery");
+  useNativeBack();
 
   useEffect(() => {
     if (ready && merchant && !hasDelivery) void navigate({ to: "/home", replace: true });
