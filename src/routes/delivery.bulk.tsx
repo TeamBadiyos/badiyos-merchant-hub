@@ -17,9 +17,10 @@ export const Route = createFileRoute("/delivery/bulk")({
   component: Bulk,
 });
 
+// Phones below are intentionally fake so sample rows can never match a real receiver.
 const SAMPLE = `receiver_phone,reference_no,description,packets
-9876543210,INV-1001,Medicines,1
-9123456780,INV-1002,Grocery box,2
+9000000001,SAMPLE-001,Medicines,1
+9000000002,SAMPLE-002,Grocery box,2
 `;
 
 function Bulk() {
@@ -30,6 +31,7 @@ function Bulk() {
   const receivers = useQuery({ queryKey: ["biz", "receivers"], queryFn: listReceivers });
   const profile = useQuery({ queryKey: ["biz", "profile"], queryFn: getProfile });
   const [text, setText] = useState("");
+  const [isSample, setIsSample] = useState(false);
   const [busy, setBusy] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<number, string>>({});
 
@@ -112,13 +114,23 @@ function Bulk() {
                 className="hidden"
                 onChange={async (e) => {
                   const f = e.target.files?.[0];
-                  if (f) setText(await f.text());
+                  if (f) {
+                    setText(await f.text());
+                    setIsSample(false);
+                  }
                   e.target.value = "";
                 }}
               />
             </label>
           </Button>
-          <Button variant="outline" className="flex-1" onClick={() => setText(SAMPLE)}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              setText(SAMPLE);
+              setIsSample(true);
+            }}
+          >
             <FileText className="size-4" />
             {dt("fillSample")}
           </Button>
@@ -143,10 +155,24 @@ function Bulk() {
             {dt("sampleCsv")}
           </Button>
         </div>
-        <Textarea rows={6} placeholder={dt("pasteCsv")} value={text} onChange={(e) => setText(e.target.value)} className="num text-xs" />
+        <Textarea
+          rows={6}
+          placeholder={dt("pasteCsv")}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setIsSample(false);
+          }}
+          className="num text-xs"
+        />
 
         {rows.length > 0 && (
           <>
+            {isSample && (
+              <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                {dt("sampleWarning")}
+              </p>
+            )}
             <p className="text-sm font-bold text-foreground">
               {dt("preview")}: {rows.length - bad} {dt("rowsOk")}
               {bad > 0 && <span className="text-destructive"> · {bad} {dt("rowsErr")}</span>}
