@@ -329,37 +329,50 @@ function NewOrder() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={picking} onOpenChange={setPicking}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{dt("selectReceiver")}</DialogTitle></DialogHeader>
-          <div className="relative">
-            <Search className="absolute top-3.5 left-3 size-4 text-muted-foreground" />
-            <Input className="h-11 pl-9" placeholder={dt("searchReceiver")} value={q} onChange={(e) => setQ(e.target.value)} />
+      <Sheet open={picking} onOpenChange={setPicking}>
+        <SheetContent
+          side="bottom"
+          className="flex max-h-[88vh] flex-col gap-0 rounded-t-3xl p-0"
+        >
+          <div className="shrink-0 space-y-3 border-b border-border px-4 pt-3 pb-3">
+            <div className="mx-auto h-1.5 w-10 rounded-full bg-border" />
+            <SheetHeader className="space-y-0 text-left">
+              <SheetTitle className="text-base font-extrabold">{dt("selectReceiver")}</SheetTitle>
+            </SheetHeader>
+            <div className="relative">
+              <Search className="absolute top-3.5 left-3 size-4 text-muted-foreground" />
+              <Input
+                className="h-11 pl-9"
+                placeholder={dt("searchReceiver")}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
           </div>
-          {q.trim() ? (
-            <div className="divide-y divide-border rounded-xl border border-border">{matches.map(rRow)}</div>
-          ) : (
-            <>
-              {recent.length > 0 && (
-                <>
-                  <p className="text-xs font-bold text-muted-foreground">{dt("recent")}</p>
-                  <div className="divide-y divide-border rounded-xl border border-border">{recent.map(rRow)}</div>
-                </>
-              )}
-              {frequent.length > 0 && (
-                <>
-                  <p className="text-xs font-bold text-muted-foreground">{dt("frequent")}</p>
-                  <div className="divide-y divide-border rounded-xl border border-border">{frequent.map(rRow)}</div>
-                </>
-              )}
-            </>
-          )}
-          <Button variant="outline" onClick={() => { setPicking(false); setAdding(true); }}>
-            <Plus className="size-4" />
-            {dt("addReceiver")}
-          </Button>
-        </DialogContent>
-      </Dialog>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+            {!q.trim() && matches.length > 0 && (
+              <p className="pb-2 text-xs font-bold text-muted-foreground">{dt("topReceivers")}</p>
+            )}
+            <div className="divide-y divide-border rounded-xl border border-border">
+              {matches.map(rRow)}
+            </div>
+          </div>
+          <div className="safe-bottom shrink-0 border-t border-border p-4">
+            <Button
+              variant="outline"
+              className="h-12 w-full font-bold"
+              onClick={() => {
+                setPicking(false);
+                setAdding(true);
+              }}
+            >
+              <Plus className="size-4" />
+              {dt("addReceiver")}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
 
       {adding && (
         <PlaceForm
