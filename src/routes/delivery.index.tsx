@@ -21,7 +21,6 @@ import {
   bizRpc,
   getProfile,
   getTrip,
-  getTripRider,
   getWallet,
   inr,
   listActiveTrips,
@@ -201,12 +200,6 @@ function ActiveTrip({ tripId }: { tripId: string }) {
     queryFn: () => getTrip(tripId),
     refetchInterval: 30_000,
   });
-  const rider = useQuery({
-    queryKey: ["biz", "trip-rider", tripId],
-    queryFn: () => getTripRider(tripId),
-    refetchInterval: 10_000,
-  });
-
   if (trip.isLoading)
     return (
       <div className="flex h-20 items-center justify-center rounded-2xl border border-border bg-card">
@@ -221,14 +214,14 @@ function ActiveTrip({ tripId }: { tripId: string }) {
       <div className="flex items-center justify-between gap-3 px-1">
         <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <Truck className="size-4 shrink-0 text-primary" />
-          {rider.data?.available ? (
-            <span className="truncate font-semibold text-foreground">{rider.data.name ?? dt("rider")}</span>
+          {trip.data.rider_available ? (
+            <span className="truncate font-semibold text-foreground">{trip.data.rider_name ?? dt("rider")}</span>
           ) : (
             <span className="font-semibold">{dt("findingRider")}</span>
           )}
-          {rider.data?.available && rider.data.phone && (
+          {trip.data.rider_available && trip.data.rider_phone && (
             <Button variant="ghost" size="icon" className="size-8" asChild aria-label={dt("call")}>
-              <a href={`tel:+91${rider.data.phone}`}><Phone className="size-4" /></a>
+              <a href={`tel:+91${trip.data.rider_phone}`}><Phone className="size-4" /></a>
             </Button>
           )}
         </div>

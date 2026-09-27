@@ -75,8 +75,11 @@ export type TripInfo = {
   status: string;
   run_label: string | null;
   trip_no: number | null;
-  zone_name: string | null;
+  trip_label: string | null;
   parcel_count: number;
+  rider_available: boolean;
+  rider_name: string | null;
+  rider_phone: string | null;
   stops: TripStop[];
 };
 
