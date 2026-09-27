@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { KeyRound, Loader2, Phone, Share2, Undo2 } from "lucide-react";
 
 import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell";
 import { CancelTripDialog } from "@/components/delivery/CancelTripDialog";
+import { RemovePacketsPanel, RemovedPacketsList } from "@/components/delivery/RemovePacketsPanel";
 import { PackingList } from "@/components/delivery/PackingList";
 import { ParcelLabelDialog } from "@/components/delivery/ParcelLabelDialog";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ async function share(text: string) {
 function Trip() {
   const { id } = Route.useParams();
   const dt = useDT();
+  const qc = useQueryClient();
   const trip = useQuery({ queryKey: ["biz", "trip", id], queryFn: () => getTrip(id), refetchInterval: 10_000 });
   const rider = useQuery({
     queryKey: ["biz", "trip-rider", id],
@@ -53,7 +55,7 @@ function Trip() {
   return (
     <DeliveryShell
       title={`${dt("trip")} ${trip.data?.order_code ?? ""}`}
-      onRefresh={() => Promise.all([trip.refetch(), rider.refetch()])}
+      onRefresh={() => Promise.all([trip.refetch(), rider.refetch(), qc.invalidateQueries({ queryKey: ["biz", "trip-orders", id] })])}
     >
       {trip.isLoading ? (
         <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
@@ -102,7 +104,9 @@ function Trip() {
             )}
           </div>
 
+          {trip.data && <RemovePacketsPanel trip={trip.data} />}
           {trip.data && <CancelTripDialog trip={trip.data} />}
+          {trip.data && <RemovedPacketsList trip={trip.data} />}
 
           {withOtp.length > 0 && (
             <Button size="lg" className="h-12 w-full" onClick={() => void share(withOtp.map(line).join("\n"))}>

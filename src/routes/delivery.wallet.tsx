@@ -32,6 +32,10 @@ type WalletEntry = { amount: number; type: string; reason: string | null };
 function entryLabel(entry: WalletEntry, dt: DT) {
   const t = (key: string) => (dt as unknown as (k: string) => string)(key);
   const reason = (entry.reason ?? "").toLowerCase();
+  if (reason.startsWith("packets removed from trip")) {
+    const m = /trip\s+(t\S+)/i.exec(entry.reason ?? "");
+    return `${t("entryPacketsRemoved")}${m?.[1] && m[1] !== "t?" ? ` ${m[1].toUpperCase()}` : ""}`;
+  }
   if (reason.startsWith("batch")) return t("entryTripCharge");
   if (reason.startsWith("refund") || reason.startsWith("cancel")) return t("entryTripRefund");
   if (reason.startsWith("return")) return t("entryReturn");
