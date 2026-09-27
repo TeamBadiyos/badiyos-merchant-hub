@@ -74,7 +74,6 @@ const en = {
   cancelTrip: "Cancel trip",
   cancelTripBack: "Keep trip",
   cancelTripInfo: "Orders go back to Pending and will go in the next dispatch.",
-  cancelReason: "Reason",
   cancelReasonRiderLate: "Rider is late",
   cancelReasonOrderChanged: "Order changed",
   cancelReasonCustomer: "Customer cancelled",
@@ -150,7 +149,7 @@ const en = {
   gettingAddress: "Getting the address…",
 };
 
-type DKey = keyof typeof en;
+export type DKey = keyof typeof en;
 
 const mr: Record<DKey, string> = {
   home: "होम",
@@ -223,7 +222,6 @@ const mr: Record<DKey, string> = {
   cancelTrip: "ट्रिप रद्द करा",
   cancelTripBack: "ट्रिप ठेवा",
   cancelTripInfo: "ऑर्डर पुन्हा प्रलंबित होतील आणि पुढच्या डिस्पॅचमध्ये जातील.",
-  cancelReason: "कारण",
   cancelReasonRiderLate: "रायडर उशिरा आहे",
   cancelReasonOrderChanged: "ऑर्डर बदलली",
   cancelReasonCustomer: "ग्राहकाने रद्द केले",
