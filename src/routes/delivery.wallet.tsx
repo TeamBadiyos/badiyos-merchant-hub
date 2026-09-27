@@ -25,6 +25,29 @@ export const Route = createFileRoute("/delivery/wallet")({
   component: WalletPage,
 });
 
+type DT = (key: never) => string;
+type WalletEntry = { amount: number; type: string; reason: string | null };
+
+/** Turns stored technical reasons ("batch:<uuid>", "adjust:...") into plain words. */
+function entryLabel(entry: WalletEntry, dt: DT) {
+  const t = (key: string) => (dt as unknown as (k: string) => string)(key);
+  const reason = (entry.reason ?? "").toLowerCase();
+  if (reason.startsWith("batch")) return t("entryTripCharge");
+  if (reason.startsWith("refund") || reason.startsWith("cancel")) return t("entryTripRefund");
+  if (reason.startsWith("adjust")) return t("entryAdjust");
+  if (reason.startsWith("topup") || reason.startsWith("top_up")) return t("entryTopup");
+  const isDebit = entry.type === "debit" || Number(entry.amount) < 0;
+  return isDebit ? t("entryDebit") : t("entryCredit");
+}
+
+function topupLabel(status: string, dt: DT) {
+  const t = (key: string) => (dt as unknown as (k: string) => string)(key);
+  const s = (status ?? "").toLowerCase();
+  if (s === "paid" || s === "success" || s === "captured" || s === "credited") return t("topupCompleted");
+  if (s === "failed" || s === "cancelled" || s === "canceled") return t("topupFailed");
+  return t("topupProcessing");
+}
+
 
 function WalletPage() {
   const dt = useDT();
@@ -142,7 +165,7 @@ function WalletPage() {
               wallet.data!.entries.map((e) => (
                 <div key={e.id} className="flex items-center justify-between gap-3 p-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{e.reason ?? e.type}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">{entryLabel(e, dt)}</p>
                     <p className="num text-[11px] text-muted-foreground">
                       {new Date(e.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </p>
@@ -166,7 +189,7 @@ function WalletPage() {
               topups.data!.map((t) => (
                 <div key={t.id} className="flex items-center justify-between gap-3 p-3">
                   <div>
-                    <p className="text-sm font-semibold capitalize text-foreground">{t.status}</p>
+                    <p className="text-sm font-semibold text-foreground">{topupLabel(t.status, dt)}</p>
                     <p className="num text-[11px] text-muted-foreground">
                       {new Date(t.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                       {t.created_by_label ? ` · ${t.created_by_label}` : ""}
