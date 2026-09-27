@@ -116,7 +116,7 @@ function OrdersPage() {
 
           {!orders.isLoading && filtered.length === 0 && (
             <PlaceholderPanel
-              title={orders.data?.length ? t("noResults") : t("noOrders")}
+              title={allOrders.length ? t("noResults") : t("noOrders")}
               description={t("ordersEmpty")}
               icon={Receipt}
             />
