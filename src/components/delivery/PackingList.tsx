@@ -1,4 +1,4 @@
-import { CheckCircle2, PackageCheck, Printer } from "lucide-react";
+import { CheckCircle2, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,10 +19,12 @@ export function PackingList({ trip, compact = false, showPrint = false }: Packin
     .filter((stop) => stop.stop_type === "drop")
     .sort((a, b) => a.sequence - b.sequence);
   const elementId = `packing-list-${trip.order_id}`;
+  const runLabel = trip.run_label?.replace(/ run$/, ` ${dt("run")}`) ?? null;
   const heading = [
-    trip.run_label,
+    runLabel,
     trip.trip_no ? `${dt("trip")} ${trip.trip_no}` : dt("trip"),
     trip.zone_name,
+    `${trip.parcel_count} ${dt("parcels")}`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -33,10 +35,6 @@ export function PackingList({ trip, compact = false, showPrint = false }: Packin
         <div className="min-w-0">
           <p className="text-sm font-extrabold text-foreground">{heading}</p>
           <p className="num mt-0.5 text-[11px] text-muted-foreground">{trip.order_code ?? trip.order_id}</p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-primary">
-            <PackageCheck className="size-4" />
-            {trip.parcel_count} {dt("parcels")}
-          </p>
         </div>
         <label className="print:hidden flex shrink-0 cursor-pointer items-center gap-2 text-xs font-bold text-foreground">
           <Checkbox checked={packed} onCheckedChange={(value) => setPacked(value === true)} />
