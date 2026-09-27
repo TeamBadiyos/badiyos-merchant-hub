@@ -89,7 +89,18 @@ function DeliveryHome() {
   const threshold = plan?.qty_enabled ? Number(plan.qty_threshold ?? 0) : 0;
 
   return (
-    <DeliveryShell title={dt("home")}>
+    <DeliveryShell
+      title={dt("home")}
+      onRefresh={() =>
+        Promise.all([
+          wallet.refetch(),
+          profile.refetch(),
+          stock.refetch(),
+          orders.refetch(),
+          trips.refetch(),
+        ])
+      }
+    >
       <div className="space-y-5">
         <div
           className={`rounded-2xl border p-4 shadow-card ${

@@ -41,7 +41,7 @@ function Receivers() {
   };
 
   return (
-    <DeliveryShell title={dt("receivers")}>
+    <DeliveryShell title={dt("receivers")} onRefresh={() => receivers.refetch()}>
       <div className="space-y-4">
         <Button size="lg" className="h-12 w-full" onClick={() => setEditing({})}>
           <Plus className="size-5" />

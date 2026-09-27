@@ -14,7 +14,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { ModeSwitch } from "@/components/delivery/ModeSwitch";
 import { Wordmark } from "@/components/Wordmark";
@@ -27,6 +27,10 @@ import { useDT } from "@/lib/delivery/i18n";
 import { useActorName, useAppMode } from "@/lib/delivery/mode";
 import { useI18n } from "@/lib/i18n";
 import { usePushRegistration } from "@/lib/push";
+import { PullIndicator } from "@/components/PullIndicator";
+import { useEdgeSwipeBack } from "@/lib/use-edge-swipe-back";
+import { useNativeBack } from "@/lib/use-native-back";
+import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 import { useRequireAuth } from "@/lib/use-require-auth";
 
 const SUPPORT_TEL = "tel:+918007444464";
@@ -38,7 +42,16 @@ const tabs = [
   { to: "/delivery/wallet", key: "wallet", icon: Wallet },
 ] as const;
 
-export function DeliveryShell({ title, children }: { title: string; children: ReactNode }) {
+export function DeliveryShell({
+  title,
+  children,
+  onRefresh,
+}: {
+  title: string;
+  children: ReactNode;
+  /** Enables native-style pull-to-refresh on this screen's scroll area. */
+  onRefresh?: () => Promise<unknown> | void;
+}) {
   const dt = useDT();
   const { lang, setLang } = useI18n();
   const merchant = useRequireAuth();
@@ -51,6 +64,10 @@ export function DeliveryShell({ title, children }: { title: string; children: Re
   const [draft, setDraft] = useState("");
   usePushRegistration(context.merchantId ?? merchant?.id);
   useDeliveryDeepLinks();
+  const scrollRef = useRef<HTMLElement>(null);
+  const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, onRefresh);
+  const { dragX, animating } = useEdgeSwipeBack(!open, "/delivery");
+  useNativeBack();
 
   useEffect(() => {
     if (ready && merchant && !hasDelivery) void navigate({ to: "/home", replace: true });
@@ -122,7 +139,12 @@ export function DeliveryShell({ title, children }: { title: string; children: Re
 
   return (
     <div className="h-full overflow-hidden bg-background">
-      <div className="safe-x mx-auto flex h-full w-full max-w-[520px] flex-col border-border bg-background sm:border-x">
+      <div
+        className={`safe-x mx-auto flex h-full w-full max-w-[520px] flex-col border-border bg-background sm:border-x ${
+          animating ? "transition-transform duration-200 ease-out" : ""
+        }`}
+        style={dragX ? { transform: `translate3d(${dragX}px,0,0)` } : undefined}
+      >
         <header className="bg-brand-gradient safe-top z-20 shrink-0 px-6 pb-6 text-primary-foreground">
           <div className="flex items-center gap-4 pt-6">
             <Sheet open={open} onOpenChange={setOpen}>
@@ -181,8 +203,14 @@ export function DeliveryShell({ title, children }: { title: string; children: Re
           </div>
         </header>
 
-        <main className="app-scroll relative flex-1">
-          <div className="px-6 pt-6 pb-32">{children}</div>
+        <main ref={scrollRef} className="app-scroll relative flex-1">
+          {onRefresh && <PullIndicator pull={pull} refreshing={refreshing} threshold={threshold} />}
+          <div
+            className={pull ? "" : "transition-transform duration-200 ease-out"}
+            style={{ transform: `translate3d(0,${pull}px,0)` }}
+          >
+            <div className="px-6 pt-6 pb-32">{children}</div>
+          </div>
         </main>
 
         <nav className="safe-bottom fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur">

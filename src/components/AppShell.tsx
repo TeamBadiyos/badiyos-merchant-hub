@@ -34,6 +34,7 @@ import { hapticImpact } from "@/lib/haptics";
 import { useI18n, type Key } from "@/lib/i18n";
 import { useAvailability } from "@/lib/use-availability";
 import { useEdgeSwipeBack } from "@/lib/use-edge-swipe-back";
+import { useNativeBack } from "@/lib/use-native-back";
 import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 
 const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
@@ -78,7 +79,8 @@ export function AppShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const scrollRef = useRef<HTMLElement>(null);
   const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, onRefresh);
-  const { dragX, animating } = useEdgeSwipeBack(!open);
+  const { dragX, animating } = useEdgeSwipeBack(!open, "/home");
+  useNativeBack();
 
   // Delivery-only businesses must never land on a store screen.
   useEffect(() => {

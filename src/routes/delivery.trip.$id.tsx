@@ -51,7 +51,10 @@ function Trip() {
     );
 
   return (
-    <DeliveryShell title={`${dt("trip")} ${trip.data?.order_code ?? ""}`}>
+    <DeliveryShell
+      title={`${dt("trip")} ${trip.data?.order_code ?? ""}`}
+      onRefresh={() => Promise.all([trip.refetch(), rider.refetch()])}
+    >
       {trip.isLoading ? (
         <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
       ) : trip.error ? (

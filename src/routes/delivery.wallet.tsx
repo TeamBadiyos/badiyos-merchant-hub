@@ -138,7 +138,10 @@ function WalletPage() {
 
 
   return (
-    <DeliveryShell title={dt("wallet")}>
+    <DeliveryShell
+      title={dt("wallet")}
+      onRefresh={() => Promise.all([wallet.refetch(), topups.refetch(), limits.refetch()])}
+    >
       <div className="space-y-5">
         <div className={`rounded-2xl border p-5 shadow-card ${low ? "border-destructive/40 bg-destructive/5" : "border-border bg-card"}`}>
           <p className="text-xs font-semibold text-muted-foreground">{dt("balance")}</p>
