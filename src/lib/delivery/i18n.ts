@@ -90,7 +90,6 @@ const en = {
   packingComplete: "Packing complete",
   printPackingList: "Print packing list",
   noInvoice: "No invoice number",
-  stop: "Stop",
   invoiceNo: "Invoice no.",
   fillSample: "Fill sample",
   entryTripCharge: "Delivery trip charges",
