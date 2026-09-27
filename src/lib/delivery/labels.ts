@@ -120,6 +120,8 @@ function arrayBufferToBase64(buffer: ArrayBuffer) {
   return btoa(binary);
 }
 
+const containsDevanagari = (value: string) => /[\u0900-\u097f]/.test(value);
+
 export async function downloadParcelLabels(labels: ParcelLabel[], format: LabelFormat, title: string) {
   if (labels.length === 0) return;
   const [{ jsPDF }, fontResponse, qrImages] = await Promise.all([
@@ -153,17 +155,24 @@ export async function downloadParcelLabels(labels: ParcelLabel[], format: LabelF
     const qrSize = thermal ? 27 : 30;
     const textWidth = width - inset * 2 - qrSize - 3;
     pdf.setTextColor(17);
+    pdf.setFont("helvetica", "bold");
     pdf.setFontSize(16);
     pdf.text(`T${label.tripNo} · ${label.dropLabel}`, x + inset, y + inset + 5);
     pdf.text(`${label.packetNo}/${label.packetTotal}`, x + width - inset - qrSize - 3, y + inset + 5, { align: "right" });
+    pdf.setFont(containsDevanagari(label.receiverName) ? "LabelSans" : "helvetica", containsDevanagari(label.receiverName) ? "normal" : "bold");
     pdf.setFontSize(11);
     pdf.text(label.receiverName, x + inset, y + inset + 12, { maxWidth: textWidth });
+    pdf.setFont(containsDevanagari(label.address) ? "LabelSans" : "helvetica", "normal");
     pdf.setFontSize(8);
-    pdf.text(pdf.splitTextToSize(label.address, textWidth).slice(0, 2), x + inset, y + inset + 17);
-    pdf.text(label.invoices.length ? label.invoices.join(", ") : "—", x + inset, y + inset + 27, { maxWidth: textWidth });
+    pdf.text(pdf.splitTextToSize(label.address, textWidth).slice(0, 2), x + inset, y + inset + 19);
+    pdf.setFont("courier", "bold");
+    pdf.text(label.invoices.length ? label.invoices.join(", ") : "—", x + inset, y + inset + 31, { maxWidth: textWidth });
     pdf.setFontSize(6.5);
     pdf.setTextColor(85);
-    pdf.text(`${label.dispatchDate} · ${label.businessName}`, x + inset, y + height - inset, { maxWidth: textWidth });
+    pdf.setFont("helvetica", "normal");
+    pdf.text(label.dispatchDate, x + inset, y + height - inset - 3);
+    pdf.setFont(containsDevanagari(label.businessName) ? "LabelSans" : "helvetica", "normal");
+    pdf.text(label.businessName, x + inset, y + height - inset, { maxWidth: textWidth });
     const qrX = x + width - inset - qrSize;
     pdf.addImage(qrImages[index] ?? "", "PNG", qrX, y + inset, qrSize, qrSize);
     pdf.setFont("courier", "bold");
