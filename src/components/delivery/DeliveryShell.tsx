@@ -46,12 +46,16 @@ export function DeliveryShell({
   title,
   children,
   onRefresh,
+  footer,
 }: {
   title: string;
   children: ReactNode;
   /** Enables native-style pull-to-refresh on this screen's scroll area. */
   onRefresh?: () => Promise<unknown> | void;
+  /** Replaces the bottom tab bar with a screen-specific action bar. */
+  footer?: ReactNode;
 }) {
+
   const dt = useDT();
   const { lang, setLang } = useI18n();
   const merchant = useRequireAuth();
@@ -213,6 +217,11 @@ export function DeliveryShell({
           </div>
         </main>
 
+        {footer ? (
+          <div className="safe-bottom fixed bottom-0 z-30 w-full max-w-[520px] border-t border-border bg-background p-3">
+            {footer}
+          </div>
+        ) : (
         <nav className="safe-bottom fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur">
           <ul className="grid grid-cols-4">
             {tabs.map(({ to, key, icon: Icon }) => {
@@ -237,6 +246,8 @@ export function DeliveryShell({
             })}
           </ul>
         </nav>
+        )}
+
       </div>
     </div>
   );

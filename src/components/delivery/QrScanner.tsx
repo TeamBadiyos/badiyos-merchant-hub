@@ -54,20 +54,23 @@ export function QrScanner({
     const tick = async () => {
       if (stopped) return;
       const v = video.current;
+      if (v && !pausedRef.current && v.paused) void v.play().catch(() => undefined);
       if (v && v.readyState >= 2 && !pausedRef.current) {
         try {
+
           if (detector) {
             const r = await detector.detect(v);
             if (r[0]?.rawValue) emit(r[0].rawValue);
           } else if (g) {
-            const w = 480;
-            const h = Math.round((v.videoHeight / v.videoWidth) * w) || 360;
+            const w = 320;
+            const h = Math.round((v.videoHeight / v.videoWidth) * w) || 240;
             canvas.width = w;
             canvas.height = h;
             g.drawImage(v, 0, 0, w, h);
             const img = g.getImageData(0, 0, w, h);
             const r = jsQR(img.data, w, h, { inversionAttempts: "dontInvert" });
             if (r?.data) emit(r.data);
+
           }
         } catch {
           /* keep scanning */
@@ -101,6 +104,15 @@ export function QrScanner({
     };
   }, []);
 
+  // Some Android WebViews pause the stream when a dialog opens; resume on close.
+  useEffect(() => {
+    if (paused) return;
+    const v = video.current;
+    if (v?.paused) void v.play().catch(() => undefined);
+  }, [paused]);
+
+
+
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-foreground ${className}`}>
       {failed ? (
@@ -110,7 +122,7 @@ export function QrScanner({
         </div>
       ) : (
         <>
-          <video ref={video} playsInline muted className="h-full w-full object-cover" />
+          <video ref={video} autoPlay playsInline muted className="h-full w-full object-cover" />
           <div className="pointer-events-none absolute inset-[18%] rounded-xl border-2 border-primary-foreground/80" />
         </>
       )}
