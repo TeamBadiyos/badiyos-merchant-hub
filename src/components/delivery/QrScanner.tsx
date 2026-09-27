@@ -122,7 +122,7 @@ export function QrScanner({
         </div>
       ) : (
         <>
-          <video ref={video} playsInline muted className="h-full w-full object-cover" />
+          <video ref={video} autoPlay playsInline muted className="h-full w-full object-cover" />
           <div className="pointer-events-none absolute inset-[18%] rounded-xl border-2 border-primary-foreground/80" />
         </>
       )}
