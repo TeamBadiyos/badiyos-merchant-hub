@@ -34,10 +34,14 @@ function entryLabel(entry: WalletEntry, dt: DT) {
   const reason = (entry.reason ?? "").toLowerCase();
   if (reason.startsWith("batch")) return t("entryTripCharge");
   if (reason.startsWith("refund") || reason.startsWith("cancel")) return t("entryTripRefund");
+  if (reason.startsWith("return")) return t("entryReturn");
   if (reason.startsWith("adjust")) return t("entryAdjust");
   if (reason.startsWith("topup") || reason.startsWith("top_up")) return t("entryTopup");
-  const isDebit = entry.type === "debit" || Number(entry.amount) < 0;
-  return isDebit ? t("entryDebit") : t("entryCredit");
+  if (!reason) {
+    const isDebit = entry.type === "debit" || Number(entry.amount) < 0;
+    return isDebit ? t("entryDebit") : t("entryCredit");
+  }
+  return t("entryOther");
 }
 
 function topupLabel(status: string, dt: DT) {
