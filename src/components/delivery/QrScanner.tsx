@@ -60,14 +60,15 @@ export function QrScanner({
             const r = await detector.detect(v);
             if (r[0]?.rawValue) emit(r[0].rawValue);
           } else if (g) {
-            const w = 480;
-            const h = Math.round((v.videoHeight / v.videoWidth) * w) || 360;
+            const w = 320;
+            const h = Math.round((v.videoHeight / v.videoWidth) * w) || 240;
             canvas.width = w;
             canvas.height = h;
             g.drawImage(v, 0, 0, w, h);
             const img = g.getImageData(0, 0, w, h);
             const r = jsQR(img.data, w, h, { inversionAttempts: "dontInvert" });
             if (r?.data) emit(r.data);
+
           }
         } catch {
           /* keep scanning */
