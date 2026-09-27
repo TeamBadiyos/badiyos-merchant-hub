@@ -8,7 +8,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 // Bias suggestions around Latur, Maharashtra (the service area).
-const BIAS = { lat: 18.4088, lng: 76.5604, radius: 60000 };
+const BIAS = { lat: 18.4088, lng: 76.5604, radius: 50000 };
 
 function creds() {
   const lovable = process.env["LOVABLE_API_KEY"];
