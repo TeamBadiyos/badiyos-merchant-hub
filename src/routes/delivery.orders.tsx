@@ -68,7 +68,7 @@ function Orders() {
   };
 
   return (
-    <DeliveryShell title={dt("orders")}>
+    <DeliveryShell title={dt("orders")} onRefresh={() => orders.refetch()}>
       <div className="space-y-4">
         <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1">
           {TABS.map(([s, k]) => {
