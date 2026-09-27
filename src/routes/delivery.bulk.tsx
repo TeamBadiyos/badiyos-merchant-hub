@@ -114,13 +114,23 @@ function Bulk() {
                 className="hidden"
                 onChange={async (e) => {
                   const f = e.target.files?.[0];
-                  if (f) setText(await f.text());
+                  if (f) {
+                    setText(await f.text());
+                    setIsSample(false);
+                  }
                   e.target.value = "";
                 }}
               />
             </label>
           </Button>
-          <Button variant="outline" className="flex-1" onClick={() => setText(SAMPLE)}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              setText(SAMPLE);
+              setIsSample(true);
+            }}
+          >
             <FileText className="size-4" />
             {dt("fillSample")}
           </Button>
@@ -145,10 +155,24 @@ function Bulk() {
             {dt("sampleCsv")}
           </Button>
         </div>
-        <Textarea rows={6} placeholder={dt("pasteCsv")} value={text} onChange={(e) => setText(e.target.value)} className="num text-xs" />
+        <Textarea
+          rows={6}
+          placeholder={dt("pasteCsv")}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setIsSample(false);
+          }}
+          className="num text-xs"
+        />
 
         {rows.length > 0 && (
           <>
+            {isSample && (
+              <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                {dt("sampleWarning")}
+              </p>
+            )}
             <p className="text-sm font-bold text-foreground">
               {dt("preview")}: {rows.length - bad} {dt("rowsOk")}
               {bad > 0 && <span className="text-destructive"> · {bad} {dt("rowsErr")}</span>}
