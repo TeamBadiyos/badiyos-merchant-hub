@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { hapticImpact } from "@/lib/haptics";
+import { friendlyErrorMessage } from "@/lib/friendly-error";
 import { useI18n } from "@/lib/i18n";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import {

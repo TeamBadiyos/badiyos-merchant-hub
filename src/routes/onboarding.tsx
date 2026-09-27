@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { verifyGstin } from "@/lib/gstin.functions";
 import { hapticImpact, hapticNotify } from "@/lib/haptics";
+import { friendlyErrorMessage } from "@/lib/friendly-error";
 import { useI18n } from "@/lib/i18n";
 import { lookupRegionDefaults } from "@/lib/locale-config";
 import {
@@ -60,7 +61,7 @@ const region = lookupRegionDefaults();
 type Errors = Record<string, string | null>;
 
 function OnboardingPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { merchant, ready, userId, refresh } = useAuth();
   const navigate = useNavigate();
   const verifyGstinFn = useServerFn(verifyGstin);
