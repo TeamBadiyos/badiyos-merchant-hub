@@ -64,6 +64,10 @@ const en = {
   changeReceiver: "Change",
   recent: "Recent",
   frequent: "Most frequent",
+  topReceivers: "Most orders first",
+  ordersWord: "orders",
+  newReceiver: "New",
+
   placeOrder: "Place Order",
   ordersPlaced: "orders placed",
   fixRedStickers: "Some stickers have a problem. Remove or fix the red ones.",
