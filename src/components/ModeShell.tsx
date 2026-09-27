@@ -19,7 +19,12 @@ export function ModeShell({
   onRefresh?: () => Promise<unknown> | void;
 }) {
   const { mode } = useAppMode();
-  if (mode === "delivery") return <DeliveryShell title={title}>{children}</DeliveryShell>;
+  if (mode === "delivery")
+    return (
+      <DeliveryShell title={title} {...(onRefresh ? { onRefresh } : {})}>
+        {children}
+      </DeliveryShell>
+    );
   return (
     <AppShell title={title} {...(onRefresh ? { onRefresh } : {})}>
       {children}
