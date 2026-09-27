@@ -90,14 +90,25 @@ function WalletPage() {
         amountPaise: res.amountPaise,
         description: dt("balance"),
         notes: { purpose: "merchant_wallet_topup", merchant_id: res.merchantId },
+        // Already signed in here: hand Razorpay the details so it never asks again.
+        prefill: {
+          ...(merchant?.owner_name || merchant?.store_name
+            ? { name: merchant.owner_name ?? merchant.store_name ?? "" }
+            : {}),
+          ...(toRazorpayContact(merchant?.phone) ? { contact: toRazorpayContact(merchant?.phone)! } : {}),
+        },
       });
       setOpen(false);
       void pollCredit(before);
     } catch (e) {
-      toast.error((e as Error).message);
+      // Never show raw gateway text: classify and speak plainly.
+      if (isPaymentCancelled(e)) toast(paymentErrorMessage(e, lang));
+      else if (e instanceof Error && e.name === "PaymentError") toast.error(paymentErrorMessage(e, lang));
+      else toast.error(friendlyErrorMessage(e, lang));
       setStage("idle");
     }
   };
+
 
   return (
     <DeliveryShell title={dt("wallet")}>
