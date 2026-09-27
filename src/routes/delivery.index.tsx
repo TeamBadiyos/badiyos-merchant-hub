@@ -1,10 +1,11 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, Clock, Loader2, Plus, Send, Truck, Upload } from "lucide-react";
+import { ChevronRight, Clock, Loader2, Phone, Plus, Send, Truck, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell";
+import { PackingList } from "@/components/delivery/PackingList";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,8 @@ import { Progress } from "@/components/ui/progress";
 import {
   bizRpc,
   getProfile,
+  getTrip,
+  getTripRider,
   getWallet,
   inr,
   listActiveTrips,
@@ -168,25 +171,9 @@ function DeliveryHome() {
             </p>
           ) : (
             <div className="space-y-2">
-              {(trips.data ?? []).map((tr) => (
-                <Link
-                  key={tr.id}
-                  to="/delivery/trip/$id"
-                  params={{ id: tr.courier_order_id! }}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card"
-                >
-                  <Truck className="size-5 text-primary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-foreground">
-                      {dt("trip")} · {tr.drops_count ?? 0} {dt("ordersOf")}
-                    </p>
-                    <p className="num text-xs text-muted-foreground">
-                      {new Date(tr.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                  <ChevronRight className="size-4 text-muted-foreground" />
-                </Link>
-              ))}
+              {(trips.data ?? []).map((tr) =>
+                tr.courier_order_id ? <ActiveTrip key={tr.id} tripId={tr.courier_order_id} /> : null,
+              )}
             </div>
           )}
         </div>
@@ -204,5 +191,53 @@ function DeliveryHome() {
         </AlertDialogContent>
       </AlertDialog>
     </DeliveryShell>
+  );
+}
+
+function ActiveTrip({ tripId }: { tripId: string }) {
+  const dt = useDT();
+  const trip = useQuery({
+    queryKey: ["biz", "trip", tripId],
+    queryFn: () => getTrip(tripId),
+    refetchInterval: 30_000,
+  });
+  const rider = useQuery({
+    queryKey: ["biz", "trip-rider", tripId],
+    queryFn: () => getTripRider(tripId),
+    refetchInterval: 10_000,
+  });
+
+  if (trip.isLoading)
+    return (
+      <div className="flex h-20 items-center justify-center rounded-2xl border border-border bg-card">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  if (!trip.data) return null;
+
+  return (
+    <div className="space-y-2">
+      <PackingList trip={trip.data} compact />
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          <Truck className="size-4 shrink-0 text-primary" />
+          {rider.data?.available ? (
+            <span className="truncate font-semibold text-foreground">{rider.data.name ?? dt("rider")}</span>
+          ) : (
+            <span className="font-semibold">{dt("findingRider")}</span>
+          )}
+          {rider.data?.available && rider.data.phone && (
+            <Button variant="ghost" size="icon" className="size-8" asChild aria-label={dt("call")}>
+              <a href={`tel:+91${rider.data.phone}`}><Phone className="size-4" /></a>
+            </Button>
+          )}
+        </div>
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/delivery/trip/$id" params={{ id: tripId }}>
+            {dt("trip")} <ChevronRight className="size-4" />
+          </Link>
+        </Button>
+      </div>
+    </div>
   );
 }
