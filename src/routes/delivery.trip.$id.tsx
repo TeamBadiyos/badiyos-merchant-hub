@@ -3,8 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { KeyRound, Loader2, Phone, Share2, Undo2 } from "lucide-react";
 
 import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell";
+import { PackingList } from "@/components/delivery/PackingList";
 import { Button } from "@/components/ui/button";
-import { getTrip, type TripStop } from "@/lib/delivery/api";
+import { getTrip, getTripRider, type TripStop } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
 
 export const Route = createFileRoute("/delivery/trip/$id")({
@@ -30,6 +31,11 @@ function Trip() {
   const { id } = Route.useParams();
   const dt = useDT();
   const trip = useQuery({ queryKey: ["biz", "trip", id], queryFn: () => getTrip(id), refetchInterval: 10_000 });
+  const rider = useQuery({
+    queryKey: ["biz", "trip-rider", id],
+    queryFn: () => getTripRider(id),
+    refetchInterval: 10_000,
+  });
 
   const stops = trip.data?.stops ?? [];
   const pickup = stops.find((s) => s.stop_type === "pickup");
@@ -50,6 +56,8 @@ function Trip() {
         <p className="text-sm text-destructive">{(trip.error as Error).message}</p>
       ) : (
         <div className="space-y-4">
+          {trip.data && <PackingList trip={trip.data} showPrint />}
+
           <div className="rounded-2xl border-2 border-primary bg-primary-soft p-5 text-center">
             <p className="text-xs font-bold text-primary">{dt("pickupOtp")}</p>
             <p className="num mt-2 text-5xl font-extrabold tracking-[0.3em] text-foreground">
@@ -59,7 +67,21 @@ function Trip() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-            {dt("rider")}: {dt("riderPending")}
+            {rider.data?.available ? (
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-bold text-foreground">{rider.data.name ?? dt("rider")}</p>
+                  {rider.data.vehicle && <p className="text-xs">{rider.data.vehicle}</p>}
+                </div>
+                {rider.data.phone && (
+                  <Button variant="outline" size="icon" asChild aria-label={dt("call")}>
+                    <a href={`tel:+91${rider.data.phone}`}><Phone className="size-4" /></a>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <p className="font-semibold text-foreground">{dt("findingRider")}</p>
+            )}
           </div>
 
           {withOtp.length > 0 && (
