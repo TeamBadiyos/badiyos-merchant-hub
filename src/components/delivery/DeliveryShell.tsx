@@ -46,12 +46,16 @@ export function DeliveryShell({
   title,
   children,
   onRefresh,
+  footer,
 }: {
   title: string;
   children: ReactNode;
   /** Enables native-style pull-to-refresh on this screen's scroll area. */
   onRefresh?: () => Promise<unknown> | void;
+  /** Replaces the bottom tab bar with a screen-specific action bar. */
+  footer?: ReactNode;
 }) {
+
   const dt = useDT();
   const { lang, setLang } = useI18n();
   const merchant = useRequireAuth();
