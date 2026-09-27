@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Receipt, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -41,11 +41,24 @@ function OrdersPage() {
 
   // Realtime is already subscribed once in the shell — no second channel here.
 
-  const orders = useQuery({
+  // Paged history: 100 newest first, "Load older" walks further back so the
+  // full history (and search over it) stays reachable without one huge fetch.
+  const orders = useInfiniteQuery({
     queryKey: ["orders", "all", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(undefined, { limit: 100 }),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      fetchOrders(undefined, { limit: 100, before: pageParam ?? undefined }),
+    getNextPageParam: (lastPage) =>
+      lastPage.length === 100
+        ? lastPage[lastPage.length - 1].created_at
+        : undefined,
   });
+
+  const allOrders = useMemo(
+    () => orders.data?.pages.flat() ?? [],
+    [orders.data],
+  );
 
   const filtered = useMemo(() => {
     const needle = term.trim().toLowerCase();
