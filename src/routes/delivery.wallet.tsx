@@ -25,6 +25,29 @@ export const Route = createFileRoute("/delivery/wallet")({
   component: WalletPage,
 });
 
+type DT = (key: never) => string;
+type WalletEntry = { amount: number; type: string; reason: string | null };
+
+/** Turns stored technical reasons ("batch:<uuid>", "adjust:...") into plain words. */
+function entryLabel(entry: WalletEntry, dt: DT) {
+  const t = (key: string) => (dt as unknown as (k: string) => string)(key);
+  const reason = (entry.reason ?? "").toLowerCase();
+  if (reason.startsWith("batch")) return t("entryTripCharge");
+  if (reason.startsWith("refund") || reason.startsWith("cancel")) return t("entryTripRefund");
+  if (reason.startsWith("adjust")) return t("entryAdjust");
+  if (reason.startsWith("topup") || reason.startsWith("top_up")) return t("entryTopup");
+  const isDebit = entry.type === "debit" || Number(entry.amount) < 0;
+  return isDebit ? t("entryDebit") : t("entryCredit");
+}
+
+function topupLabel(status: string, dt: DT) {
+  const t = (key: string) => (dt as unknown as (k: string) => string)(key);
+  const s = (status ?? "").toLowerCase();
+  if (s === "paid" || s === "success" || s === "captured" || s === "credited") return t("topupCompleted");
+  if (s === "failed" || s === "cancelled" || s === "canceled") return t("topupFailed");
+  return t("topupProcessing");
+}
+
 
 function WalletPage() {
   const dt = useDT();
