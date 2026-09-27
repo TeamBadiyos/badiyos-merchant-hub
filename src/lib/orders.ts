@@ -23,7 +23,7 @@ export function startOfTodayIso(): string {
  */
 export async function fetchOrders(
   statuses?: string[],
-  opts?: { since?: string; limit?: number },
+  opts?: { since?: string; before?: string; limit?: number },
 ): Promise<OrderWithItems[]> {
   let query = supabase
     .from("merchant_orders")
@@ -32,6 +32,7 @@ export async function fetchOrders(
     .order("created_at", { ascending: false });
   if (statuses?.length) query = query.in("status", statuses);
   if (opts?.since) query = query.gte("created_at", opts.since);
+  if (opts?.before) query = query.lt("created_at", opts.before);
   query = query.limit(opts?.limit ?? 200);
   const { data, error } = await query;
   if (error) throw error;
