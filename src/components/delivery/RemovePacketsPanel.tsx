@@ -67,7 +67,7 @@ export function RemovePacketsPanel({ trip }: { trip: TripInfo }) {
           res.reason === "packet_scanned" ? dt("packetScannedErr") : res.reason === "pickup_done" ? dt("pickupDoneErr") : dt("removeFailed"),
         );
       } else if (res.trip_cancelled) {
-        toast.success(dt("tripCancelled").replace(/\.?\s*Refund$/i, "").replace(/\.\s*परतावा$/, "") || dt("tripCancelled"));
+        toast.success(dt("tripCancelledOnly"));
       } else {
         const n = res.packets_removed ?? res.codes?.length ?? sel.size;
         const refund = Number(res.refund ?? 0);

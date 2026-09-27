@@ -25,7 +25,9 @@ import {
   getWallet,
   inr,
   listActiveTrips,
+  batchTripNos,
   listOrders,
+  listRecentRemovals,
   nextSlot,
 } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
@@ -56,6 +58,25 @@ function DeliveryHome() {
   const lowStock = stock.data ? (perDay > 0 ? avail < perDay * 3 : avail === 0) : false;
   const orders = useQuery({ queryKey: ["biz", "orders"], queryFn: listOrders, refetchInterval: 30_000 });
   const trips = useQuery({ queryKey: ["biz", "trips"], queryFn: listActiveTrips, refetchInterval: 30_000 });
+  const removals = useQuery({ queryKey: ["biz", "removals"], queryFn: () => listRecentRemovals(), refetchInterval: 30_000 });
+  const riderGroups = (() => {
+    const pending = new Set((orders.data ?? []).filter((o) => o.status === "pending").map((o) => o.id));
+    const g = new Map<string, { batch: string | null; n: number }>();
+    for (const r of removals.data ?? []) {
+      if (r.removed_by !== "rider" || !r.business_order_id || !pending.has(r.business_order_id)) continue;
+      const k = r.removal_id ?? r.batch_id ?? r.removed_at;
+      const cur = g.get(k) ?? { batch: r.batch_id, n: 0 };
+      cur.n += 1;
+      g.set(k, cur);
+    }
+    return [...g.entries()];
+  })();
+  const riderBatchIds = [...new Set(riderGroups.map(([, v]) => v.batch).filter(Boolean) as string[])];
+  const tripNos = useQuery({
+    queryKey: ["biz", "batchTripNos", riderBatchIds.join(",")],
+    enabled: riderBatchIds.length > 0,
+    queryFn: () => batchTripNos(riderBatchIds),
+  });
 
   const dispatchNow = useMutation({
     mutationFn: () => bizRpc("business_dispatch_now"),
@@ -98,6 +119,7 @@ function DeliveryHome() {
           stock.refetch(),
           orders.refetch(),
           trips.refetch(),
+          removals.refetch(),
         ])
       }
     >
@@ -122,6 +144,23 @@ function DeliveryHome() {
             {dt("lowLimit")}: {inr(limit)}
           </p>
         </div>
+
+        {riderGroups.map(([k, v]) => {
+          const no = v.batch ? tripNos.data?.[v.batch] : null;
+          return (
+            <Link
+              key={k}
+              to="/delivery/orders"
+              search={{ waiting: true }}
+              className="flex items-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/5 p-3 text-sm font-semibold text-destructive"
+            >
+              <span className="flex-1">
+                {dt("trip")} {no ? `T${no}` : ""}: {v.n} {dt("riderRemovedBanner")}
+              </span>
+              <ChevronRight className="size-4" />
+            </Link>
+          );
+        })}
 
         {stock.data && (
           <p className={`num text-xs font-semibold ${lowStock ? "text-destructive" : "text-muted-foreground"}`}>

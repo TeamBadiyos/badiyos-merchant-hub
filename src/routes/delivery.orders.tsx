@@ -10,12 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { QrScanner } from "@/components/delivery/QrScanner";
 import { sealDisplay } from "@/lib/delivery/seals";
-import { bizRpc, listOrders, type BizOrder } from "@/lib/delivery/api";
+import { bizRpc, listOrders, listRecentRemovals, type BizOrder } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
 import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/orders")({
   head: () => deliveryHead("Delivery orders", "Track pending, on-the-way, delivered and returned orders."),
+  validateSearch: (s: Record<string, unknown>): { waiting?: boolean } => (s["waiting"] ? { waiting: true } : {}),
   component: Orders,
 });
 
@@ -33,6 +34,14 @@ function Orders() {
   const dt = useDT();
   const friendly = useFriendlyError();
   const orders = useQuery({ queryKey: ["biz", "orders"], queryFn: listOrders, refetchInterval: 30_000 });
+  const { waiting } = Route.useSearch();
+  const removals = useQuery({ queryKey: ["biz", "removals"], queryFn: () => listRecentRemovals(), refetchInterval: 30_000 });
+  const removedMap = useMemo(() => {
+    const m = new Map<string, { notes: string | null; reason: string | null }>();
+    for (const r of removals.data ?? []) if (r.business_order_id && !m.has(r.business_order_id)) m.set(r.business_order_id, { notes: r.notes, reason: r.reason_code });
+    return m;
+  }, [removals.data]);
+  const [onlyWaiting, setOnlyWaiting] = useState(Boolean(waiting));
   const [tab, setTab] = useState<string>("pending");
   const [q, setQ] = useState("");
   const [cancelling, setCancelling] = useState<BizOrder | null>(null);
@@ -44,6 +53,7 @@ function Orders() {
     const s = q.trim().toLowerCase();
     return (orders.data ?? [])
       .filter((o) => o.status === tab)
+      .filter((o) => !onlyWaiting || removedMap.has(o.id))
       .filter(
         (o) =>
           !s ||
@@ -52,14 +62,14 @@ function Orders() {
           (o.receiver?.name ?? "").toLowerCase().includes(s) ||
           (o.receiver?.contact_phone ?? "").includes(s),
       );
-  }, [orders.data, tab, q]);
+  }, [orders.data, tab, q, onlyWaiting, removedMap]);
 
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     setBusy(true);
     try {
       await fn();
       toast.success(ok);
-      await orders.refetch();
+      await Promise.all([orders.refetch(), removals.refetch()]);
     } catch (e) {
       toast.error(friendly(e));
     } finally {
@@ -76,7 +86,10 @@ function Orders() {
             return (
               <button
                 key={s}
-                onClick={() => setTab(s)}
+                onClick={() => {
+                  setTab(s);
+                  setOnlyWaiting(false);
+                }}
                 className={`shrink-0 rounded-full border px-3 py-2 text-xs font-bold ${
                   tab === s ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"
                 }`}
@@ -94,6 +107,11 @@ function Orders() {
           </button>
         </div>
 
+        {onlyWaiting && (
+          <button onClick={() => setOnlyWaiting(false)} className="flex items-center gap-1 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-bold text-primary">
+            {dt("waitingNextSlot")} <X className="size-3.5" />
+          </button>
+        )}
         {list.length === 0 ? (
           <p className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
             {dt("noOrders")}
@@ -108,6 +126,12 @@ function Orders() {
                     {o.stickers?.length ? o.stickers.map((k) => sealDisplay(k.code)).join(", ") : o.reference_no || "—"} · {o.packet_count} {dt("packets")}
                   </p>
                   {o.description && <p className="mt-1 text-xs text-muted-foreground">{o.description}</p>}
+                  {o.status === "pending" && removedMap.has(o.id) && (
+                    <p className="mt-1 inline-block rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-bold text-primary">
+                      {dt("waitingNextSlot")}
+                      {(removedMap.get(o.id)?.notes || removedMap.get(o.id)?.reason) && ` · ${removedMap.get(o.id)?.notes || removedMap.get(o.id)?.reason}`}
+                    </p>
+                  )}
                   {o.cancel_reason && <p className="mt-1 text-xs text-destructive">{o.cancel_reason}</p>}
                 </div>
                 <p className="num shrink-0 text-[11px] text-muted-foreground">
@@ -170,6 +194,9 @@ function Orders() {
           <DialogHeader>
             <DialogTitle>{dt("cancelOrder")}</DialogTitle>
           </DialogHeader>
+          {cancelling?.stickers?.length ? (
+            <p className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm font-semibold text-destructive">{dt("voidStickerWarn")}</p>
+          ) : null}
           <Input autoFocus placeholder={dt("cancelReason")} value={reason} onChange={(e) => setReason(e.target.value)} />
           <Button
             variant="destructive"
