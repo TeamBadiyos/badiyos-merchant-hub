@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, RotateCcw, Search, X } from "lucide-react";
+import { ChevronRight, RotateCcw, ScanLine, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -8,6 +8,8 @@ import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { QrScanner } from "@/components/delivery/QrScanner";
+import { sealDisplay } from "@/lib/delivery/seals";
 import { bizRpc, listOrders, type BizOrder } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
 import { useFriendlyError } from "@/lib/use-friendly-error";
@@ -36,6 +38,7 @@ function Orders() {
   const [cancelling, setCancelling] = useState<BizOrder | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -45,6 +48,7 @@ function Orders() {
         (o) =>
           !s ||
           (o.reference_no ?? "").toLowerCase().includes(s) ||
+          (o.stickers ?? []).some((k) => k.code.includes(s.replace(/\D/g, "") || s) || sealDisplay(k.code).includes(s)) ||
           (o.receiver?.name ?? "").toLowerCase().includes(s) ||
           (o.receiver?.contact_phone ?? "").includes(s),
       );
@@ -84,7 +88,10 @@ function Orders() {
         </div>
         <div className="relative">
           <Search className="absolute top-3.5 left-3 size-4 text-muted-foreground" />
-          <Input className="h-11 pl-9" placeholder={dt("searchOrders")} value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="h-11 pl-9 pr-12" placeholder={dt("searchOrders")} value={q} onChange={(e) => setQ(e.target.value)} />
+          <button aria-label={dt("scanToSearch")} onClick={() => setScanning(true)} className="absolute top-1.5 right-1.5 grid size-8 place-items-center rounded-lg text-primary">
+            <ScanLine className="size-5" />
+          </button>
         </div>
 
         {list.length === 0 ? (
@@ -98,7 +105,7 @@ function Orders() {
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-foreground">{o.receiver?.name ?? "—"}</p>
                   <p className="num text-xs text-muted-foreground">
-                    {o.reference_no || "—"} · {o.packet_count} {dt("packets")}
+                    {o.stickers?.length ? o.stickers.map((k) => sealDisplay(k.code)).join(", ") : o.reference_no || "—"} · {o.packet_count} {dt("packets")}
                   </p>
                   {o.description && <p className="mt-1 text-xs text-muted-foreground">{o.description}</p>}
                   {o.cancel_reason && <p className="mt-1 text-xs text-destructive">{o.cancel_reason}</p>}
@@ -137,6 +144,26 @@ function Orders() {
           ))
         )}
       </div>
+
+      <Dialog open={scanning} onOpenChange={setScanning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dt("scanToSearch")}</DialogTitle>
+          </DialogHeader>
+          {scanning && (
+            <QrScanner
+              className="h-72"
+              onCode={(t) => {
+                const d = t.replace(/\D/g, "");
+                setQ(d.length > 1 ? sealDisplay(d) : t);
+                setScanning(false);
+                const hit = (orders.data ?? []).find((o) => (o.stickers ?? []).some((k) => k.code === d));
+                if (hit) setTab(hit.status);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(cancelling)} onOpenChange={(v) => !v && setCancelling(null)}>
         <DialogContent>
