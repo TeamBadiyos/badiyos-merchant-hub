@@ -151,22 +151,36 @@ function NewOrder() {
     }
   };
 
-  const rRow = (r: Receiver) => (
-    <button
-      key={r.id}
-      onClick={() => {
-        setReceiverId(r.id);
-        setPicking(false);
-        setQ("");
-      }}
-      className="block w-full p-3 text-left"
-    >
-      <p className="text-sm font-bold text-foreground">{r.name}</p>
-      <p className="num truncate text-xs text-muted-foreground">
-        {[r.contact_name, r.contact_phone, r.address].filter(Boolean).join(" · ")}
-      </p>
-    </button>
-  );
+  const rRow = (r: Receiver, i: number) => {
+    const n = counts.get(r.id) ?? 0;
+    return (
+      <button
+        key={r.id}
+        onClick={() => {
+          setReceiverId(r.id);
+          setPicking(false);
+          setQ("");
+        }}
+        className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 text-left"
+      >
+        <span className="num w-6 shrink-0 text-sm font-extrabold text-muted-foreground">{i + 1}</span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-bold text-foreground">{r.name}</span>
+          <span className="num block truncate text-xs text-muted-foreground">
+            {[r.contact_name, r.contact_phone, r.address].filter(Boolean).join(" · ")}
+          </span>
+        </span>
+        <span
+          className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-bold ${
+            n > 0 ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {n > 0 ? `${n} ${dt("ordersWord")}` : dt("newReceiver")}
+        </span>
+      </button>
+    );
+  };
+
 
   const placeBar = (
     <Button
