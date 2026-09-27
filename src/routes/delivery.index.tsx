@@ -29,6 +29,8 @@ import {
   nextSlot,
 } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { sealStock } from "@/lib/delivery/seals";
+import { useAuth } from "@/lib/auth";
 import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/")({
@@ -43,6 +45,15 @@ function DeliveryHome() {
   const [confirm, setConfirm] = useState(false);
   const wallet = useQuery({ queryKey: ["biz", "wallet"], queryFn: getWallet });
   const profile = useQuery({ queryKey: ["biz", "profile"], queryFn: getProfile });
+  const { merchant } = useAuth();
+  const stock = useQuery({
+    queryKey: ["biz", "sealStock", merchant?.id],
+    enabled: Boolean(merchant?.id),
+    queryFn: () => sealStock(merchant!.id),
+  });
+  const avail = Number(stock.data?.available ?? 0);
+  const perDay = Number(stock.data?.avg_used_per_day_7d ?? 0);
+  const lowStock = stock.data ? (perDay > 0 ? avail < perDay * 3 : avail === 0) : false;
   const orders = useQuery({ queryKey: ["biz", "orders"], queryFn: listOrders, refetchInterval: 30_000 });
   const trips = useQuery({ queryKey: ["biz", "trips"], queryFn: listActiveTrips, refetchInterval: 30_000 });
 
@@ -101,6 +112,12 @@ function DeliveryHome() {
           </p>
         </div>
 
+        {stock.data && (
+          <p className={`num text-xs font-semibold ${lowStock ? "text-destructive" : "text-muted-foreground"}`}>
+            {dt("stickersLeft")}: {avail.toLocaleString("en-IN")}
+            {lowStock && <> · {dt("orderStickers")}</>}
+          </p>
+        )}
         <Button asChild size="lg" className="h-14 w-full text-base">
           <Link to="/delivery/new">
             <Plus className="size-5" />
