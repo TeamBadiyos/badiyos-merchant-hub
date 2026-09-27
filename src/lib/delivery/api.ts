@@ -67,6 +67,15 @@ export type TripStop = {
   status: string;
   reference_nos: string[] | null;
   parcel_count: number;
+  packets: {
+    code: string;
+    packet_no: number;
+    packet_total: number;
+    trip_no: number;
+    drop_label: string;
+    scanned_pickup_at: string | null;
+    scanned_drop_at: string | null;
+  }[];
   otp: string | null;
 };
 
@@ -74,6 +83,10 @@ export type TripInfo = {
   order_id: string;
   order_code: string | null;
   status: string;
+  batch_status: string | null;
+  dispatch_run_id: string | null;
+  dispatch_date: string | null;
+  business_name: string | null;
   run_label: string | null;
   trip_no: number | null;
   trip_label: string | null;
