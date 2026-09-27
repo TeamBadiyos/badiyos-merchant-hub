@@ -217,6 +217,11 @@ export function DeliveryShell({
           </div>
         </main>
 
+        {footer ? (
+          <div className="safe-bottom fixed bottom-0 z-30 w-full max-w-[520px] border-t border-border bg-background p-3">
+            {footer}
+          </div>
+        ) : (
         <nav className="safe-bottom fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur">
           <ul className="grid grid-cols-4">
             {tabs.map(({ to, key, icon: Icon }) => {
@@ -241,6 +246,8 @@ export function DeliveryShell({
             })}
           </ul>
         </nav>
+        )}
+
       </div>
     </div>
   );
