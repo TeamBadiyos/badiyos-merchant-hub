@@ -17,3 +17,4 @@
   `DeliveryShell`); screens must not open their own channel.
 - `fetchOrders` always takes a `since`/`limit` bound — never pull a shop's whole
   order history with nested items to compute a screen's numbers.
+- Delivery trip packing state is device-local and keyed by courier order ID; the database remains the source for packing-list content.
