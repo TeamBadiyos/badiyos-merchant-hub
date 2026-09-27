@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { bizRpc, isPhone10, phone10, type PickupPoint, type Receiver } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { useFriendlyError } from "@/lib/use-friendly-error";
 
 type Kind = "receiver" | "pickup";
 
@@ -29,6 +30,7 @@ export function PlaceForm({
   onSaved: (id: string) => void;
 }) {
   const dt = useDT();
+  const friendly = useFriendlyError();
   const [f, setF] = useState(() => ({
     name: initial?.name ?? "",
     contact_name: initial?.contact_name ?? "",
@@ -71,7 +73,7 @@ export function PlaceForm({
       onSaved(typeof id === "string" ? id : String((id as { id?: string })?.id ?? ""));
       onOpenChange(false);
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(friendly(e));
     } finally {
       setBusy(false);
     }

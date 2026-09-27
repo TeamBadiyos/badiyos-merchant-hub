@@ -10,10 +10,14 @@ import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth";
 import { bizRpc, getWallet, inr, listTopups } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
 import { createTopupOrder, getTopupLimits } from "@/lib/delivery/topup.functions";
-import { openRazorpayCheckout } from "@/lib/razorpayCheckout";
+import { friendlyErrorMessage, isPaymentCancelled, paymentErrorMessage } from "@/lib/friendly-error";
+import { useI18n } from "@/lib/i18n";
+import { openRazorpayCheckout, toRazorpayContact } from "@/lib/razorpayCheckout";
+
 
 export const Route = createFileRoute("/delivery/wallet")({
   validateSearch: z.object({ topup: z.boolean().optional() }),
@@ -24,6 +28,9 @@ export const Route = createFileRoute("/delivery/wallet")({
 
 function WalletPage() {
   const dt = useDT();
+  const { lang } = useI18n();
+  const { merchant } = useAuth();
+
   const search = Route.useSearch();
   const wallet = useQuery({ queryKey: ["biz", "wallet"], queryFn: getWallet });
   const topups = useQuery({ queryKey: ["biz", "topups"], queryFn: listTopups });
@@ -83,14 +90,25 @@ function WalletPage() {
         amountPaise: res.amountPaise,
         description: dt("balance"),
         notes: { purpose: "merchant_wallet_topup", merchant_id: res.merchantId },
+        // Already signed in here: hand Razorpay the details so it never asks again.
+        prefill: {
+          ...(merchant?.owner_name || merchant?.store_name
+            ? { name: merchant.owner_name ?? merchant.store_name ?? "" }
+            : {}),
+          ...(toRazorpayContact(merchant?.phone) ? { contact: toRazorpayContact(merchant?.phone)! } : {}),
+        },
       });
       setOpen(false);
       void pollCredit(before);
     } catch (e) {
-      toast.error((e as Error).message);
+      // Never show raw gateway text: classify and speak plainly.
+      if (isPaymentCancelled(e)) toast(paymentErrorMessage(e, lang));
+      else if (e instanceof Error && e.name === "PaymentError") toast.error(paymentErrorMessage(e, lang));
+      else toast.error(friendlyErrorMessage(e, lang));
       setStage("idle");
     }
   };
+
 
   return (
     <DeliveryShell title={dt("wallet")}>

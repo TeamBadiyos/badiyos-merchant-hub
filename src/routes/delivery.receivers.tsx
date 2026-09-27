@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { bizRpc, listReceivers, type Receiver } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
+import { useFriendlyError } from "@/lib/use-friendly-error";
 
 export const Route = createFileRoute("/delivery/receivers")({
   head: () => deliveryHead("Receivers", "People and shops you deliver to."),
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/delivery/receivers")({
 
 function Receivers() {
   const dt = useDT();
+  const friendly = useFriendlyError();
   const receivers = useQuery({ queryKey: ["biz", "receivers"], queryFn: listReceivers });
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Partial<Receiver> | null>(null);
@@ -34,7 +36,7 @@ function Receivers() {
       await bizRpc("business_set_receiver_active", { _id: r.id, _active: !r.is_active });
       await receivers.refetch();
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(friendly(e));
     }
   };
 
