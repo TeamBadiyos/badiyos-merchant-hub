@@ -273,20 +273,20 @@ function LoginPage() {
                   {t("otpSub")} +91 {mobile}
                 </p>
               </div>
-              <InputOTP maxLength={6} value={otp} onChange={setOtp} containerClassName="justify-center">
+              <InputOTP maxLength={4} value={otp} onChange={setOtp} containerClassName="justify-center">
                 <InputOTPGroup className="gap-2">
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                  {[0, 1, 2, 3].map((i) => (
                     <InputOTPSlot
                       key={i}
                       index={i}
-                      className="num size-10 rounded-xl border border-input text-base font-bold"
+                      className="num size-12 rounded-xl border border-input text-lg font-bold"
                     />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
               <Button
                 size="lg"
-                disabled={otp.length !== 6 || busy}
+                disabled={otp.length !== 4 || busy}
                 onClick={() => {
                   hapticNotify("success");
                   void handleVerifyOtp();

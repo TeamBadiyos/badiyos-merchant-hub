@@ -103,8 +103,15 @@ export async function checkOtpRateLimit(phone: string, ip: string | null): Promi
 }
 
 export async function createOtpCode(phone: string): Promise<string> {
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  // 4 digits: the approved WhatsApp template carries a 4-digit copy-code button.
+  const code = String(Math.floor(1000 + Math.random() * 9000));
   const expires = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
+  // Invalidate any earlier unused codes so only the newest one works.
+  await supabaseAdmin
+    .from("otp_codes")
+    .update({ is_verified: true })
+    .eq("phone", phone)
+    .eq("is_verified", false);
   const { error } = await supabaseAdmin
     .from("otp_codes")
     .insert({ phone, code, expires_at: expires, is_verified: false });
@@ -131,9 +138,19 @@ export async function sendWhatsappOtp(phone: string, code: string): Promise<void
       apiKey,
       campaignName,
       destination: `91${phone}`,
-      userName: "badiyos",
+      userName: phone,
       source: "merchant-portal",
       templateParams: [code],
+      // Required: the template has a copy-code URL button. Without this
+      // parameter WhatsApp silently drops the message even though AiSensy 200s.
+      buttons: [
+        {
+          type: "button",
+          sub_type: "url",
+          index: 0,
+          parameters: [{ type: "text", text: code }],
+        },
+      ],
     }),
   });
 
