@@ -253,6 +253,8 @@ const mr: Record<DKey, string> = {
   contactPerson: "संपर्क व्यक्तीचे नाव",
   pickupName: "पिकअप ठिकाणाचे नाव",
   mapUnavailable: "नकाशा लोड होऊ शकला नाही",
+  searchAddress: "भाग, दुकान किंवा खूण शोधा",
+  gettingAddress: "पत्ता घेत आहे…",
 };
 
 export function useDT() {
