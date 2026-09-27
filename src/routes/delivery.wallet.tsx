@@ -28,6 +28,9 @@ export const Route = createFileRoute("/delivery/wallet")({
 
 function WalletPage() {
   const dt = useDT();
+  const { lang } = useI18n();
+  const { merchant } = useAuth();
+
   const search = Route.useSearch();
   const wallet = useQuery({ queryKey: ["biz", "wallet"], queryFn: getWallet });
   const topups = useQuery({ queryKey: ["biz", "topups"], queryFn: listTopups });
