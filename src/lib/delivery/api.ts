@@ -82,6 +82,11 @@ export type TripInfo = {
   rider_name: string | null;
   rider_phone: string | null;
   stops: TripStop[];
+  batch_id: string | null;
+  trip_amount: number;
+  can_cancel: boolean;
+  cancel_fee_preview: number;
+  refund_preview: number;
 };
 
 export type TripRider = {
@@ -99,6 +104,11 @@ export const getTrip = (id: string) =>
   bizRpc<TripInfo>("business_get_trip_otps", { _courier_order_id: id }, false);
 export const getTripRider = (id: string) =>
   bizRpc<TripRider>("business_get_trip_rider", { _courier_order_id: id }, false);
+export const cancelTrip = (batchId: string, reason: string) =>
+  bizRpc<{ ok: boolean; cancellation_fee: number; refund_amount: number }>("business_cancel_trip", {
+    _batch_id: batchId,
+    _reason: reason,
+  });
 
 export type Receiver = {
   id: string;

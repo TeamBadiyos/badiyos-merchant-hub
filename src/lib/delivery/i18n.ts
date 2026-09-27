@@ -71,6 +71,17 @@ const en = {
   rider: "Rider",
   riderPending: "Rider details not available yet",
   findingRider: "Finding rider",
+  cancelTrip: "Cancel trip",
+  cancelTripBack: "Keep trip",
+  cancelTripInfo: "Orders go back to Pending and will go in the next dispatch.",
+  cancelReasonRiderLate: "Rider is late",
+  cancelReasonOrderChanged: "Order changed",
+  cancelReasonCustomer: "Customer cancelled",
+  cancelReasonOther: "Other",
+  cancelReasonNote: "Write the reason",
+  cancelFee: "Cancellation fee (rider reached pickup)",
+  refundAmount: "Refund to wallet",
+  tripCancelled: "Trip cancelled. Refund",
   packingList: "Packing list",
   run: "run",
   parcels: "parcels",
@@ -138,7 +149,7 @@ const en = {
   gettingAddress: "Getting the address…",
 };
 
-type DKey = keyof typeof en;
+export type DKey = keyof typeof en;
 
 const mr: Record<DKey, string> = {
   home: "होम",
@@ -208,6 +219,17 @@ const mr: Record<DKey, string> = {
   rider: "रायडर",
   riderPending: "रायडरची माहिती अजून उपलब्ध नाही",
   findingRider: "रायडर शोधत आहोत",
+  cancelTrip: "ट्रिप रद्द करा",
+  cancelTripBack: "ट्रिप ठेवा",
+  cancelTripInfo: "ऑर्डर पुन्हा प्रलंबित होतील आणि पुढच्या डिस्पॅचमध्ये जातील.",
+  cancelReasonRiderLate: "रायडर उशिरा आहे",
+  cancelReasonOrderChanged: "ऑर्डर बदलली",
+  cancelReasonCustomer: "ग्राहकाने रद्द केले",
+  cancelReasonOther: "इतर",
+  cancelReasonNote: "कारण लिहा",
+  cancelFee: "रद्द शुल्क (रायडर पिकअपला पोहोचला)",
+  refundAmount: "वॉलेटमध्ये परतावा",
+  tripCancelled: "ट्रिप रद्द झाली. परतावा",
   packingList: "पॅकिंग यादी",
   run: "फेरी",
   parcels: "पार्सल",

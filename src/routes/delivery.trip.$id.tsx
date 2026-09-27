@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { KeyRound, Loader2, Phone, Share2, Undo2 } from "lucide-react";
 
 import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell";
+import { CancelTripDialog } from "@/components/delivery/CancelTripDialog";
 import { PackingList } from "@/components/delivery/PackingList";
 import { Button } from "@/components/ui/button";
 import { getTrip, getTripRider, type TripStop } from "@/lib/delivery/api";
@@ -83,6 +84,8 @@ function Trip() {
               <p className="font-semibold text-foreground">{dt("findingRider")}</p>
             )}
           </div>
+
+          {trip.data && <CancelTripDialog trip={trip.data} />}
 
           {withOtp.length > 0 && (
             <Button size="lg" className="h-12 w-full" onClick={() => void share(withOtp.map(line).join("\n"))}>
