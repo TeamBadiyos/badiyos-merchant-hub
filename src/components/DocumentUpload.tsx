@@ -1,5 +1,5 @@
 import { CheckCircle2, Loader2, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,9 @@ export function DocumentUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(Boolean(existingUrl));
+  useEffect(() => {
+    setDone(Boolean(existingUrl));
+  }, [existingUrl]);
 
   const handleFile = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
@@ -52,7 +55,12 @@ export function DocumentUpload({
         toast.error("Upload failed. Please try again.");
         return;
       }
-      await onUploaded(path);
+      try {
+        await onUploaded(path);
+      } catch {
+        toast.error(`Could not save ${label}. Please try again.`);
+        return;
+      }
       setDone(true);
       toast.success(`${label} ${t("uploaded").toLowerCase()}`);
     } finally {

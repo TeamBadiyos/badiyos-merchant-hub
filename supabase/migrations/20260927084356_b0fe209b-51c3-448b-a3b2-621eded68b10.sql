@@ -1,0 +1,2 @@
+ALTER TABLE public.merchant_documents DROP CONSTRAINT merchant_documents_doc_type_check;
+ALTER TABLE public.merchant_documents ADD CONSTRAINT merchant_documents_doc_type_check CHECK (doc_type = ANY (ARRAY['aadhar','aadhaar','pan','gst_certificate','shop_license','cancelled_cheque']));

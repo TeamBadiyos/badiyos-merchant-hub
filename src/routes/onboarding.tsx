@@ -193,14 +193,27 @@ function OnboardingPage() {
         .from("merchants")
         .update({ shop_photo_url: path })
         .eq("id", merchant.id);
-      if (error) console.error(error);
+      if (error) {
+        console.error(error);
+        throw error;
+      }
       await refresh();
       return;
     }
-    const { error } = await supabase
-      .from("merchant_documents")
-      .insert({ merchant_id: merchant.id, doc_type: docType, file_url: path });
-    if (error) console.error(error);
+    const existing = (documents.data ?? []).some((d) => d.doc_type === docType);
+    const { error } = existing
+      ? await supabase
+          .from("merchant_documents")
+          .update({ file_url: path, uploaded_at: new Date().toISOString() })
+          .eq("merchant_id", merchant.id)
+          .eq("doc_type", docType)
+      : await supabase
+          .from("merchant_documents")
+          .insert({ merchant_id: merchant.id, doc_type: docType, file_url: path });
+    if (error) {
+      console.error(error);
+      throw error;
+    }
     await documents.refetch();
   };
 
