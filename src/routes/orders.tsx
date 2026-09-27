@@ -62,7 +62,7 @@ function OrdersPage() {
 
   const filtered = useMemo(() => {
     const needle = term.trim().toLowerCase();
-    return (orders.data ?? []).filter((order) => {
+    return allOrders.filter((order) => {
       if (status !== "all" && order.status !== status) return false;
       if (!needle) return true;
       return (
