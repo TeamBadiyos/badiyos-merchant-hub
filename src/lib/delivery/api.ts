@@ -59,6 +59,7 @@ export type TripStop = {
   stop_id: string;
   stop_type: "pickup" | "drop" | "return";
   sequence: number;
+  drop_label: string | null;
   address: string | null;
   receiver_name: string | null;
   contact_name: string | null;

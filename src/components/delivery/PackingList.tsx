@@ -43,10 +43,10 @@ export function PackingList({ trip, compact = false, showPrint = false }: Packin
       </div>
 
       <div className={`${compact ? "mt-3 space-y-1.5" : "mt-4 divide-y divide-border border-y border-border"}`}>
-        {drops.map((stop, index) => (
+        {drops.map((stop) => (
           <div key={stop.stop_id} className={`flex gap-3 ${compact ? "text-xs" : "py-3 text-sm"}`}>
             <span className="num flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-extrabold text-primary">
-              C{index + 1}
+              {stop.drop_label}
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold text-foreground">{stop.receiver_name ?? stop.contact_name ?? "—"}</p>
