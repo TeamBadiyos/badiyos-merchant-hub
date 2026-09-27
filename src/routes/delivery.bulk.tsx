@@ -17,9 +17,10 @@ export const Route = createFileRoute("/delivery/bulk")({
   component: Bulk,
 });
 
+// Phones below are intentionally fake so sample rows can never match a real receiver.
 const SAMPLE = `receiver_phone,reference_no,description,packets
-9876543210,INV-1001,Medicines,1
-9123456780,INV-1002,Grocery box,2
+9000000001,SAMPLE-001,Medicines,1
+9000000002,SAMPLE-002,Grocery box,2
 `;
 
 function Bulk() {
@@ -30,6 +31,7 @@ function Bulk() {
   const receivers = useQuery({ queryKey: ["biz", "receivers"], queryFn: listReceivers });
   const profile = useQuery({ queryKey: ["biz", "profile"], queryFn: getProfile });
   const [text, setText] = useState("");
+  const [isSample, setIsSample] = useState(false);
   const [busy, setBusy] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<number, string>>({});
 
