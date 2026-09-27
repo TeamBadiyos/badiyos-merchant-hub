@@ -64,6 +64,10 @@ const en = {
   changeReceiver: "Change",
   recent: "Recent",
   frequent: "Most frequent",
+  topReceivers: "Most orders first",
+  ordersWord: "orders",
+  newReceiver: "New",
+
   placeOrder: "Place Order",
   ordersPlaced: "orders placed",
   fixRedStickers: "Some stickers have a problem. Remove or fix the red ones.",
@@ -283,6 +287,10 @@ const mr: Record<DKey, string> = {
   changeReceiver: "बदला",
   recent: "अलीकडील",
   frequent: "सर्वाधिक वापरलेले",
+  topReceivers: "जास्त ऑर्डर आधी",
+  ordersWord: "ऑर्डर",
+  newReceiver: "नवीन",
+
   placeOrder: "ऑर्डर द्या",
   ordersPlaced: "ऑर्डर दिल्या",
   fixRedStickers: "काही स्टिकरमध्ये अडचण आहे. लाल स्टिकर काढा किंवा दुरुस्त करा.",

@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 import { playOrderChime } from "@/lib/alert-sound";
 import { useAuth } from "@/lib/auth";
 import { getProfile, listOrders, listReceivers, type Receiver } from "@/lib/delivery/api";
@@ -89,34 +91,32 @@ function NewOrder() {
 
   const active = (receivers.data ?? []).filter((r) => r.is_active);
   const chosen = active.find((r) => r.id === receiverId);
-  const { recent, frequent } = useMemo(() => {
-    const byId = new Map(active.map((r) => [r.id, r]));
-    const seen: Receiver[] = [];
-    const counts = new Map<string, number>();
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
     for (const o of orders.data ?? []) {
-      if (!o.receiver_id || !byId.has(o.receiver_id)) continue;
-      counts.set(o.receiver_id, (counts.get(o.receiver_id) ?? 0) + 1);
-      if (seen.length < 5 && !seen.some((r) => r.id === o.receiver_id)) seen.push(byId.get(o.receiver_id)!);
+      if (!o.receiver_id) continue;
+      m.set(o.receiver_id, (m.get(o.receiver_id) ?? 0) + 1);
     }
-    const freq = [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => byId.get(id)!)
-      .filter((r) => !seen.some((s) => s.id === r.id))
-      .slice(0, 5);
-    return { recent: seen, frequent: freq };
-  }, [active, orders.data]);
+    return m;
+  }, [orders.data]);
+  const ranked = useMemo(
+    () =>
+      [...active].sort(
+        (a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0) || a.name.localeCompare(b.name),
+      ),
+    [active, counts],
+  );
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return [];
-    return active
-      .filter(
-        (r) =>
-          r.name.toLowerCase().includes(s) ||
-          (r.contact_name ?? "").toLowerCase().includes(s) ||
-          (r.contact_phone ?? "").includes(s),
-      )
-      .slice(0, 10);
-  }, [active, q]);
+    if (!s) return ranked;
+    return ranked.filter(
+      (r) =>
+        r.name.toLowerCase().includes(s) ||
+        (r.contact_name ?? "").toLowerCase().includes(s) ||
+        (r.contact_phone ?? "").includes(s),
+    );
+  }, [ranked, q]);
+
 
   const place = async () => {
     if (!receiverId || !pickupId || !chips.length) return;
@@ -153,22 +153,36 @@ function NewOrder() {
     }
   };
 
-  const rRow = (r: Receiver) => (
-    <button
-      key={r.id}
-      onClick={() => {
-        setReceiverId(r.id);
-        setPicking(false);
-        setQ("");
-      }}
-      className="block w-full p-3 text-left"
-    >
-      <p className="text-sm font-bold text-foreground">{r.name}</p>
-      <p className="num truncate text-xs text-muted-foreground">
-        {[r.contact_name, r.contact_phone, r.address].filter(Boolean).join(" · ")}
-      </p>
-    </button>
-  );
+  const rRow = (r: Receiver, i: number) => {
+    const n = counts.get(r.id) ?? 0;
+    return (
+      <button
+        key={r.id}
+        onClick={() => {
+          setReceiverId(r.id);
+          setPicking(false);
+          setQ("");
+        }}
+        className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-3 text-left"
+      >
+        <span className="num w-6 shrink-0 text-sm font-extrabold text-muted-foreground">{i + 1}</span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-bold text-foreground">{r.name}</span>
+          <span className="num block truncate text-xs text-muted-foreground">
+            {[r.contact_name, r.contact_phone, r.address].filter(Boolean).join(" · ")}
+          </span>
+        </span>
+        <span
+          className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-bold ${
+            n > 0 ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {n > 0 ? `${n} ${dt("ordersWord")}` : dt("newReceiver")}
+        </span>
+      </button>
+    );
+  };
+
 
   const placeBar = (
     <Button
@@ -317,37 +331,50 @@ function NewOrder() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={picking} onOpenChange={setPicking}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{dt("selectReceiver")}</DialogTitle></DialogHeader>
-          <div className="relative">
-            <Search className="absolute top-3.5 left-3 size-4 text-muted-foreground" />
-            <Input className="h-11 pl-9" placeholder={dt("searchReceiver")} value={q} onChange={(e) => setQ(e.target.value)} />
+      <Sheet open={picking} onOpenChange={setPicking}>
+        <SheetContent
+          side="bottom"
+          className="flex max-h-[88vh] flex-col gap-0 rounded-t-3xl p-0"
+        >
+          <div className="shrink-0 space-y-3 border-b border-border px-4 pt-3 pb-3">
+            <div className="mx-auto h-1.5 w-10 rounded-full bg-border" />
+            <SheetHeader className="space-y-0 text-left">
+              <SheetTitle className="text-base font-extrabold">{dt("selectReceiver")}</SheetTitle>
+            </SheetHeader>
+            <div className="relative">
+              <Search className="absolute top-3.5 left-3 size-4 text-muted-foreground" />
+              <Input
+                className="h-11 pl-9"
+                placeholder={dt("searchReceiver")}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
           </div>
-          {q.trim() ? (
-            <div className="divide-y divide-border rounded-xl border border-border">{matches.map(rRow)}</div>
-          ) : (
-            <>
-              {recent.length > 0 && (
-                <>
-                  <p className="text-xs font-bold text-muted-foreground">{dt("recent")}</p>
-                  <div className="divide-y divide-border rounded-xl border border-border">{recent.map(rRow)}</div>
-                </>
-              )}
-              {frequent.length > 0 && (
-                <>
-                  <p className="text-xs font-bold text-muted-foreground">{dt("frequent")}</p>
-                  <div className="divide-y divide-border rounded-xl border border-border">{frequent.map(rRow)}</div>
-                </>
-              )}
-            </>
-          )}
-          <Button variant="outline" onClick={() => { setPicking(false); setAdding(true); }}>
-            <Plus className="size-4" />
-            {dt("addReceiver")}
-          </Button>
-        </DialogContent>
-      </Dialog>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+            {!q.trim() && matches.length > 0 && (
+              <p className="pb-2 text-xs font-bold text-muted-foreground">{dt("topReceivers")}</p>
+            )}
+            <div className="divide-y divide-border rounded-xl border border-border">
+              {matches.map(rRow)}
+            </div>
+          </div>
+          <div className="safe-bottom shrink-0 border-t border-border p-4">
+            <Button
+              variant="outline"
+              className="h-12 w-full font-bold"
+              onClick={() => {
+                setPicking(false);
+                setAdding(true);
+              }}
+            >
+              <Plus className="size-4" />
+              {dt("addReceiver")}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
 
       {adding && (
         <PlaceForm
