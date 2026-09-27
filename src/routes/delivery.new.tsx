@@ -24,7 +24,7 @@ export const Route = createFileRoute("/delivery/new")({
   component: NewOrder,
 });
 
-type Chip = { code: string; method: "scan" | "manual"; error?: string };
+type Chip = { code: string; method: "scan" | "manual"; error?: string | undefined };
 const PICKUP_KEY = "badiyos.delivery.lastPickup";
 
 function NewOrder() {
