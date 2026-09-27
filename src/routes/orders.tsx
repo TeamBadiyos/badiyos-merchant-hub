@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Receipt, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -41,15 +41,31 @@ function OrdersPage() {
 
   // Realtime is already subscribed once in the shell — no second channel here.
 
-  const orders = useQuery({
+  // Paged history: 100 newest first, "Load older" walks further back so the
+  // full history (and search over it) stays reachable without one huge fetch.
+  const orders = useInfiniteQuery({
     queryKey: ["orders", "all", merchant?.id],
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchOrders(undefined, { limit: 100 }),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      fetchOrders(
+        undefined,
+        pageParam ? { limit: 100, before: pageParam } : { limit: 100 },
+      ),
+    getNextPageParam: (lastPage) =>
+      lastPage.length === 100
+        ? lastPage[lastPage.length - 1]?.created_at
+        : undefined,
   });
+
+  const allOrders = useMemo(
+    () => orders.data?.pages.flat() ?? [],
+    [orders.data],
+  );
 
   const filtered = useMemo(() => {
     const needle = term.trim().toLowerCase();
-    return (orders.data ?? []).filter((order) => {
+    return allOrders.filter((order) => {
       if (status !== "all" && order.status !== status) return false;
       if (!needle) return true;
       return (
@@ -57,7 +73,7 @@ function OrdersPage() {
         itemsSummary(order).toLowerCase().includes(needle)
       );
     });
-  }, [orders.data, status, term]);
+  }, [allOrders, status, term]);
 
   if (!merchant) return null;
 
@@ -103,7 +119,7 @@ function OrdersPage() {
 
           {!orders.isLoading && filtered.length === 0 && (
             <PlaceholderPanel
-              title={orders.data?.length ? t("noResults") : t("noOrders")}
+              title={allOrders.length ? t("noResults") : t("noOrders")}
               description={t("ordersEmpty")}
               icon={Receipt}
             />
@@ -112,6 +128,19 @@ function OrdersPage() {
           {filtered.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}
+
+          {orders.hasNextPage && (
+            <button
+              onClick={() => orders.fetchNextPage()}
+              disabled={orders.isFetchingNextPage}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-input bg-background py-3 text-sm font-bold text-primary"
+            >
+              {orders.isFetchingNextPage && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {t("loadOlder")}
+            </button>
+          )}
         </div>
       )}
     </AppShell>
