@@ -89,34 +89,32 @@ function NewOrder() {
 
   const active = (receivers.data ?? []).filter((r) => r.is_active);
   const chosen = active.find((r) => r.id === receiverId);
-  const { recent, frequent } = useMemo(() => {
-    const byId = new Map(active.map((r) => [r.id, r]));
-    const seen: Receiver[] = [];
-    const counts = new Map<string, number>();
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
     for (const o of orders.data ?? []) {
-      if (!o.receiver_id || !byId.has(o.receiver_id)) continue;
-      counts.set(o.receiver_id, (counts.get(o.receiver_id) ?? 0) + 1);
-      if (seen.length < 5 && !seen.some((r) => r.id === o.receiver_id)) seen.push(byId.get(o.receiver_id)!);
+      if (!o.receiver_id) continue;
+      m.set(o.receiver_id, (m.get(o.receiver_id) ?? 0) + 1);
     }
-    const freq = [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => byId.get(id)!)
-      .filter((r) => !seen.some((s) => s.id === r.id))
-      .slice(0, 5);
-    return { recent: seen, frequent: freq };
-  }, [active, orders.data]);
+    return m;
+  }, [orders.data]);
+  const ranked = useMemo(
+    () =>
+      [...active].sort(
+        (a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0) || a.name.localeCompare(b.name),
+      ),
+    [active, counts],
+  );
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return [];
-    return active
-      .filter(
-        (r) =>
-          r.name.toLowerCase().includes(s) ||
-          (r.contact_name ?? "").toLowerCase().includes(s) ||
-          (r.contact_phone ?? "").includes(s),
-      )
-      .slice(0, 10);
-  }, [active, q]);
+    if (!s) return ranked;
+    return ranked.filter(
+      (r) =>
+        r.name.toLowerCase().includes(s) ||
+        (r.contact_name ?? "").toLowerCase().includes(s) ||
+        (r.contact_phone ?? "").includes(s),
+    );
+  }, [ranked, q]);
+
 
   const place = async () => {
     if (!receiverId || !pickupId || !chips.length) return;
