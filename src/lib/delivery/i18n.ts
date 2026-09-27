@@ -249,7 +249,6 @@ const mr: Record<DKey, string> = {
   packingComplete: "पॅकिंग पूर्ण",
   printPackingList: "पॅकिंग यादी प्रिंट करा",
   noInvoice: "बिल क्रमांक नाही",
-  stop: "थांबा",
   invoiceNo: "बिल क्रमांक",
   fillSample: "नमुना भरा",
   entryTripCharge: "डिलिव्हरी ट्रिप शुल्क",
