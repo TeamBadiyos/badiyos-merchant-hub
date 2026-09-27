@@ -70,7 +70,7 @@ function OrdersPage() {
         itemsSummary(order).toLowerCase().includes(needle)
       );
     });
-  }, [orders.data, status, term]);
+  }, [allOrders, status, term]);
 
   if (!merchant) return null;
 
@@ -125,6 +125,19 @@ function OrdersPage() {
           {filtered.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}
+
+          {orders.hasNextPage && (
+            <button
+              onClick={() => orders.fetchNextPage()}
+              disabled={orders.isFetchingNextPage}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-input bg-background py-3 text-sm font-bold text-primary"
+            >
+              {orders.isFetchingNextPage && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {t("loadOlder")}
+            </button>
+          )}
         </div>
       )}
     </AppShell>
