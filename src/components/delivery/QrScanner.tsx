@@ -54,8 +54,10 @@ export function QrScanner({
     const tick = async () => {
       if (stopped) return;
       const v = video.current;
+      if (v && !pausedRef.current && v.paused) void v.play().catch(() => undefined);
       if (v && v.readyState >= 2 && !pausedRef.current) {
         try {
+
           if (detector) {
             const r = await detector.detect(v);
             if (r[0]?.rawValue) emit(r[0].rawValue);
