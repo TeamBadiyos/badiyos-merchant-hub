@@ -104,6 +104,15 @@ export function QrScanner({
     };
   }, []);
 
+  // Some Android WebViews pause the stream when a dialog opens; resume on close.
+  useEffect(() => {
+    if (paused) return;
+    const v = video.current;
+    if (v?.paused) void v.play().catch(() => undefined);
+  }, [paused]);
+
+
+
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-foreground ${className}`}>
       {failed ? (
