@@ -244,6 +244,7 @@ function ActiveTripGroups({ tripRows }: { tripRows: ActiveTripRow[] }) {
 
 function ActiveTrip({ trip }: { trip: Awaited<ReturnType<typeof getTrip>> }) {
   const dt = useDT();
+  const hasPackets = trip.batch_status === "dispatched" && trip.stops.some((stop) => stop.packets.length > 0);
 
   return (
     <div className="space-y-2">
@@ -262,11 +263,19 @@ function ActiveTrip({ trip }: { trip: Awaited<ReturnType<typeof getTrip>> }) {
             </Button>
           )}
         </div>
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/delivery/trip/$id" params={{ id: trip.order_id }}>
-            {dt("trip")} <ChevronRight className="size-4" />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-1">
+          {hasPackets && (
+            <ParcelLabelDialog
+              trips={[trip]}
+              title={`trip-${trip.trip_no ?? trip.order_code ?? trip.order_id}-labels`}
+            />
+          )}
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/delivery/trip/$id" params={{ id: trip.order_id }}>
+              {dt("trip")} <ChevronRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

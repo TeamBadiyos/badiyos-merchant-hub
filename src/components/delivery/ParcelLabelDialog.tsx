@@ -34,9 +34,16 @@ export function ParcelLabelDialog({ trips, title, className }: ParcelLabelDialog
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState<LabelFormat>(() => readLabelFormat());
   const [busy, setBusy] = useState<"print" | "download" | null>(null);
-  const labels = useMemo(() => parcelLabelsFromTrips(trips), [trips]);
+  const labelResult = useMemo(() => {
+    try {
+      return { labels: parcelLabelsFromTrips(trips), error: null };
+    } catch (error) {
+      return { labels: [], error };
+    }
+  }, [trips]);
+  const { labels } = labelResult;
 
-  if (labels.length === 0) return null;
+  if (labels.length === 0 || labelResult.error) return null;
 
   const chooseFormat = (value: LabelFormat) => {
     setFormat(value);
