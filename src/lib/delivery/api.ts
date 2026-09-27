@@ -65,15 +65,36 @@ export type TripStop = {
   contact_phone: string | null;
   status: string;
   reference_nos: string[] | null;
+  parcel_count: number;
   otp: string | null;
 };
 
-export type TripInfo = { order_id: string; order_code: string | null; status: string; stops: TripStop[] };
+export type TripInfo = {
+  order_id: string;
+  order_code: string | null;
+  status: string;
+  run_label: string | null;
+  trip_no: number | null;
+  zone_name: string | null;
+  parcel_count: number;
+  stops: TripStop[];
+};
+
+export type TripRider = {
+  available: boolean;
+  name?: string | null;
+  phone?: string | null;
+  photo_url?: string | null;
+  vehicle?: string | null;
+  location?: { lat: number; lng: number; location_updated_at: string | null; stale: boolean } | null;
+};
 
 export const getProfile = () => bizRpc<BusinessProfile>("business_get_profile", {}, false);
 export const getWallet = () => bizRpc<WalletInfo>("business_get_wallet", {}, false);
 export const getTrip = (id: string) =>
   bizRpc<TripInfo>("business_get_trip_otps", { _courier_order_id: id }, false);
+export const getTripRider = (id: string) =>
+  bizRpc<TripRider>("business_get_trip_rider", { _courier_order_id: id }, false);
 
 export type Receiver = {
   id: string;

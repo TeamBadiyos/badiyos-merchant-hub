@@ -271,4 +271,22 @@
     border: 0;
     box-shadow: none;
   }
+
+  body:has(.packing-list-printing) * {
+    visibility: hidden;
+  }
+
+  .packing-list-printing,
+  .packing-list-printing * {
+    visibility: visible;
+  }
+
+  .packing-list-printing {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+  }
 }
