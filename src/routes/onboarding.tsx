@@ -336,7 +336,7 @@ function OnboardingPage() {
       const { error } = await supabase.rpc("merchant_submit_application");
       if (error) {
         console.error(error);
-        toast.error(error.message || "Could not submit your application.");
+        toast.error(friendlyErrorMessage(error, lang));
         return;
       }
       await refresh();

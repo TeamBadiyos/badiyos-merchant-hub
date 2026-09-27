@@ -185,7 +185,7 @@ function ProfilePage() {
       const { error } = await supabase.from("merchants").update(patch).eq("id", merchant.id);
       if (error) {
         console.error(error);
-        toast.error(error.message);
+        toast.error(friendlyErrorMessage(error, lang));
         return;
       }
       hapticImpact("light");
