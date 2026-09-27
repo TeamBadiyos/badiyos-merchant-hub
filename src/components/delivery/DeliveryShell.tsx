@@ -139,7 +139,12 @@ export function DeliveryShell({
 
   return (
     <div className="h-full overflow-hidden bg-background">
-      <div className="safe-x mx-auto flex h-full w-full max-w-[520px] flex-col border-border bg-background sm:border-x">
+      <div
+        className={`safe-x mx-auto flex h-full w-full max-w-[520px] flex-col border-border bg-background sm:border-x ${
+          animating ? "transition-transform duration-200 ease-out" : ""
+        }`}
+        style={dragX ? { transform: `translate3d(${dragX}px,0,0)` } : undefined}
+      >
         <header className="bg-brand-gradient safe-top z-20 shrink-0 px-6 pb-6 text-primary-foreground">
           <div className="flex items-center gap-4 pt-6">
             <Sheet open={open} onOpenChange={setOpen}>
