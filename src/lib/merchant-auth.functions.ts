@@ -11,7 +11,7 @@ import { PHONE_RE, PIN_RE, OTP_RE } from "./validation";
  */
 const REVIEW_PHONE = "9999900000";
 const REVIEW_PIN = "1234";
-const REVIEW_OTP = "123456";
+const REVIEW_OTP = "1234";
 const isReviewPhone = (phone: string) => phone.replace(/\D/g, "").slice(-10) === REVIEW_PHONE;
 
 /**
