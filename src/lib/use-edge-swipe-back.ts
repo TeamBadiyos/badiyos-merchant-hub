@@ -3,21 +3,24 @@ import { useRouter } from "@tanstack/react-router";
 
 import { hapticSelection } from "./haptics";
 
-const EDGE = 28;
+const EDGE = 32;
 const COMMIT = 80;
 
 /**
- * iOS-style edge-swipe-from-left to go back.
+ * Edge-swipe to go back, from either screen edge.
  *
- * The gesture only starts inside the left edge strip, tracks the finger so the
- * screen follows it, and commits to `history.back()` past the threshold.
+ * - Left edge, dragged right  -> classic iOS/Android back.
+ * - Right edge, dragged left  -> same back action, mirrored, for phones whose
+ *   system gesture bar makes the left edge awkward.
+ *
+ * The screen follows the finger and commits past the threshold.
  * `canGoBack` guards against swiping off the first screen in the stack.
  */
-export function useEdgeSwipeBack(enabled = true) {
+export function useEdgeSwipeBack(enabled = true, fallbackTo = "/home") {
   const router = useRouter();
   const [dragX, setDragX] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const state = useRef({ active: false, startX: 0, startY: 0, armed: false });
+  const state = useRef({ active: false, startX: 0, startY: 0, armed: false, dir: 1 });
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
@@ -27,7 +30,10 @@ export function useEdgeSwipeBack(enabled = true) {
     const onStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
       const touch = e.touches[0]!;
-      s.active = touch.clientX <= EDGE;
+      const fromLeft = touch.clientX <= EDGE;
+      const fromRight = touch.clientX >= window.innerWidth - EDGE;
+      s.dir = fromLeft ? 1 : -1;
+      s.active = fromLeft || fromRight;
       s.startX = touch.clientX;
       s.startY = touch.clientY;
       s.armed = false;
@@ -37,20 +43,21 @@ export function useEdgeSwipeBack(enabled = true) {
     const onMove = (e: TouchEvent) => {
       if (!s.active) return;
       const touch = e.touches[0]!;
-      const dx = touch.clientX - s.startX;
+      // Progress measured in the gesture's own direction, so both edges behave alike.
+      const travel = (touch.clientX - s.startX) * s.dir;
       const dy = touch.clientY - s.startY;
-      if (dx < 0 || Math.abs(dy) > Math.abs(dx) + 12) {
+      if (travel < 0 || Math.abs(dy) > Math.abs(travel) + 12) {
         s.active = false;
         setDragX(0);
         return;
       }
       e.preventDefault();
-      if (!s.armed && dx >= COMMIT) {
+      if (!s.armed && travel >= COMMIT) {
         s.armed = true;
         hapticSelection();
       }
-      if (s.armed && dx < COMMIT) s.armed = false;
-      setDragX(Math.min(dx, window.innerWidth));
+      if (s.armed && travel < COMMIT) s.armed = false;
+      setDragX(Math.min(travel, window.innerWidth) * s.dir);
     };
 
     const onEnd = () => {
@@ -58,12 +65,13 @@ export function useEdgeSwipeBack(enabled = true) {
       s.active = false;
       setAnimating(true);
       if (s.armed) {
-        setDragX(window.innerWidth);
+        const dir = s.dir;
+        setDragX(window.innerWidth * dir);
         window.setTimeout(() => {
           setDragX(0);
           setAnimating(false);
           if (router.history.canGoBack()) router.history.back();
-          else void router.navigate({ to: "/home" });
+          else void router.navigate({ to: fallbackTo });
         }, 180);
       } else {
         setDragX(0);
@@ -81,7 +89,7 @@ export function useEdgeSwipeBack(enabled = true) {
       window.removeEventListener("touchend", onEnd);
       window.removeEventListener("touchcancel", onEnd);
     };
-  }, [enabled, router]);
+  }, [enabled, router, fallbackTo]);
 
   return { dragX, animating };
 }
