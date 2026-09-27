@@ -170,9 +170,25 @@ function NewOrder() {
     </button>
   );
 
+  const placeBar = (
+    <Button
+      size="lg"
+      className="h-14 w-full text-base font-bold"
+      disabled={busy || !chips.length || !chosen || !pickupId}
+      onClick={() => void place()}
+    >
+      {busy && <Loader2 className="size-4 animate-spin" />}
+      <span className="truncate">
+        {dt("placeOrder")} — {chips.length} {dt("packetsCount")}
+        {chosen ? ` → ${chosen.name}` : ""}
+      </span>
+    </Button>
+  );
+
   return (
-    <DeliveryShell title={dt("newOrder")}>
-      <div className="space-y-4 pb-28">
+    <DeliveryShell title={dt("newOrder")} footer={placeBar}>
+      <div className="space-y-4 pb-4">
+
         {cameraFailed ? (
           <div className="flex h-[45vh] flex-col items-center justify-center gap-3 rounded-2xl bg-muted p-4 text-center">
             <p className="text-sm font-bold text-foreground">{dt("cameraFailedTitle")}</p>
