@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { TripInfo } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
-import { printPackingList, useTripPacked } from "@/lib/delivery/packing";
+import { printPackingSheet, useTripPacked } from "@/lib/delivery/packing";
 
 type PackingListProps = {
   trip: TripInfo;
@@ -28,6 +28,27 @@ export function PackingList({ trip, compact = false, showPrint = false }: Packin
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const print = () =>
+    printPackingSheet({
+      title: `${dt("packingList")} · ${trip.order_code ?? trip.order_id}`,
+      heading: `${dt("packingList")} — ${heading}`,
+      subheading: `${trip.order_code ?? trip.order_id} · ${new Date().toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })}${trip.rider_name ? ` · ${trip.rider_name}` : ""}`,
+      columns: [dt("stop"), dt("name"), dt("invoiceNo"), dt("parcelsShort")],
+      rows: drops.map((stop) => ({
+        label: stop.drop_label ?? "",
+        name: [stop.receiver_name ?? stop.contact_name ?? "—", stop.address ?? ""].filter(Boolean).join(" — "),
+        invoices: stop.reference_nos?.length ? stop.reference_nos.join(", ") : dt("noInvoice"),
+        parcels: String(stop.parcel_count),
+      })),
+      footer: `${dt("parcels")}: ${trip.parcel_count}`,
+    });
+
 
   return (
     <section id={elementId} className="packing-list rounded-2xl border border-border bg-card p-4 shadow-card">
@@ -68,12 +89,7 @@ export function PackingList({ trip, compact = false, showPrint = false }: Packin
       )}
 
       {showPrint && (
-        <Button
-          type="button"
-          variant="outline"
-          className="print:hidden mt-4 h-11 w-full"
-          onClick={() => printPackingList(elementId)}
-        >
+        <Button type="button" variant="outline" className="print:hidden mt-4 h-11 w-full" onClick={print}>
           <Printer className="size-4" />
           {dt("printPackingList")}
         </Button>
