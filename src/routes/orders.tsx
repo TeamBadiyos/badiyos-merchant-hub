@@ -48,10 +48,13 @@ function OrdersPage() {
     enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
     initialPageParam: null as string | null,
     queryFn: ({ pageParam }) =>
-      fetchOrders(undefined, { limit: 100, before: pageParam ?? undefined }),
+      fetchOrders(
+        undefined,
+        pageParam ? { limit: 100, before: pageParam } : { limit: 100 },
+      ),
     getNextPageParam: (lastPage) =>
       lastPage.length === 100
-        ? lastPage[lastPage.length - 1].created_at
+        ? lastPage[lastPage.length - 1]?.created_at
         : undefined,
   });
 
