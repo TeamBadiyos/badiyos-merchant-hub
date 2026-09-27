@@ -9,10 +9,12 @@ export function QrScanner({
   onCode,
   className = "",
   paused = false,
+  onFailed,
 }: {
   onCode: (text: string) => void;
   className?: string;
   paused?: boolean;
+  onFailed?: () => void;
 }) {
   const dt = useDT();
   const video = useRef<HTMLVideoElement>(null);
@@ -88,6 +90,7 @@ export function QrScanner({
         void tick();
       } catch {
         setFailed(true);
+        onFailed?.();
       }
     })();
 
