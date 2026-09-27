@@ -5,6 +5,7 @@ import { KeyRound, Loader2, Phone, Share2, Undo2 } from "lucide-react";
 import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell";
 import { CancelTripDialog } from "@/components/delivery/CancelTripDialog";
 import { PackingList } from "@/components/delivery/PackingList";
+import { ParcelLabelDialog } from "@/components/delivery/ParcelLabelDialog";
 import { Button } from "@/components/ui/button";
 import { getTrip, getTripRider, type TripStop } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
@@ -58,6 +59,19 @@ function Trip() {
       ) : (
         <div className="space-y-4">
           {trip.data && <PackingList trip={trip.data} showPrint />}
+          {trip.data?.batch_status === "dispatched" ? (
+            trip.data.stops.some((stop) => stop.packets.length > 0) ? (
+              <ParcelLabelDialog
+                trips={[trip.data]}
+                title={`trip-${trip.data.trip_no ?? trip.data.order_code ?? trip.data.order_id}-labels`}
+                className="h-11 w-full"
+              />
+            ) : (
+              <p className="rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground">
+                {dt("noParcelLabels")}
+              </p>
+            )
+          ) : null}
 
           <div className="rounded-2xl border-2 border-primary bg-primary-soft p-5 text-center">
             <p className="text-xs font-bold text-primary">{dt("pickupOtp")}</p>

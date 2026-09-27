@@ -18,3 +18,4 @@
 - `fetchOrders` always takes a `since`/`limit` bound — never pull a shop's whole
   order history with nested items to compute a screen's numbers.
 - Delivery trip packing state is device-local and keyed by courier order ID; the database remains the source for packing-list content.
+- Parcel label format is device-local; every printed trip, drop, packet number, total, and code must come from `business_get_trip_otps`.

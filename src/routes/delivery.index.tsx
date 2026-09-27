@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Clock, Loader2, Phone, Plus, Send, Truck, Upload } from "lucide-react";
 import { useState } from "react";
@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { DeliveryShell, deliveryHead } from "@/components/delivery/DeliveryShell";
 import { PackingList } from "@/components/delivery/PackingList";
+import { ParcelLabelDialog } from "@/components/delivery/ParcelLabelDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -169,11 +170,7 @@ function DeliveryHome() {
               {dt("noTrips")}
             </p>
           ) : (
-            <div className="space-y-2">
-              {(trips.data ?? []).map((tr) =>
-                tr.courier_order_id ? <ActiveTrip key={tr.id} tripId={tr.courier_order_id} /> : null,
-              )}
-            </div>
+            <ActiveTripGroups tripRows={trips.data ?? []} />
           )}
         </div>
       </div>
@@ -193,43 +190,92 @@ function DeliveryHome() {
   );
 }
 
-function ActiveTrip({ tripId }: { tripId: string }) {
+type ActiveTripRow = { id: string; courier_order_id: string | null };
+
+function ActiveTripGroups({ tripRows }: { tripRows: ActiveTripRow[] }) {
   const dt = useDT();
-  const trip = useQuery({
-    queryKey: ["biz", "trip", tripId],
-    queryFn: () => getTrip(tripId),
-    refetchInterval: 30_000,
+  const ids = tripRows.flatMap((row) => (row.courier_order_id ? [row.courier_order_id] : []));
+  const queries = useQueries({
+    queries: ids.map((tripId) => ({
+      queryKey: ["biz", "trip", tripId],
+      queryFn: () => getTrip(tripId),
+      refetchInterval: 30_000,
+    })),
   });
-  if (trip.isLoading)
+  const loadedTrips = queries.flatMap((query) => (query.data ? [query.data] : []));
+  const groups = loadedTrips.reduce<Map<string, typeof loadedTrips>>((map, trip) => {
+    const key = trip.dispatch_run_id ?? trip.order_id;
+    const group = map.get(key) ?? [];
+    group.push(trip);
+    map.set(key, group);
+    return map;
+  }, new Map());
+
+  if (queries.some((query) => query.isLoading) && loadedTrips.length === 0) {
     return (
       <div className="flex h-20 items-center justify-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
       </div>
     );
-  if (!trip.data) return null;
+  }
+
+  return (
+    <div className="space-y-4">
+      {[...groups.entries()].map(([runId, runTrips]) => {
+        const eligible = runTrips.filter((trip) => trip.batch_status === "dispatched");
+        const hasPackets = eligible.some((trip) => trip.stops.some((stop) => stop.packets.length > 0));
+        return (
+          <section key={runId} className="space-y-2">
+            <div className="flex items-center justify-between gap-3 px-1">
+              <p className="text-xs font-bold text-muted-foreground">
+                {runTrips[0]?.dispatch_date ?? dt("today")}
+              </p>
+              {hasPackets && (
+                <ParcelLabelDialog trips={eligible} title={`dispatch-${runTrips[0]?.dispatch_date ?? runId}-labels`} />
+              )}
+            </div>
+            {runTrips.map((trip) => <ActiveTrip key={trip.order_id} trip={trip} />)}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+function ActiveTrip({ trip }: { trip: Awaited<ReturnType<typeof getTrip>> }) {
+  const dt = useDT();
+  const hasPackets = trip.batch_status === "dispatched" && trip.stops.some((stop) => stop.packets.length > 0);
 
   return (
     <div className="space-y-2">
-      <PackingList trip={trip.data} compact />
+      <PackingList trip={trip} compact />
       <div className="flex items-center justify-between gap-3 px-1">
         <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <Truck className="size-4 shrink-0 text-primary" />
-          {trip.data.rider_available ? (
-            <span className="truncate font-semibold text-foreground">{trip.data.rider_name ?? dt("rider")}</span>
+          {trip.rider_available ? (
+            <span className="truncate font-semibold text-foreground">{trip.rider_name ?? dt("rider")}</span>
           ) : (
             <span className="font-semibold">{dt("findingRider")}</span>
           )}
-          {trip.data.rider_available && trip.data.rider_phone && (
+          {trip.rider_available && trip.rider_phone && (
             <Button variant="ghost" size="icon" className="size-8" asChild aria-label={dt("call")}>
-              <a href={`tel:+91${trip.data.rider_phone}`}><Phone className="size-4" /></a>
+              <a href={`tel:+91${trip.rider_phone}`}><Phone className="size-4" /></a>
             </Button>
           )}
         </div>
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/delivery/trip/$id" params={{ id: tripId }}>
-            {dt("trip")} <ChevronRight className="size-4" />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-1">
+          {hasPackets && (
+            <ParcelLabelDialog
+              trips={[trip]}
+              title={`trip-${trip.trip_no ?? trip.order_code ?? trip.order_id}-labels`}
+            />
+          )}
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/delivery/trip/$id" params={{ id: trip.order_id }}>
+              {dt("trip")} <ChevronRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
