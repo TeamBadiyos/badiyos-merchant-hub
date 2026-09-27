@@ -42,7 +42,16 @@ const tabs = [
   { to: "/delivery/wallet", key: "wallet", icon: Wallet },
 ] as const;
 
-export function DeliveryShell({ title, children }: { title: string; children: ReactNode }) {
+export function DeliveryShell({
+  title,
+  children,
+  onRefresh,
+}: {
+  title: string;
+  children: ReactNode;
+  /** Enables native-style pull-to-refresh on this screen's scroll area. */
+  onRefresh?: () => Promise<unknown> | void;
+}) {
   const dt = useDT();
   const { lang, setLang } = useI18n();
   const merchant = useRequireAuth();
