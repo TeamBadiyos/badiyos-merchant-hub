@@ -100,6 +100,7 @@ export type TripInfo = {
   can_cancel: boolean;
   cancel_fee_preview: number;
   refund_preview: number;
+  removed_packets?: RemovedPacket[];
 };
 
 export type TripRider = {
@@ -211,3 +212,83 @@ export function nextSlot(slots: string[] | null | undefined): string | null {
 
 export const inr = (n: number | string | null | undefined) =>
   `₹${Number(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+
+export type RemovedPacket = {
+  code: string;
+  drop_label: string | null;
+  receiver_name: string | null;
+  reason: string | null;
+  notes: string | null;
+  removed_by: "rider" | "business" | string;
+  removed_at: string;
+};
+
+export type RemovePacketsResult = {
+  ok: boolean;
+  reason?: string;
+  trip_cancelled?: boolean;
+  codes?: string[];
+  packets_removed?: number;
+  refund?: number;
+  new_total?: number;
+  drops_left?: number;
+  result?: { refund_amount?: number; cancellation_fee?: number } | null;
+};
+
+export const removePackets = (batchId: string, orderIds: string[], reason: string) =>
+  bizRpc<RemovePacketsResult>(
+    "business_remove_packets_from_trip",
+    { _batch_id: batchId, _order_ids: orderIds, _reason: reason },
+    false,
+  );
+
+export type TripOrder = {
+  id: string;
+  seal_code: string | null;
+  packet_count: number;
+  drop_stop_id: string | null;
+  status: string;
+  reference_no: string | null;
+};
+
+export async function listTripOrders(courierOrderId: string): Promise<TripOrder[]> {
+  const { data, error } = await supabase
+    .from("business_orders")
+    .select("id, seal_code, packet_count, drop_stop_id, status, reference_no")
+    .eq("courier_order_id", courierOrderId)
+    .limit(500);
+  if (error) throw error;
+  return (data ?? []) as unknown as TripOrder[];
+}
+
+export type RemovalRow = {
+  business_order_id: string | null;
+  batch_id: string | null;
+  courier_order_id: string | null;
+  removal_id: string | null;
+  code: string | null;
+  reason_code: string | null;
+  notes: string | null;
+  removed_by: string;
+  removed_at: string;
+};
+
+/** Packets taken off trips in the last few days (rider or business). */
+export async function listRecentRemovals(days = 7): Promise<RemovalRow[]> {
+  const since = new Date(Date.now() - days * 86400_000).toISOString();
+  const { data, error } = await supabase
+    .from("business_trip_removed_packets" as never)
+    .select("business_order_id, batch_id, courier_order_id, removal_id, code, reason_code, notes, removed_by, removed_at")
+    .gte("removed_at", since)
+    .order("removed_at", { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return (data ?? []) as unknown as RemovalRow[];
+}
+
+export async function batchTripNos(ids: string[]): Promise<Record<string, number | null>> {
+  if (!ids.length) return {};
+  const { data, error } = await supabase.from("business_batches").select("id, trip_no").in("id", ids);
+  if (error) throw error;
+  return Object.fromEntries(((data ?? []) as { id: string; trip_no: number | null }[]).map((b) => [b.id, b.trip_no]));
+}
