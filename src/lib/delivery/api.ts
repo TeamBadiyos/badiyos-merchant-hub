@@ -158,13 +158,15 @@ export type BizOrder = {
   delivered_at: string | null;
   updated_at: string;
   receiver: { name: string; contact_phone: string | null } | null;
+  receiver_id: string | null;
+  stickers: { code: string }[] | null;
 };
 
 export async function listOrders(): Promise<BizOrder[]> {
   const { data, error } = await supabase
     .from("business_orders")
     .select(
-      "id, reference_no, description, packet_count, status, courier_order_id, cancel_reason, created_at, delivered_at, updated_at, receiver:business_receivers!business_orders_receiver_id_fkey(name, contact_phone)",
+      "id, reference_no, description, packet_count, status, courier_order_id, cancel_reason, created_at, delivered_at, updated_at, receiver_id, stickers:business_seal_stickers!business_seal_stickers_business_order_id_fkey(code), receiver:business_receivers!business_orders_receiver_id_fkey(name, contact_phone)",
     )
     .order("created_at", { ascending: false })
     .limit(1000);
