@@ -294,20 +294,6 @@ function NewOrder() {
         ) : null}
       </div>
 
-      <div className="safe-bottom fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[520px] border-t border-border bg-background p-3">
-        <Button
-          size="lg"
-          className="h-12 w-full font-bold"
-          disabled={busy || !chips.length || !chosen || !pickupId}
-          onClick={() => void place()}
-        >
-          {busy && <Loader2 className="size-4 animate-spin" />}
-          <span className="truncate">
-            {dt("placeOrder")} — {chips.length} {dt("packetsCount")}
-            {chosen ? ` → ${chosen.name}` : ""}
-          </span>
-        </Button>
-      </div>
 
       <Dialog open={typing} onOpenChange={setTyping}>
         <DialogContent>
