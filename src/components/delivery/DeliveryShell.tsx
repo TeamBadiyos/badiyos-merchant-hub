@@ -60,7 +60,7 @@ export function DeliveryShell({
   const dt = useDT();
   const { lang, setLang } = useI18n();
   const merchant = useRequireAuth();
-  const { signOut, context, can, ready } = useAuth();
+  const { signOut, context, ready } = useAuth();
   const { hasDelivery } = useAppMode();
   const { name, save } = useActorName();
   const navigate = useNavigate();
