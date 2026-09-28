@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { QrScanner } from "@/components/delivery/QrScanner";
+import { OrderProofButton } from "@/components/delivery/ProofViewer";
 import { sealDisplay } from "@/lib/delivery/seals";
 import { bizRpc, listOrders, listRecentRemovals, type BizOrder } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
@@ -139,6 +140,7 @@ function Orders() {
                 </p>
               </div>
               <div className="mt-3 flex gap-2">
+                {o.status === "delivered" && <OrderProofButton orderId={o.id} />}
                 {o.status === "pending" && (
                   <Button variant="outline" size="sm" className="text-destructive" onClick={() => { setReason(""); setCancelling(o); }}>
                     <X className="size-4" />

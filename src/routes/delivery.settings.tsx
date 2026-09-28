@@ -1,4 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+import { proofSettings } from "@/lib/delivery/proofs";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -20,6 +23,7 @@ function Settings() {
   const { lang, setLang } = useI18n();
   const { name, save } = useActorName();
   const [draft, setDraft] = useState("");
+  const proof = useQuery({ queryKey: ["biz", "proof-settings"], queryFn: proofSettings });
   useEffect(() => setDraft(name ?? ""), [name]);
 
   return (
@@ -49,6 +53,15 @@ function Settings() {
               </Button>
             ))}
           </div>
+        </div>
+        <div className="space-y-1 rounded-2xl border border-border bg-card p-4 text-sm">
+          <p className="font-semibold text-foreground">
+            {dt("proofModeLabel")}:{" "}
+            {proof.data?.drop_proof_mode === "photo" ? dt("proofModePhoto") : proof.data?.drop_proof_mode && proof.data.drop_proof_mode !== "otp" ? dt("proofModeEither") : dt("proofModeOtp")}
+          </p>
+          {proof.data?.proof_retention_days != null && (
+            <p className="text-muted-foreground">{dt("photosKept").replace("{n}", String(proof.data.proof_retention_days))}</p>
+          )}
         </div>
       </div>
     </DeliveryShell>

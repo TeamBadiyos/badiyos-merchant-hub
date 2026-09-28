@@ -7,6 +7,7 @@ import { CancelTripDialog } from "@/components/delivery/CancelTripDialog";
 import { RemovePacketsPanel, RemovedPacketsList } from "@/components/delivery/RemovePacketsPanel";
 import { PackingList } from "@/components/delivery/PackingList";
 import { ParcelLabelDialog } from "@/components/delivery/ParcelLabelDialog";
+import { StopProofBlock } from "@/components/delivery/ProofViewer";
 import { Button } from "@/components/ui/button";
 import { getTrip, getTripRider, type TripStop } from "@/lib/delivery/api";
 import { useDT } from "@/lib/delivery/i18n";
@@ -162,6 +163,9 @@ function Trip() {
                     </Button>
                   )}
                 </div>
+              )}
+              {s.stop_type === "drop" && s.status === "completed" && (
+                <StopProofBlock stopId={s.stop_id} rider={rider.data?.name ?? trip.data?.rider_name ?? null} />
               )}
             </div>
           ))}
