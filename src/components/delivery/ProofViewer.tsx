@@ -23,7 +23,7 @@ export function ProofBadge({ via }: { via: "otp" | "photo" | null | undefined })
 
 /** Full-screen photo viewer with pinch zoom and swipe/arrow navigation. */
 export function PhotoViewer({ photos, index, rider, onClose }: {
-  photos: ViewerPhoto[]; index: number | null; rider?: string | null; onClose: () => void;
+  photos: ViewerPhoto[]; index: number | null; rider?: string | null | undefined; onClose: () => void;
 }) {
   const dt = useDT();
   const [i, setI] = useState(index ?? 0);
