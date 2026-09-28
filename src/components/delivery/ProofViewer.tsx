@@ -105,7 +105,7 @@ export function PhotoViewer({ photos, index, rider, onClose }: {
 }
 
 /** Thumbnails for a proof set; tap opens the full-screen viewer. */
-export function ProofThumbs({ photos, rider }: { photos: ViewerPhoto[]; rider?: string | null }) {
+export function ProofThumbs({ photos, rider }: { photos: ViewerPhoto[]; rider?: string | null | undefined }) {
   const [open, setOpen] = useState<number | null>(null);
   const urls = useQuery({
     queryKey: ["biz", "proof-urls", photos.map((p) => p.path).join("|")],
@@ -129,7 +129,7 @@ export function ProofThumbs({ photos, rider }: { photos: ViewerPhoto[]; rider?: 
 }
 
 /** Inline proof block for a delivered drop stop (trip detail). */
-export function StopProofBlock({ stopId, rider }: { stopId: string; rider?: string | null }) {
+export function StopProofBlock({ stopId, rider }: { stopId: string; rider?: string | null | undefined }) {
   const q = useQuery({ queryKey: ["biz", "stop-proofs", stopId], queryFn: () => stopProofs(stopId) });
   if (!q.data?.completed_via) return null;
   const photos = q.data.proofs.map((d) => ({ path: d.storage_path, time: d.captured_at ?? d.created_at, seals: d.seal_codes, unverified: d.location_unverified }));
