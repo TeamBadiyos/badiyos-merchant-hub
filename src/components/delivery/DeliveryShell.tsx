@@ -1,5 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  Camera,
   ChevronRight,
   Home,
   Languages,
@@ -136,6 +137,7 @@ export function DeliveryShell({
 
   const menu = [
     { to: "/delivery/pickup-points", label: dt("pickupPoints"), icon: MapPin, show: true },
+    { to: "/delivery/proofs", label: dt("deliveryProofs"), icon: Camera, show: true },
     { to: "/staff", label: dt("staff"), icon: Users, show: can("manage_staff") },
     { to: "/delivery/settings", label: dt("settings"), icon: Settings, show: true },
     { to: "/profile", label: dt("profile"), icon: User, show: true },

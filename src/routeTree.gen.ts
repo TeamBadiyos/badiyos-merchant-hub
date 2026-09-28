@@ -29,6 +29,7 @@ import { Route as DeliveryBulkRouteImport } from './routes/delivery.bulk'
 import { Route as DeliveryNewRouteImport } from './routes/delivery.new'
 import { Route as DeliveryOrdersRouteImport } from './routes/delivery.orders'
 import { Route as DeliveryPickupPointsRouteImport } from './routes/delivery.pickup-points'
+import { Route as DeliveryProofsRouteImport } from './routes/delivery.proofs'
 import { Route as DeliveryReceiversRouteImport } from './routes/delivery.receivers'
 import { Route as DeliverySettingsRouteImport } from './routes/delivery.settings'
 import { Route as DeliveryWalletRouteImport } from './routes/delivery.wallet'
@@ -136,6 +137,11 @@ const DeliveryPickupPointsRoute = DeliveryPickupPointsRouteImport.update({
   path: '/pickup-points',
   getParentRoute: () => DeliveryRoute,
 } as any)
+const DeliveryProofsRoute = DeliveryProofsRouteImport.update({
+  id: '/proofs',
+  path: '/proofs',
+  getParentRoute: () => DeliveryRoute,
+} as any)
 const DeliveryReceiversRoute = DeliveryReceiversRouteImport.update({
   id: '/receivers',
   path: '/receivers',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/delivery/new': typeof DeliveryNewRoute
   '/delivery/orders': typeof DeliveryOrdersRoute
   '/delivery/pickup-points': typeof DeliveryPickupPointsRoute
+  '/delivery/proofs': typeof DeliveryProofsRoute
   '/delivery/receivers': typeof DeliveryReceiversRoute
   '/delivery/settings': typeof DeliverySettingsRoute
   '/delivery/wallet': typeof DeliveryWalletRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/delivery/new': typeof DeliveryNewRoute
   '/delivery/orders': typeof DeliveryOrdersRoute
   '/delivery/pickup-points': typeof DeliveryPickupPointsRoute
+  '/delivery/proofs': typeof DeliveryProofsRoute
   '/delivery/receivers': typeof DeliveryReceiversRoute
   '/delivery/settings': typeof DeliverySettingsRoute
   '/delivery/wallet': typeof DeliveryWalletRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/delivery/new': typeof DeliveryNewRoute
   '/delivery/orders': typeof DeliveryOrdersRoute
   '/delivery/pickup-points': typeof DeliveryPickupPointsRoute
+  '/delivery/proofs': typeof DeliveryProofsRoute
   '/delivery/receivers': typeof DeliveryReceiversRoute
   '/delivery/settings': typeof DeliverySettingsRoute
   '/delivery/wallet': typeof DeliveryWalletRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/delivery/new'
     | '/delivery/orders'
     | '/delivery/pickup-points'
+    | '/delivery/proofs'
     | '/delivery/receivers'
     | '/delivery/settings'
     | '/delivery/wallet'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/delivery/new'
     | '/delivery/orders'
     | '/delivery/pickup-points'
+    | '/delivery/proofs'
     | '/delivery/receivers'
     | '/delivery/settings'
     | '/delivery/wallet'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/delivery/new'
     | '/delivery/orders'
     | '/delivery/pickup-points'
+    | '/delivery/proofs'
     | '/delivery/receivers'
     | '/delivery/settings'
     | '/delivery/wallet'
@@ -500,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeliveryPickupPointsRouteImport
       parentRoute: typeof DeliveryRoute
     }
+    '/delivery/proofs': {
+      id: '/delivery/proofs'
+      path: '/proofs'
+      fullPath: '/delivery/proofs'
+      preLoaderRoute: typeof DeliveryProofsRouteImport
+      parentRoute: typeof DeliveryRoute
+    }
     '/delivery/receivers': {
       id: '/delivery/receivers'
       path: '/receivers'
@@ -550,6 +569,7 @@ interface DeliveryRouteChildren {
   DeliveryNewRoute: typeof DeliveryNewRoute
   DeliveryOrdersRoute: typeof DeliveryOrdersRoute
   DeliveryPickupPointsRoute: typeof DeliveryPickupPointsRoute
+  DeliveryProofsRoute: typeof DeliveryProofsRoute
   DeliveryReceiversRoute: typeof DeliveryReceiversRoute
   DeliverySettingsRoute: typeof DeliverySettingsRoute
   DeliveryWalletRoute: typeof DeliveryWalletRoute
@@ -562,6 +582,7 @@ const DeliveryRouteChildren: DeliveryRouteChildren = {
   DeliveryNewRoute: DeliveryNewRoute,
   DeliveryOrdersRoute: DeliveryOrdersRoute,
   DeliveryPickupPointsRoute: DeliveryPickupPointsRoute,
+  DeliveryProofsRoute: DeliveryProofsRoute,
   DeliveryReceiversRoute: DeliveryReceiversRoute,
   DeliverySettingsRoute: DeliverySettingsRoute,
   DeliveryWalletRoute: DeliveryWalletRoute,
