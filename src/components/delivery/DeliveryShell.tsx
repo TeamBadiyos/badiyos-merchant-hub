@@ -138,7 +138,6 @@ export function DeliveryShell({
   const menu = [
     { to: "/delivery/pickup-points", label: dt("pickupPoints"), icon: MapPin, show: true },
     { to: "/delivery/proofs", label: dt("deliveryProofs"), icon: Camera, show: true },
-    { to: "/staff", label: dt("staff"), icon: Users, show: can("manage_staff") },
     { to: "/delivery/settings", label: dt("settings"), icon: Settings, show: true },
     { to: "/profile", label: dt("profile"), icon: User, show: true },
   ];
@@ -178,6 +177,16 @@ export function DeliveryShell({
                         <ChevronRight className="size-4 text-muted-foreground" />
                       </Link>
                     ))}
+                  <div
+                    aria-disabled="true"
+                    className="flex items-center gap-4 rounded-xl px-4 py-4 text-sm font-semibold text-muted-foreground/70"
+                  >
+                    <Users className="size-5 text-muted-foreground/70" />
+                    <span className="flex-1">{dt("staff")}</span>
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold text-muted-foreground">
+                      {dt("comingSoon")}
+                    </span>
+                  </div>
                   <button
                     onClick={() => setLang(lang === "en" ? "mr" : "en")}
                     className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-foreground hover:bg-accent"
