@@ -603,7 +603,10 @@ function OnboardingPage() {
               {coords.lat != null && coords.lng != null && (
                 <p className="-mt-3 text-xs font-bold text-primary">{t("locationSaved")}</p>
               )}
-              {field("address", t("addressLine"), { placeholder: "Shop no, street, landmark" })}
+              {field("address", t("addressLine"), { placeholder: "Road / area / landmark" })}
+              {field("building", t("buildingName"), {
+                placeholder: "Shop no, building, floor",
+              })}
               <div className="grid grid-cols-2 gap-3">
                 {field("city", t("city"))}
                 {field("pincode", t("pincode"), {
@@ -612,6 +615,7 @@ function OnboardingPage() {
                   transform: (v) => digitsOnly(v).slice(0, 6),
                 })}
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 {field("state", t("state"))}
                 {field("country", t("country"))}
