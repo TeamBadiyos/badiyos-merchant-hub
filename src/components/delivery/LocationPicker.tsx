@@ -25,12 +25,19 @@ export function LocationPicker({
   lng,
   onChange,
   onAddress,
+  mapClassName = "h-56",
+  className,
 }: {
   lat: number | null;
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
   onAddress?: (address: string) => void;
+  /** Tailwind height/size classes for the map canvas. */
+  mapClassName?: string;
+  /** Extra classes for the picker wrapper (e.g. flex layout in a full-screen sheet). */
+  className?: string;
 }) {
+
   const dt = useDT();
   const el = useRef<HTMLDivElement>(null);
   const api = useRef<{ set: (lat: number, lng: number) => void } | null>(null);
