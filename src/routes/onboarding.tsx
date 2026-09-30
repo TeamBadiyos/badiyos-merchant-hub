@@ -644,8 +644,11 @@ function OnboardingPage() {
                 </Button>
               </div>
               <Dialog open={mapOpen} onOpenChange={setMapOpen}>
-                <DialogContent className="max-w-[95vw] rounded-3xl p-4 sm:max-w-lg">
-                  <DialogHeader>
+                <DialogContent
+                  className="flex h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-3 rounded-none border-0 p-4 pb-6 left-0 top-0 sm:left-1/2 sm:top-1/2 sm:h-[90dvh] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border"
+                  showCloseButton
+                >
+                  <DialogHeader className="shrink-0 pr-8 text-left">
                     <DialogTitle className="text-base font-extrabold">
                       {t("mapPickTitle")}
                     </DialogTitle>
@@ -655,6 +658,8 @@ function OnboardingPage() {
                     lng={coords.lng}
                     onChange={(lat, lng) => setCoords({ lat, lng })}
                     onAddress={(address) => setForm((prev) => ({ ...prev, address }))}
+                    className="flex min-h-0 flex-1 flex-col"
+                    mapClassName="min-h-0 flex-1"
                   />
                   <Button
                     size="lg"
@@ -663,12 +668,13 @@ function OnboardingPage() {
                       hapticImpact("light");
                       setMapOpen(false);
                     }}
-                    className="w-full rounded-2xl text-base font-bold shadow-brand"
+                    className="w-full shrink-0 rounded-2xl text-base font-bold shadow-brand"
                   >
                     {t("useThisLocation")}
                   </Button>
                 </DialogContent>
               </Dialog>
+
             </div>
           )}
 
