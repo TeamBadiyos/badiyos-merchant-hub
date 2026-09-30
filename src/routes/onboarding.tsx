@@ -134,6 +134,7 @@ function OnboardingPage() {
       bank_ifsc: merchant.bank_ifsc ?? "",
       bank_account_holder_name: merchant.bank_account_holder_name ?? "",
     }));
+    setCoords({ lat: merchant.latitude ?? null, lng: merchant.longitude ?? null });
     setGstChoice(merchant.is_gst_registered);
     setGstin(merchant.gstin ?? "");
     setGstStatus(merchant.gst_status ?? null);
