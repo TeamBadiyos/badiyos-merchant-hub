@@ -13,6 +13,8 @@ import {
   type AddressSuggestion,
 } from "@/lib/delivery/places.functions";
 import { loadGoogleMaps } from "@/lib/google-maps";
+import { cn } from "@/lib/utils";
+
 
 const LATUR = { lat: 18.4088, lng: 76.5604 };
 
@@ -25,12 +27,19 @@ export function LocationPicker({
   lng,
   onChange,
   onAddress,
+  mapClassName = "h-56",
+  className,
 }: {
   lat: number | null;
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
   onAddress?: (address: string) => void;
+  /** Tailwind height/size classes for the map canvas. */
+  mapClassName?: string;
+  /** Extra classes for the picker wrapper (e.g. flex layout in a full-screen sheet). */
+  className?: string;
 }) {
+
   const dt = useDT();
   const el = useRef<HTMLDivElement>(null);
   const api = useRef<{ set: (lat: number, lng: number) => void } | null>(null);
@@ -162,8 +171,9 @@ export function LocationPicker({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
+    <div className={cn("space-y-2", className)}>
+      <div className="relative shrink-0">
+
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           className="h-11 pl-9"
@@ -194,8 +204,12 @@ export function LocationPicker({
       </div>
       <div
         ref={el}
-        className="h-56 w-full overflow-hidden rounded-xl border border-border bg-muted"
+        className={cn(
+          "w-full overflow-hidden rounded-xl border border-border bg-muted",
+          mapClassName,
+        )}
       />
+
       {error && <p className="text-xs text-destructive">{dt("mapUnavailable")}</p>}
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">

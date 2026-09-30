@@ -88,7 +88,9 @@ function OnboardingPage() {
     owner_name: "",
     gst_legal_name: "",
     address: "",
+    building: "",
     city: region.city,
+
     state: region.state,
     country: region.country,
     pincode: "",
@@ -314,11 +316,16 @@ function OnboardingPage() {
     setErrors(next);
     if (Object.values(next).some(Boolean)) return;
 
+    // Building/shop name is optional and stored as the first line of the address.
+    const fullAddress = [form.building.trim(), form.address.trim()]
+      .filter(Boolean)
+      .join(", ");
+
     await saveDraft(
       {
         store_category_id: category!.id,
         segment_id: category!.segment_id,
-        address: form.address,
+        address: fullAddress,
         city: form.city,
         state: form.state,
         country: form.country,
@@ -330,6 +337,7 @@ function OnboardingPage() {
       3,
     );
   };
+
 
   const submitStep3 = async () => {
     const next: Errors = {
@@ -595,7 +603,10 @@ function OnboardingPage() {
               {coords.lat != null && coords.lng != null && (
                 <p className="-mt-3 text-xs font-bold text-primary">{t("locationSaved")}</p>
               )}
-              {field("address", t("addressLine"), { placeholder: "Shop no, street, landmark" })}
+              {field("address", t("addressLine"), { placeholder: "Road / area / landmark" })}
+              {field("building", t("buildingName"), {
+                placeholder: "Shop no, building, floor",
+              })}
               <div className="grid grid-cols-2 gap-3">
                 {field("city", t("city"))}
                 {field("pincode", t("pincode"), {
@@ -604,6 +615,7 @@ function OnboardingPage() {
                   transform: (v) => digitsOnly(v).slice(0, 6),
                 })}
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 {field("state", t("state"))}
                 {field("country", t("country"))}
@@ -632,8 +644,11 @@ function OnboardingPage() {
                 </Button>
               </div>
               <Dialog open={mapOpen} onOpenChange={setMapOpen}>
-                <DialogContent className="max-w-[95vw] rounded-3xl p-4 sm:max-w-lg">
-                  <DialogHeader>
+                <DialogContent
+                  className="flex h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-3 rounded-none border-0 p-4 pb-6 left-0 top-0 sm:left-1/2 sm:top-1/2 sm:h-[90dvh] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border"
+                >
+
+                  <DialogHeader className="shrink-0 pr-8 text-left">
                     <DialogTitle className="text-base font-extrabold">
                       {t("mapPickTitle")}
                     </DialogTitle>
@@ -643,6 +658,8 @@ function OnboardingPage() {
                     lng={coords.lng}
                     onChange={(lat, lng) => setCoords({ lat, lng })}
                     onAddress={(address) => setForm((prev) => ({ ...prev, address }))}
+                    className="flex min-h-0 flex-1 flex-col"
+                    mapClassName="min-h-0 flex-1"
                   />
                   <Button
                     size="lg"
@@ -651,12 +668,13 @@ function OnboardingPage() {
                       hapticImpact("light");
                       setMapOpen(false);
                     }}
-                    className="w-full rounded-2xl text-base font-bold shadow-brand"
+                    className="w-full shrink-0 rounded-2xl text-base font-bold shadow-brand"
                   >
                     {t("useThisLocation")}
                   </Button>
                 </DialogContent>
               </Dialog>
+
             </div>
           )}
 
