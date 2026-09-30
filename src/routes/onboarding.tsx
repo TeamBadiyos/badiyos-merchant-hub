@@ -443,8 +443,8 @@ function OnboardingPage() {
         </div>
       </header>
 
-      <main className="mx-auto -mt-6 w-full max-w-[520px] px-6">
-        <div className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-card">
+      <main className="mx-auto -mt-6 w-full max-w-[520px] px-4 sm:px-6">
+        <div className="space-y-4 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6">
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -620,27 +620,25 @@ function OnboardingPage() {
                 {field("state", t("state"))}
                 {field("country", t("country"))}
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <Button
                   variant="outline"
-                  size="lg"
                   onClick={() => setStep(1)}
-                  className="rounded-2xl font-bold"
+                  className="h-12 shrink-0 rounded-2xl px-4 text-sm font-bold"
                 >
                   <ArrowLeft className="size-5" />
                   {t("back")}
                 </Button>
                 <Button
-                  size="lg"
                   disabled={saving}
                   onClick={() => {
                     hapticImpact("light");
                     void submitStep2();
                   }}
-                  className="flex-1 rounded-2xl text-base font-bold shadow-brand"
+                  className="h-12 min-w-0 flex-1 rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
-                  {t("saveContinue")}
+                  <span className="truncate">{t("saveContinue")}</span>
                 </Button>
               </div>
               <Dialog open={mapOpen} onOpenChange={setMapOpen}>
@@ -736,27 +734,25 @@ function OnboardingPage() {
                 {field("bank_account_holder_name", t("accountHolder"))}
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <Button
                   variant="outline"
-                  size="lg"
                   onClick={() => setStep(2)}
-                  className="rounded-2xl font-bold"
+                  className="h-12 shrink-0 rounded-2xl px-4 text-sm font-bold"
                 >
                   <ArrowLeft className="size-5" />
                   {t("back")}
                 </Button>
                 <Button
-                  size="lg"
                   disabled={saving}
                   onClick={() => {
                     hapticImpact("light");
                     void submitStep3();
                   }}
-                  className="flex-1 rounded-2xl text-base font-bold shadow-brand"
+                  className="h-12 min-w-0 flex-1 rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
-                  {t("saveContinue")}
+                  <span className="truncate">{t("saveContinue")}</span>
                 </Button>
               </div>
             </div>
@@ -785,27 +781,25 @@ function OnboardingPage() {
                   </div>
                 ))}
               </dl>
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <Button
                   variant="outline"
-                  size="lg"
                   onClick={() => setStep(3)}
-                  className="rounded-2xl font-bold"
+                  className="h-12 shrink-0 rounded-2xl px-4 text-sm font-bold"
                 >
                   <ArrowLeft className="size-5" />
                   {t("back")}
                 </Button>
                 <Button
-                  size="lg"
                   disabled={saving}
                   onClick={() => {
                     hapticNotify("success");
                     void submitApplication();
                   }}
-                  className="flex-1 rounded-2xl text-base font-bold shadow-brand"
+                  className="h-12 min-w-0 flex-1 rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
                 >
                   {saving && <Loader2 className="size-5 animate-spin" />}
-                  {t("submitApplication")}
+                  <span className="truncate">{t("submitApplication")}</span>
                 </Button>
               </div>
               <LegalConsent />
