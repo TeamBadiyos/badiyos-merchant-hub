@@ -67,6 +67,16 @@ export const Route = createFileRoute("/onboarding")({
 const TOTAL_STEPS = 4;
 const region = lookupRegionDefaults();
 
+/** Document types with their translation keys, used by the full form and the query window. */
+const DOC_LABEL_KEYS = [
+  ["aadhaar", "docAadhaar"],
+  ["pan", "docPan"],
+  ["gst_certificate", "docGst"],
+  ["shop_license", "docShopLicense"],
+  ["cancelled_cheque", "docCheque"],
+  ["shop_photo", "shopPhoto"],
+] as const satisfies ReadonlyArray<readonly [DocType, string]>;
+
 type Errors = Record<string, string | null>;
 
 function OnboardingPage() {
