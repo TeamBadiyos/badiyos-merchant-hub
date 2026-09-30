@@ -594,6 +594,23 @@ function OnboardingPage() {
       </header>
 
       <main className="mx-auto -mt-6 w-full max-w-[520px] px-4 sm:px-6">
+        {hasQuery && (
+          <button
+            type="button"
+            onClick={() => setShowFullForm(false)}
+            className="mb-3 flex w-full items-start gap-2 rounded-2xl border border-primary/30 bg-primary-soft p-4 text-left"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" />
+            <span className="min-w-0">
+              <span className="block text-xs font-extrabold text-accent-foreground">
+                {queryNotes || t("queryTitle")}
+              </span>
+              <span className="mt-1 block text-xs font-bold text-primary underline">
+                {t("queryBackToQuery")}
+              </span>
+            </span>
+          </button>
+        )}
         <div className="space-y-4 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6">
           {step === 1 && (
             <div className="space-y-6">
