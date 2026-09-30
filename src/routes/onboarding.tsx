@@ -646,8 +646,8 @@ function OnboardingPage() {
               <Dialog open={mapOpen} onOpenChange={setMapOpen}>
                 <DialogContent
                   className="flex h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-3 rounded-none border-0 p-4 pb-6 left-0 top-0 sm:left-1/2 sm:top-1/2 sm:h-[90dvh] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border"
-                  showCloseButton
                 >
+
                   <DialogHeader className="shrink-0 pr-8 text-left">
                     <DialogTitle className="text-base font-extrabold">
                       {t("mapPickTitle")}
