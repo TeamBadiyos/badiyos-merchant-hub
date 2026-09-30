@@ -560,25 +560,41 @@ function OnboardingPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-bold">{t("category")}</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(categories.data ?? []).map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => set("store_category_id")(c.id)}
-                      className={`rounded-2xl border px-3 py-3 text-xs font-bold transition-colors ${
-                        form.store_category_id === c.id
-                          ? "border-primary bg-primary-soft text-accent-foreground"
-                          : "border-border bg-background text-muted-foreground"
-                      }`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
+                <Select
+                  value={form.store_category_id || undefined}
+                  onValueChange={(v) => set("store_category_id")(v)}
+                >
+                  <SelectTrigger className="h-12 rounded-2xl text-sm font-semibold">
+                    <SelectValue placeholder={t("chooseCategory")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(categories.data ?? []).map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="text-sm font-semibold">
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors["store_category_id"] && (
                   <p className="text-xs font-bold text-destructive">{errors["store_category_id"]}</p>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  hapticImpact("light");
+                  setMapOpen(true);
+                }}
+                className="w-full justify-start rounded-2xl font-bold"
+              >
+                <MapPin className="size-5 text-primary" />
+                {coords.lat != null && coords.lng != null ? t("changeOnMap") : t("pickOnMap")}
+              </Button>
+              {coords.lat != null && coords.lng != null && (
+                <p className="-mt-3 text-xs font-bold text-primary">{t("locationSaved")}</p>
+              )}
               {field("address", t("addressLine"), { placeholder: "Shop no, street, landmark" })}
               <div className="grid grid-cols-2 gap-3">
                 {field("city", t("city"))}
