@@ -88,7 +88,9 @@ function OnboardingPage() {
     owner_name: "",
     gst_legal_name: "",
     address: "",
+    building: "",
     city: region.city,
+
     state: region.state,
     country: region.country,
     pincode: "",
@@ -314,11 +316,16 @@ function OnboardingPage() {
     setErrors(next);
     if (Object.values(next).some(Boolean)) return;
 
+    // Building/shop name is optional and stored as the first line of the address.
+    const fullAddress = [form.building.trim(), form.address.trim()]
+      .filter(Boolean)
+      .join(", ");
+
     await saveDraft(
       {
         store_category_id: category!.id,
         segment_id: category!.segment_id,
-        address: form.address,
+        address: fullAddress,
         city: form.city,
         state: form.state,
         country: form.country,
@@ -330,6 +337,7 @@ function OnboardingPage() {
       3,
     );
   };
+
 
   const submitStep3 = async () => {
     const next: Errors = {
