@@ -561,7 +561,7 @@ function OnboardingPage() {
               <div className="space-y-2">
                 <Label className="text-sm font-bold">{t("category")}</Label>
                 <Select
-                  value={form.store_category_id || undefined}
+                  value={form.store_category_id}
                   onValueChange={(v) => set("store_category_id")(v)}
                 >
                   <SelectTrigger className="h-12 rounded-2xl text-sm font-semibold">
