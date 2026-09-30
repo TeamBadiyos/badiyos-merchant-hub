@@ -455,6 +455,10 @@ function ProfilePage() {
               <Row label={t("state")} value={merchant.state} />
               <Row label={t("pincode")} value={merchant.pincode} />
               <Row label={t("category")} value={categoryName} />
+              <Row
+                label={t("badiyosCommission")}
+                value={`${Number(merchant.commission_value ?? 0)}%`}
+              />
             </div>
           )}
         </section>

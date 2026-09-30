@@ -60,6 +60,8 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
         <p className="mt-1 text-xs font-semibold text-destructive">{order.reject_reason}</p>
       )}
 
+      {(status === "delivered" || status === "completed") && <Settlement order={order} />}
+
       {order.courier_order_id && <DeliveryStatus order={order} />}
 
       {can("manage_orders") && (
