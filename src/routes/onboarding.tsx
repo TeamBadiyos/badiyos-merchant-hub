@@ -111,6 +111,7 @@ function OnboardingPage() {
     bank_account_holder_name: "",
   });
   const [mapOpen, setMapOpen] = useState(false);
+  const [showFullForm, setShowFullForm] = useState(false);
   const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
     lat: null,
     lng: null,
