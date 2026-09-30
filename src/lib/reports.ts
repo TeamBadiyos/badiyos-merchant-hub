@@ -100,7 +100,7 @@ export function revenueSeries(orders: CompletedOrder[], range: Range) {
   }
   for (const order of orders) {
     const bucket = buckets.get(dayKey(order.created_at));
-    if (bucket) bucket.revenue += Number(order.total_amount ?? 0);
+    if (bucket) bucket.revenue += Number(order.items_total ?? 0);
   }
   return [...buckets.entries()].map(([date, b]) => ({
     date,

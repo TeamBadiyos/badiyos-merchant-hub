@@ -119,9 +119,10 @@ function HomePage() {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
   const todays = (today.data ?? []).filter((o) => new Date(o.created_at) >= startOfDay);
+  // Goods sold today — the delivery fee is not the shop's money.
   const sales = todays
     .filter((o) => !["rejected", "cancelled"].includes(o.status))
-    .reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0);
+    .reduce((sum, o) => sum + Number(o.items_total ?? 0), 0);
 
   // Online checkouts still waiting on the customer's payment are not the shop's
   // orders yet — the backend refuses accept/reject on them, so keep them out.
