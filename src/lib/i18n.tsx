@@ -420,7 +420,9 @@ const dict = {
     mapPickTitle: "तुमच्या दुकानाचे ठिकाण निवडा",
     useThisLocation: "हेच ठिकाण वापरा",
     locationSaved: "ठिकाण निवडले",
+    buildingName: "इमारत / दुकानाचे नाव (ऐच्छिक)",
     addressLine: "दुकानाचा पत्ता",
+
     city: "शहर",
     state: "राज्य",
     country: "देश",
