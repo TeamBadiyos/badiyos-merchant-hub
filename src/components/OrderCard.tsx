@@ -60,6 +60,8 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
         <p className="mt-1 text-xs font-semibold text-destructive">{order.reject_reason}</p>
       )}
 
+      {(status === "delivered" || status === "completed") && <Settlement order={order} />}
+
       {order.courier_order_id && <DeliveryStatus order={order} />}
 
       {can("manage_orders") && (
@@ -114,6 +116,40 @@ export function OrderCard({ order }: { order: OrderWithItems }) {
         busy={decide.isPending}
         onConfirm={(reason) => decide.mutate({ decision: "rejected", reason })}
       />
+    </div>
+  );
+}
+
+/**
+ * Read-only settlement snapshot saved on the order by the backend.
+ * The delivery fee is never the shop's income, so it is not shown here.
+ */
+function Settlement({ order }: { order: OrderWithItems }) {
+  const { t } = useI18n();
+  const items = Number(order.items_total ?? 0);
+  const pct = Number(order.commission_pct ?? 0);
+  const commission = Number(order.commission_amount ?? 0);
+  const gst = Number(order.commission_gst_amount ?? 0);
+  const net = Number(order.merchant_net ?? 0);
+
+  return (
+    <div className="mt-3 space-y-1 rounded-xl bg-muted/60 p-3">
+      <Line label={t("itemsTotalLabel")} value={inr(items)} />
+      <Line label={`${t("commissionLabel")} (${pct}%)`} value={`- ${inr(commission)}`} />
+      {gst > 0 && <Line label={t("gstOnCommission")} value={`- ${inr(gst)}`} />}
+      <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
+        <p className="text-xs font-bold text-foreground">{t("youWillGet")}</p>
+        <p className="num text-sm font-extrabold text-primary">{inr(net)}</p>
+      </div>
+    </div>
+  );
+}
+
+function Line({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+      <p className="num text-xs font-bold text-foreground">{value}</p>
     </div>
   );
 }

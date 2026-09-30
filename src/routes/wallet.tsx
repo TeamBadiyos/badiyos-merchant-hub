@@ -41,7 +41,7 @@ function WalletPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("merchant_orders")
-        .select("total_amount, commission_amount")
+        .select("items_total, commission_amount, commission_gst_amount, merchant_net")
         .eq("status", "completed")
     .or("payment_mode.eq.cod,payment_status.eq.paid");
       if (error) throw error;
@@ -67,12 +67,13 @@ function WalletPage() {
 
   if (!merchant) return null;
 
-  const revenue = (completed.data ?? []).reduce((s, o) => s + Number(o.total_amount ?? 0), 0);
+  // The shop's money is the net the backend snapshots on each order —
+  // never the items total and never the delivery fee.
+  const earned = (completed.data ?? []).reduce((s, o) => s + Number(o.merchant_net ?? 0), 0);
   const commission = (completed.data ?? []).reduce(
-    (s, o) => s + Number(o.commission_amount ?? 0),
+    (s, o) => s + Number(o.commission_amount ?? 0) + Number(o.commission_gst_amount ?? 0),
     0,
   );
-  const earned = revenue - commission;
   const paidOut = (ledger.data ?? [])
     .filter((row) => row.type === "debit")
     .reduce((s, row) => s + Number(row.amount ?? 0), 0);
