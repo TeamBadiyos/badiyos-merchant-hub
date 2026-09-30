@@ -7471,6 +7471,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      coins_release_stale_reservations: { Args: never; Returns: number }
       compute_tds: {
         Args: { _gross: number; _owner_id: string; _owner_type: string }
         Returns: {
@@ -8637,6 +8638,10 @@ export type Database = {
         Args: { _decision: string; _notes?: string; _skill_id: string }
         Returns: undefined
       }
+      staff_delete_customer_address: {
+        Args: { _address_id: string }
+        Returns: boolean
+      }
       staff_delete_reward_program: {
         Args: { _force?: boolean; _id: string }
         Returns: undefined
@@ -9190,6 +9195,21 @@ export type Database = {
           _total_usage_limit: number
           _valid_from: string
           _valid_until: string
+        }
+        Returns: string
+      }
+      staff_upsert_customer_address: {
+        Args: {
+          _address_id: string
+          _area: string
+          _city: string
+          _full_address: string
+          _is_default: boolean
+          _label: string
+          _latitude: number
+          _longitude: number
+          _pincode: string
+          _user_id: string
         }
         Returns: string
       }
