@@ -98,6 +98,11 @@ function OnboardingPage() {
     bank_ifsc: "",
     bank_account_holder_name: "",
   });
+  const [mapOpen, setMapOpen] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
+    lat: null,
+    lng: null,
+  });
 
   useEffect(() => {
     if (ready && !userId) void navigate({ to: "/login", replace: true });
