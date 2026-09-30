@@ -323,6 +323,9 @@ function OnboardingPage() {
         state: form.state,
         country: form.country,
         pincode: form.pincode,
+        ...(coords.lat != null && coords.lng != null
+          ? { latitude: coords.lat, longitude: coords.lng }
+          : {}),
       },
       3,
     );
