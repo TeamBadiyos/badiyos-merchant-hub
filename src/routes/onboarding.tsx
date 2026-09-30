@@ -419,6 +419,145 @@ function OnboardingPage() {
     return <ReviewScreen />;
   }
 
+  const queryNotes = merchant.query_notes?.trim() || "";
+  const queryDocTypes = (merchant.query_doc_types ?? []).filter((d): d is DocType =>
+    DOC_LABEL_KEYS.some(([type]) => type === d),
+  );
+  const hasQuery = Boolean(merchant.awaiting_reupload || queryNotes);
+  const bankQueried =
+    queryDocTypes.includes("cancelled_cheque") || /bank|ifsc|account|खात|बँक/i.test(queryNotes);
+
+  const submitQuery = async () => {
+    if (queryDocTypes.length > 0) {
+      const missing = queryDocTypes.some((d) =>
+        d === "shop_photo" ? !merchant.shop_photo_url : !uploadedTypes.has(d),
+      );
+      if (missing) {
+        toast.error(t("queryDocsMissing"));
+        return;
+      }
+    }
+    if (bankQueried) {
+      const next: Errors = {
+        bank_account_number: /^\d{9,18}$/.test(form.bank_account_number)
+          ? null
+          : t("accountNumberInvalid"),
+        bank_ifsc: validateIfsc(form.bank_ifsc),
+        bank_account_holder_name: form.bank_account_holder_name.trim() ? null : t("required"),
+      };
+      setErrors(next);
+      if (Object.values(next).some(Boolean)) return;
+      setSaving(true);
+      try {
+        const { error } = await supabase
+          .from("merchants")
+          .update({
+            bank_account_number: form.bank_account_number,
+            bank_ifsc: form.bank_ifsc,
+            bank_account_holder_name: form.bank_account_holder_name,
+          })
+          .eq("id", merchant.id);
+        if (error) {
+          console.error(error);
+          toast.error(friendlyErrorMessage(error, lang));
+          return;
+        }
+      } finally {
+        setSaving(false);
+      }
+    }
+    await submitApplication();
+  };
+
+  if (hasQuery && !showFullForm) {
+    return (
+      <div className="app-scroll safe-top safe-bottom h-full bg-background pb-12">
+        <header className="bg-brand-gradient px-6 pt-10 pb-12 text-primary-foreground">
+          <div className="mx-auto w-full max-w-[520px]">
+            <Wordmark on="dark" className="h-6" />
+            <h1 className="mt-6 text-xl font-extrabold">{t("queryTitle")}</h1>
+            <p className="mt-2 text-sm text-primary-foreground/85">{t("querySub")}</p>
+          </div>
+        </header>
+
+        <main className="mx-auto -mt-6 w-full max-w-[520px] px-4 sm:px-6">
+          <div className="space-y-5 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6">
+            <div className="rounded-2xl border border-primary/30 bg-primary-soft p-4">
+              <p className="flex items-center gap-2 text-xs font-extrabold text-accent-foreground">
+                <AlertTriangle className="size-4 shrink-0" />
+                {t("queryFromTeam")}
+              </p>
+              <p className="mt-2 text-sm font-bold text-foreground">{queryNotes || "—"}</p>
+              {merchant.queried_at && (
+                <p className="num mt-2 text-xs font-semibold text-muted-foreground">
+                  {t("queryRaisedOn")} {new Date(merchant.queried_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+
+            {queryDocTypes.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-sm font-extrabold text-foreground">{t("queryDocsTitle")}</p>
+                {queryDocTypes.map((docType) => (
+                  <DocumentUpload
+                    key={docType}
+                    merchantId={merchant.id}
+                    docType={docType}
+                    label={t(DOC_LABEL_KEYS.find(([d]) => d === docType)![1])}
+                    existingUrl={
+                      docType === "shop_photo"
+                        ? merchant.shop_photo_url
+                        : ((documents.data ?? []).find((d) => d.doc_type === docType)?.file_url ??
+                          null)
+                    }
+                    onUploaded={(path) => recordDocument(docType, path)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {bankQueried && (
+              <div className="space-y-4 border-t border-border pt-4">
+                <p className="text-sm font-extrabold text-foreground">{t("queryBankTitle")}</p>
+                {field("bank_account_number", t("accountNumber"), {
+                  inputMode: "numeric",
+                  maxLength: 18,
+                  transform: (v) => digitsOnly(v).slice(0, 18),
+                })}
+                {field("bank_ifsc", t("ifsc"), {
+                  maxLength: 11,
+                  transform: (v) => upperAlnum(v).slice(0, 11),
+                  placeholder: "SBIN0001234",
+                })}
+                {field("bank_account_holder_name", t("accountHolder"))}
+              </div>
+            )}
+
+            <Button
+              disabled={saving}
+              onClick={() => {
+                hapticNotify("success");
+                void submitQuery();
+              }}
+              className="h-12 w-full rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
+            >
+              {saving && <Loader2 className="size-5 animate-spin" />}
+              <span className="truncate">{t("queryResubmit")}</span>
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => setShowFullForm(true)}
+              className="w-full text-center text-xs font-bold text-primary underline"
+            >
+              {t("queryOpenFullForm")}
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app-scroll safe-top safe-bottom h-full bg-background pb-12">
       <header className="bg-brand-gradient px-6 pt-10 pb-12 text-primary-foreground">
