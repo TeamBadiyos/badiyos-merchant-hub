@@ -17,9 +17,18 @@ import { toast } from "sonner";
 import { DocumentUpload, type DocType } from "@/components/DocumentUpload";
 import { LegalConsent } from "@/components/LegalConsent";
 import { Wordmark } from "@/components/Wordmark";
+import { LocationPicker } from "@/components/delivery/LocationPicker";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { verifyGstin } from "@/lib/gstin.functions";
@@ -89,6 +98,11 @@ function OnboardingPage() {
     bank_ifsc: "",
     bank_account_holder_name: "",
   });
+  const [mapOpen, setMapOpen] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
+    lat: null,
+    lng: null,
+  });
 
   useEffect(() => {
     if (ready && !userId) void navigate({ to: "/login", replace: true });
@@ -120,6 +134,7 @@ function OnboardingPage() {
       bank_ifsc: merchant.bank_ifsc ?? "",
       bank_account_holder_name: merchant.bank_account_holder_name ?? "",
     }));
+    setCoords({ lat: merchant.latitude ?? null, lng: merchant.longitude ?? null });
     setGstChoice(merchant.is_gst_registered);
     setGstin(merchant.gstin ?? "");
     setGstStatus(merchant.gst_status ?? null);
@@ -308,6 +323,9 @@ function OnboardingPage() {
         state: form.state,
         country: form.country,
         pincode: form.pincode,
+        ...(coords.lat != null && coords.lng != null
+          ? { latitude: coords.lat, longitude: coords.lng }
+          : {}),
       },
       3,
     );
@@ -542,25 +560,41 @@ function OnboardingPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-bold">{t("category")}</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(categories.data ?? []).map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => set("store_category_id")(c.id)}
-                      className={`rounded-2xl border px-3 py-3 text-xs font-bold transition-colors ${
-                        form.store_category_id === c.id
-                          ? "border-primary bg-primary-soft text-accent-foreground"
-                          : "border-border bg-background text-muted-foreground"
-                      }`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
+                <Select
+                  value={form.store_category_id}
+                  onValueChange={(v) => set("store_category_id")(v)}
+                >
+                  <SelectTrigger className="h-12 rounded-2xl text-sm font-semibold">
+                    <SelectValue placeholder={t("chooseCategory")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(categories.data ?? []).map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="text-sm font-semibold">
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors["store_category_id"] && (
                   <p className="text-xs font-bold text-destructive">{errors["store_category_id"]}</p>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  hapticImpact("light");
+                  setMapOpen(true);
+                }}
+                className="w-full justify-start rounded-2xl font-bold"
+              >
+                <MapPin className="size-5 text-primary" />
+                {coords.lat != null && coords.lng != null ? t("changeOnMap") : t("pickOnMap")}
+              </Button>
+              {coords.lat != null && coords.lng != null && (
+                <p className="-mt-3 text-xs font-bold text-primary">{t("locationSaved")}</p>
+              )}
               {field("address", t("addressLine"), { placeholder: "Shop no, street, landmark" })}
               <div className="grid grid-cols-2 gap-3">
                 {field("city", t("city"))}
@@ -597,6 +631,32 @@ function OnboardingPage() {
                   {t("saveContinue")}
                 </Button>
               </div>
+              <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+                <DialogContent className="max-w-[95vw] rounded-3xl p-4 sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-base font-extrabold">
+                      {t("mapPickTitle")}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <LocationPicker
+                    lat={coords.lat}
+                    lng={coords.lng}
+                    onChange={(lat, lng) => setCoords({ lat, lng })}
+                    onAddress={(address) => setForm((prev) => ({ ...prev, address }))}
+                  />
+                  <Button
+                    size="lg"
+                    disabled={coords.lat == null || coords.lng == null}
+                    onClick={() => {
+                      hapticImpact("light");
+                      setMapOpen(false);
+                    }}
+                    className="w-full rounded-2xl text-base font-bold shadow-brand"
+                  >
+                    {t("useThisLocation")}
+                  </Button>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
