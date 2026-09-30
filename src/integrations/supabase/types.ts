@@ -522,6 +522,33 @@ export type Database = {
           },
         ]
       }
+      booking_price_fallback_log: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          matched_price_option_id: string | null
+          service_category_id: string | null
+          service_label: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          matched_price_option_id?: string | null
+          service_category_id?: string | null
+          service_label?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          matched_price_option_id?: string | null
+          service_category_id?: string | null
+          service_label?: string | null
+        }
+        Relationships: []
+      }
       booking_tips: {
         Row: {
           amount: number
@@ -576,6 +603,7 @@ export type Database = {
       bookings: {
         Row: {
           address_id: string | null
+          arrived_at: string | null
           assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
@@ -597,13 +625,19 @@ export type Database = {
           dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          expert_assigned_at: string | null
           expert_payout_batch_id: string | null
+          expert_slot_reminder_sent: boolean
           gst_amount: number
           gst_percent: number
           id: string
           last_rebroadcast_at: string | null
+          no_expert_alert_sent: boolean
+          on_the_way_at: string | null
+          onway_alert_sent: boolean
           partner_payout_batch_id: string | null
           price: number
+          price_option_id: string | null
           rating: number | null
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
@@ -637,6 +671,7 @@ export type Database = {
         }
         Insert: {
           address_id?: string | null
+          arrived_at?: string | null
           assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
@@ -658,13 +693,19 @@ export type Database = {
           dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          expert_assigned_at?: string | null
           expert_payout_batch_id?: string | null
+          expert_slot_reminder_sent?: boolean
           gst_amount?: number
           gst_percent?: number
           id?: string
           last_rebroadcast_at?: string | null
+          no_expert_alert_sent?: boolean
+          on_the_way_at?: string | null
+          onway_alert_sent?: boolean
           partner_payout_batch_id?: string | null
           price: number
+          price_option_id?: string | null
           rating?: number | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
@@ -698,6 +739,7 @@ export type Database = {
         }
         Update: {
           address_id?: string | null
+          arrived_at?: string | null
           assigned_area_partner_id?: string | null
           assigned_expert_id?: string | null
           booking_lat?: number | null
@@ -719,13 +761,19 @@ export type Database = {
           dispatch_alert_sent?: boolean
           dispatch_exhausted_at?: string | null
           end_otp?: string | null
+          expert_assigned_at?: string | null
           expert_payout_batch_id?: string | null
+          expert_slot_reminder_sent?: boolean
           gst_amount?: number
           gst_percent?: number
           id?: string
           last_rebroadcast_at?: string | null
+          no_expert_alert_sent?: boolean
+          on_the_way_at?: string | null
+          onway_alert_sent?: boolean
           partner_payout_batch_id?: string | null
           price?: number
+          price_option_id?: string | null
           rating?: number | null
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
@@ -805,6 +853,13 @@ export type Database = {
             columns: ["partner_payout_batch_id"]
             isOneToOne: false
             referencedRelation: "payout_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_price_option_id_fkey"
+            columns: ["price_option_id"]
+            isOneToOne: false
+            referencedRelation: "service_price_options"
             referencedColumns: ["id"]
           },
           {
@@ -6158,6 +6213,7 @@ export type Database = {
           description: string | null
           display_order: number
           duration_minutes: number | null
+          estimated_minutes: number | null
           exclusions: string[]
           expert_payout: number | null
           gallery_urls: string[]
@@ -6179,6 +6235,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           duration_minutes?: number | null
+          estimated_minutes?: number | null
           exclusions?: string[]
           expert_payout?: number | null
           gallery_urls?: string[]
@@ -6200,6 +6257,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           duration_minutes?: number | null
+          estimated_minutes?: number | null
           exclusions?: string[]
           expert_payout?: number | null
           gallery_urls?: string[]
@@ -7121,6 +7179,12 @@ export type Database = {
       apply_referral_code: { Args: { _code: string }; Returns: string }
       award_referral_milestones: { Args: { _user_id: string }; Returns: number }
       booking_dispatch_refund_job: { Args: never; Returns: undefined }
+      booking_dispatch_release_due: { Args: never; Returns: number }
+      booking_get_expert_location: {
+        Args: { p_booking_id: string }
+        Returns: Json
+      }
+      booking_journey_sweeper: { Args: never; Returns: number }
       booking_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
@@ -7423,6 +7487,7 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: {
           address_id: string | null
+          arrived_at: string | null
           assigned_area_partner_id: string | null
           assigned_expert_id: string | null
           booking_lat: number | null
@@ -7444,13 +7509,19 @@ export type Database = {
           dispatch_alert_sent: boolean
           dispatch_exhausted_at: string | null
           end_otp: string | null
+          expert_assigned_at: string | null
           expert_payout_batch_id: string | null
+          expert_slot_reminder_sent: boolean
           gst_amount: number
           gst_percent: number
           id: string
           last_rebroadcast_at: string | null
+          no_expert_alert_sent: boolean
+          on_the_way_at: string | null
+          onway_alert_sent: boolean
           partner_payout_batch_id: string | null
           price: number
+          price_option_id: string | null
           rating: number | null
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
@@ -7515,6 +7586,10 @@ export type Database = {
           _user_id: string
         }
         Returns: Json
+      }
+      coupon_reconcile_user_reservations: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       courier_booking_start_at: {
         Args: { _d: string; _slot: string }
@@ -8005,6 +8080,11 @@ export type Database = {
           phone: string
         }[]
       }
+      expert_mark_arrived: { Args: { p_booking_id: string }; Returns: string }
+      expert_mark_on_the_way: {
+        Args: { p_booking_id: string }
+        Returns: string
+      }
       expert_register_device: {
         Args: { _device_id: string; _device_label?: string }
         Returns: Json
@@ -8327,6 +8407,10 @@ export type Database = {
         Returns: string
       }
       release_my_coin_redemption: {
+        Args: { _order_id: string }
+        Returns: number
+      }
+      release_my_coupon_redemption: {
         Args: { _order_id: string }
         Returns: number
       }
