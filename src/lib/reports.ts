@@ -37,8 +37,10 @@ export function resolveRange(key: RangeKey, fromStr?: string, toStr?: string): R
 export type CompletedOrder = {
   id: string;
   created_at: string;
-  total_amount: number;
+  items_total: number;
   commission_amount: number | null;
+  commission_gst_amount: number | null;
+  merchant_net: number | null;
   merchant_order_items: {
     product_id: string;
     product_name_snapshot: string;
@@ -52,7 +54,7 @@ export async function fetchCompletedOrders(range: Range): Promise<CompletedOrder
   const { data, error } = await supabase
     .from("merchant_orders")
     .select(
-      "id, created_at, total_amount, commission_amount, merchant_order_items(product_id, product_name_snapshot, quantity, price_snapshot)",
+      "id, created_at, items_total, commission_amount, commission_gst_amount, merchant_net, merchant_order_items(product_id, product_name_snapshot, quantity, price_snapshot)",
     )
     .eq("status", "completed")
     .or("payment_mode.eq.cod,payment_status.eq.paid")
@@ -64,13 +66,17 @@ export async function fetchCompletedOrders(range: Range): Promise<CompletedOrder
 }
 
 export function summarise(orders: CompletedOrder[]) {
-  const revenue = orders.reduce((sum, o) => sum + Number(o.total_amount ?? 0), 0);
-  const commission = orders.reduce((sum, o) => sum + Number(o.commission_amount ?? 0), 0);
+  // Goods sold, not the delivery fee; the shop's income is the snapshotted net.
+  const revenue = orders.reduce((sum, o) => sum + Number(o.items_total ?? 0), 0);
+  const commission = orders.reduce(
+    (sum, o) => sum + Number(o.commission_amount ?? 0) + Number(o.commission_gst_amount ?? 0),
+    0,
+  );
   return {
     count: orders.length,
     revenue,
     commission,
-    net: revenue - commission,
+    net: orders.reduce((sum, o) => sum + Number(o.merchant_net ?? 0), 0),
     average: orders.length ? revenue / orders.length : 0,
   };
 }
