@@ -46,7 +46,9 @@ const dict = {
     mapPickTitle: "Select your shop location",
     useThisLocation: "Use this location",
     locationSaved: "Location selected",
+    buildingName: "Building / shop name (optional)",
     addressLine: "Shop address",
+
     city: "City",
     state: "State",
     country: "Country",
