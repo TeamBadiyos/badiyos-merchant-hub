@@ -631,6 +631,32 @@ function OnboardingPage() {
                   {t("saveContinue")}
                 </Button>
               </div>
+              <Dialog open={mapOpen} onOpenChange={setMapOpen}>
+                <DialogContent className="max-w-[95vw] rounded-3xl p-4 sm:max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-base font-extrabold">
+                      {t("mapPickTitle")}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <LocationPicker
+                    lat={coords.lat}
+                    lng={coords.lng}
+                    onChange={(lat, lng) => setCoords({ lat, lng })}
+                    onAddress={(address) => setForm((prev) => ({ ...prev, address }))}
+                  />
+                  <Button
+                    size="lg"
+                    disabled={coords.lat == null || coords.lng == null}
+                    onClick={() => {
+                      hapticImpact("light");
+                      setMapOpen(false);
+                    }}
+                    className="w-full rounded-2xl text-base font-bold shadow-brand"
+                  >
+                    {t("useThisLocation")}
+                  </Button>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
