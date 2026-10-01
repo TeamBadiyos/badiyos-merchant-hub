@@ -328,9 +328,21 @@ function OnboardingPage() {
     if (Object.values(next).some(Boolean)) return;
 
     // Building/shop name is optional and stored as the first line of the address.
-    const fullAddress = [form.building.trim(), form.address.trim()]
-      .filter(Boolean)
-      .join(", ");
+    // If the street address already starts with the building name (e.g. the saved
+    // draft merged them earlier), don't prepend it again — that would duplicate it.
+    const building = form.building.trim();
+    const street = form.address.trim();
+    const lowerBuilding = building.toLowerCase();
+    const lowerStreet = street.toLowerCase();
+    const streetWithoutBuilding =
+      building &&
+      (lowerStreet === lowerBuilding || lowerStreet.startsWith(`${lowerBuilding}, `))
+        ? street
+            .slice(building.length)
+            .replace(/^\s*,\s*/, "")
+            .trim()
+        : street;
+    const fullAddress = [building, streetWithoutBuilding].filter(Boolean).join(", ");
 
     await saveDraft(
       {
