@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
+import { uploadCatalogImage } from "@/lib/catalog-images";
 import { useI18n } from "@/lib/i18n";
 
 export type DocType =
@@ -45,15 +46,27 @@ export function DocumentUpload({
     }
     setBusy(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${merchantId}/${docType}-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("merchant-documents")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (error) {
-        console.error(error);
-        toast.error("Upload failed. Please try again.");
-        return;
+      let path: string;
+      if (docType === "shop_photo") {
+        // Shop photo is public catalog media; KYC docs below stay private.
+        try {
+          path = await uploadCatalogImage({ merchantId, type: "shop_photo", file });
+        } catch (error) {
+          console.error(error);
+          toast.error("Upload failed. Please try again.");
+          return;
+        }
+      } else {
+        const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+        path = `${merchantId}/${docType}-${Date.now()}.${ext}`;
+        const { error } = await supabase.storage
+          .from("merchant-documents")
+          .upload(path, file, { upsert: true, contentType: file.type });
+        if (error) {
+          console.error(error);
+          toast.error("Upload failed. Please try again.");
+          return;
+        }
       }
       try {
         await onUploaded(path);

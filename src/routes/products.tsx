@@ -9,6 +9,7 @@ import { SwipeRow } from "@/components/SwipeRow";
 import { CsvImportDialog } from "@/components/CsvImportDialog";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { ProductImage } from "@/components/ProductImage";
+import { uploadCatalogImage } from "@/lib/catalog-images";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -397,12 +398,7 @@ function ProductForm({
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${merchantId}/product-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("product-images")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (error) throw error;
+      const path = await uploadCatalogImage({ merchantId, type: "product", file });
       setImagePath(path);
     } catch (error) {
       console.error(error);

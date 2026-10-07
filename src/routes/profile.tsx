@@ -70,24 +70,16 @@ function Row({ label, value }: { label: string; value: string | null | undefined
 }
 
 function ShopPhoto({ path }: { path: string | null }) {
-  const { data } = useQuery({
-    queryKey: ["shop-photo", path],
-    enabled: Boolean(path),
-    staleTime: 45 * 60 * 1000,
-    queryFn: async () => {
-      const { data } = await supabase.storage
-        .from("merchant-documents")
-        .createSignedUrl(path!, 60 * 60);
-      return data?.signedUrl ?? null;
-    },
-  });
-  if (path && data) {
-    return <img src={data} alt="" className="size-16 rounded-2xl object-cover" />;
-  }
   return (
-    <div className="flex size-16 items-center justify-center rounded-2xl bg-primary-soft">
-      <Building2 className="size-7 text-primary" />
-    </div>
+    <CatalogImage
+      path={path}
+      className="size-16 rounded-2xl object-cover"
+      fallback={
+        <div className="flex size-16 items-center justify-center rounded-2xl bg-primary-soft">
+          <Building2 className="size-7 text-primary" />
+        </div>
+      }
+    />
   );
 }
 
@@ -248,12 +240,10 @@ function ProfilePage() {
     }
     setUploadingPhoto(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${merchant.id}/shop_photo-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("merchant-documents")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (error) {
+      let path: string;
+      try {
+        path = await uploadCatalogImage({ merchantId: merchant.id, type: "shop_photo", file });
+      } catch (error) {
         console.error(error);
         toast.error("Upload failed. Please try again.");
         return;
