@@ -14,7 +14,9 @@ async function toUploadable(file: File): Promise<{ blob: Blob; ext: string; cont
   if (isHeic(file)) {
     const heic2any = (await import("heic2any")).default;
     const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
-    return { blob: Array.isArray(out) ? out[0] : out, ext: "jpg", contentType: "image/jpeg" };
+    const blob = Array.isArray(out) ? out[0] : out;
+    if (!blob) throw new Error("HEIC conversion failed");
+    return { blob, ext: "jpg", contentType: "image/jpeg" };
   }
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   return { blob: file, ext, contentType: file.type || "image/jpeg" };
