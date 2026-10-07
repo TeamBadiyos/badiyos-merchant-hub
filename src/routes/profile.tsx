@@ -16,6 +16,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ModeShell } from "@/components/ModeShell";
+import { CatalogImage } from "@/components/ProductImage";
+import { uploadCatalogImage } from "@/lib/catalog-images";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -310,7 +312,7 @@ function ProfilePage() {
             <input
               ref={photoInput}
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];

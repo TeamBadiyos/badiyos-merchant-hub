@@ -92,7 +92,7 @@ export function DocumentUpload({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept="image/*,.heic,.heif,application/pdf"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
