@@ -6574,10 +6574,12 @@ export type Database = {
         Row: {
           created_at: string
           detail: string | null
+          dismissed_at: string | null
           event_at: string
           id: string
           kind: string
           notif_key: string
+          read_at: string | null
           target: string
           target_id: string | null
           title: string
@@ -6585,10 +6587,12 @@ export type Database = {
         Insert: {
           created_at?: string
           detail?: string | null
+          dismissed_at?: string | null
           event_at?: string
           id?: string
           kind: string
           notif_key: string
+          read_at?: string | null
           target?: string
           target_id?: string | null
           title: string
@@ -6596,10 +6600,12 @@ export type Database = {
         Update: {
           created_at?: string
           detail?: string | null
+          dismissed_at?: string | null
           event_at?: string
           id?: string
           kind?: string
           notif_key?: string
+          read_at?: string | null
           target?: string
           target_id?: string | null
           title?: string
@@ -8576,6 +8582,8 @@ export type Database = {
         Returns: undefined
       }
       credit_referral_signup: { Args: { _txn_id: string }; Returns: number }
+      cron_fast_tick: { Args: never; Returns: undefined }
+      cron_minute_tick: { Args: never; Returns: undefined }
       current_merchant_id: { Args: never; Returns: string }
       customer_cancel_booking_apply: {
         Args: {
