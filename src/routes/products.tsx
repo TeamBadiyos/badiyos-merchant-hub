@@ -43,10 +43,20 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 type Product = Database["public"]["Tables"]["products"]["Row"];
 
 const UNITS: { value: string; key: Key }[] = [
+  { value: "gm", key: "unitGm" },
   { value: "kg", key: "unitKg" },
-  { value: "piece", key: "unitPiece" },
-  { value: "pack", key: "unitPack" },
+  { value: "ml", key: "unitMl" },
   { value: "litre", key: "unitLitre" },
+  { value: "piece", key: "unitPiece" },
+  { value: "dozen", key: "unitDozen" },
+  { value: "pack", key: "unitPack" },
+  { value: "box", key: "unitBox" },
+  { value: "bottle", key: "unitBottle" },
+  { value: "packet", key: "unitPacket" },
+  { value: "bundle", key: "unitBundle" },
+  { value: "meter", key: "unitMeter" },
+  { value: "pair", key: "unitPair" },
+  { value: "plate", key: "unitPlate" },
   { value: "other", key: "unitOther" },
 ];
 
