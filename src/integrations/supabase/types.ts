@@ -445,6 +445,53 @@ export type Database = {
           },
         ]
       }
+      booking_expert_handovers: {
+        Row: {
+          booking_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          minutes_worked: number
+          new_expert_id: string
+          previous_expert_id: string
+          previous_expert_payout: number
+          reason: string
+          total_payout: number
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          minutes_worked?: number
+          new_expert_id: string
+          previous_expert_id: string
+          previous_expert_payout?: number
+          reason: string
+          total_payout?: number
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          minutes_worked?: number
+          new_expert_id?: string
+          previous_expert_id?: string
+          previous_expert_payout?: number
+          reason?: string
+          total_payout?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_expert_handovers_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_extensions: {
         Row: {
           approval_status: string
@@ -631,6 +678,7 @@ export type Database = {
           gst_amount: number
           gst_percent: number
           id: string
+          is_training: boolean
           last_rebroadcast_at: string | null
           no_expert_alert_sent: boolean
           on_the_way_at: string | null
@@ -661,6 +709,7 @@ export type Database = {
           snapshot_hourly_rate: number | null
           snapshot_hq_share: number | null
           snapshot_partner_payout: number | null
+          staff_note: string | null
           start_otp: string | null
           started_at: string | null
           status: string
@@ -699,6 +748,7 @@ export type Database = {
           gst_amount?: number
           gst_percent?: number
           id?: string
+          is_training?: boolean
           last_rebroadcast_at?: string | null
           no_expert_alert_sent?: boolean
           on_the_way_at?: string | null
@@ -729,6 +779,7 @@ export type Database = {
           snapshot_hourly_rate?: number | null
           snapshot_hq_share?: number | null
           snapshot_partner_payout?: number | null
+          staff_note?: string | null
           start_otp?: string | null
           started_at?: string | null
           status?: string
@@ -767,6 +818,7 @@ export type Database = {
           gst_amount?: number
           gst_percent?: number
           id?: string
+          is_training?: boolean
           last_rebroadcast_at?: string | null
           no_expert_alert_sent?: boolean
           on_the_way_at?: string | null
@@ -797,6 +849,7 @@ export type Database = {
           snapshot_hourly_rate?: number | null
           snapshot_hq_share?: number | null
           snapshot_partner_payout?: number | null
+          staff_note?: string | null
           start_otp?: string | null
           started_at?: string | null
           status?: string
@@ -2298,6 +2351,68 @@ export type Database = {
           },
         ]
       }
+      coupon_attempt_logs: {
+        Row: {
+          code_attempted: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          code_attempted?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          code_attempted?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      coupon_phone_grants: {
+        Row: {
+          converted_at: string | null
+          converted_user_id: string | null
+          coupon_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          phone10: string
+        }
+        Insert: {
+          converted_at?: string | null
+          converted_user_id?: string | null
+          coupon_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          phone10: string
+        }
+        Update: {
+          converted_at?: string | null
+          converted_user_id?: string | null
+          coupon_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          phone10?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_phone_grants_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupon_redemptions: {
         Row: {
           base_amount: number
@@ -2367,6 +2482,7 @@ export type Database = {
           max_discount: number | null
           min_order_amount: number
           per_user_limit: number
+          show_in_list: boolean
           title: string
           total_usage_limit: number | null
           updated_at: string
@@ -2388,6 +2504,7 @@ export type Database = {
           max_discount?: number | null
           min_order_amount?: number
           per_user_limit?: number
+          show_in_list?: boolean
           title?: string
           total_usage_limit?: number | null
           updated_at?: string
@@ -2409,6 +2526,7 @@ export type Database = {
           max_discount?: number | null
           min_order_amount?: number
           per_user_limit?: number
+          show_in_list?: boolean
           title?: string
           total_usage_limit?: number | null
           updated_at?: string
@@ -3835,12 +3953,16 @@ export type Database = {
           bank_account_holder_name: string | null
           bank_account_number: string | null
           bank_ifsc: string | null
+          bank_name: string | null
           created_at: string
           current_lat: number | null
           current_lng: number | null
           id: string
           is_busy: boolean
           is_online: boolean
+          jacket_issued: boolean
+          jacket_issued_at: string | null
+          joining_date: string | null
           kyc_aadhaar_url: string | null
           kyc_address_proof_url: string | null
           kyc_pan_url: string | null
@@ -3848,6 +3970,7 @@ export type Database = {
           kyc_status: string
           level: string
           location_updated_at: string | null
+          mode: string
           name: string
           offline_after_job: boolean
           onboarded_by: string | null
@@ -3861,6 +3984,9 @@ export type Database = {
           referred_by_expert_id: string | null
           security_deposit_status: string
           status: string
+          training_completed_at: string | null
+          training_orders_completed: number
+          training_progress: Json
           wallet_balance: number
           zone_id: string | null
         }
@@ -3871,12 +3997,16 @@ export type Database = {
           bank_account_holder_name?: string | null
           bank_account_number?: string | null
           bank_ifsc?: string | null
+          bank_name?: string | null
           created_at?: string
           current_lat?: number | null
           current_lng?: number | null
           id?: string
           is_busy?: boolean
           is_online?: boolean
+          jacket_issued?: boolean
+          jacket_issued_at?: string | null
+          joining_date?: string | null
           kyc_aadhaar_url?: string | null
           kyc_address_proof_url?: string | null
           kyc_pan_url?: string | null
@@ -3884,6 +4014,7 @@ export type Database = {
           kyc_status?: string
           level?: string
           location_updated_at?: string | null
+          mode?: string
           name: string
           offline_after_job?: boolean
           onboarded_by?: string | null
@@ -3897,6 +4028,9 @@ export type Database = {
           referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
+          training_completed_at?: string | null
+          training_orders_completed?: number
+          training_progress?: Json
           wallet_balance?: number
           zone_id?: string | null
         }
@@ -3907,12 +4041,16 @@ export type Database = {
           bank_account_holder_name?: string | null
           bank_account_number?: string | null
           bank_ifsc?: string | null
+          bank_name?: string | null
           created_at?: string
           current_lat?: number | null
           current_lng?: number | null
           id?: string
           is_busy?: boolean
           is_online?: boolean
+          jacket_issued?: boolean
+          jacket_issued_at?: string | null
+          joining_date?: string | null
           kyc_aadhaar_url?: string | null
           kyc_address_proof_url?: string | null
           kyc_pan_url?: string | null
@@ -3920,6 +4058,7 @@ export type Database = {
           kyc_status?: string
           level?: string
           location_updated_at?: string | null
+          mode?: string
           name?: string
           offline_after_job?: boolean
           onboarded_by?: string | null
@@ -3933,6 +4072,9 @@ export type Database = {
           referred_by_expert_id?: string | null
           security_deposit_status?: string
           status?: string
+          training_completed_at?: string | null
+          training_orders_completed?: number
+          training_progress?: Json
           wallet_balance?: number
           zone_id?: string | null
         }
@@ -5275,6 +5417,7 @@ export type Database = {
         Row: {
           amount: number
           batch_id: string
+          bonus_amount: number
           booking_ids: string[]
           created_at: string
           gross_amount: number | null
@@ -5285,15 +5428,23 @@ export type Database = {
           owner_type: string
           paid: boolean
           paid_at: string | null
+          paid_on: string | null
           pan_last4: string | null
+          payment_mode: string | null
+          payment_notes: string | null
+          removed: boolean
+          removed_reason: string | null
           tds_amount: number
           tds_deposited_at: string | null
           tds_rate: number
           tds_status: string
+          utr: string | null
+          wallet_debited: boolean
         }
         Insert: {
           amount?: number
           batch_id: string
+          bonus_amount?: number
           booking_ids?: string[]
           created_at?: string
           gross_amount?: number | null
@@ -5304,15 +5455,23 @@ export type Database = {
           owner_type: string
           paid?: boolean
           paid_at?: string | null
+          paid_on?: string | null
           pan_last4?: string | null
+          payment_mode?: string | null
+          payment_notes?: string | null
+          removed?: boolean
+          removed_reason?: string | null
           tds_amount?: number
           tds_deposited_at?: string | null
           tds_rate?: number
           tds_status?: string
+          utr?: string | null
+          wallet_debited?: boolean
         }
         Update: {
           amount?: number
           batch_id?: string
+          bonus_amount?: number
           booking_ids?: string[]
           created_at?: string
           gross_amount?: number | null
@@ -5323,11 +5482,18 @@ export type Database = {
           owner_type?: string
           paid?: boolean
           paid_at?: string | null
+          paid_on?: string | null
           pan_last4?: string | null
+          payment_mode?: string | null
+          payment_notes?: string | null
+          removed?: boolean
+          removed_reason?: string | null
           tds_amount?: number
           tds_deposited_at?: string | null
           tds_rate?: number
           tds_status?: string
+          utr?: string | null
+          wallet_debited?: boolean
         }
         Relationships: [
           {
@@ -5344,6 +5510,7 @@ export type Database = {
           batch_type: string
           created_at: string
           id: string
+          notes: string | null
           paid_at: string | null
           status: string
           total_amount: number
@@ -5354,6 +5521,7 @@ export type Database = {
           batch_type?: string
           created_at?: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           status?: string
           total_amount?: number
@@ -5364,6 +5532,7 @@ export type Database = {
           batch_type?: string
           created_at?: string
           id?: string
+          notes?: string | null
           paid_at?: string | null
           status?: string
           total_amount?: number
@@ -5397,6 +5566,10 @@ export type Database = {
         Row: {
           admin_hidden: boolean
           admin_hidden_reason: string | null
+          approval_reason: string | null
+          approval_reviewed_at: string | null
+          approval_reviewed_by: string | null
+          approval_status: string
           category_label: string | null
           created_at: string
           description: string | null
@@ -5404,6 +5577,7 @@ export type Database = {
           hsn_sac_code: string | null
           id: string
           image_url: string | null
+          image_url_2: string | null
           is_active: boolean
           low_stock_threshold: number
           merchant_id: string
@@ -5415,6 +5589,10 @@ export type Database = {
         Insert: {
           admin_hidden?: boolean
           admin_hidden_reason?: string | null
+          approval_reason?: string | null
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           category_label?: string | null
           created_at?: string
           description?: string | null
@@ -5422,6 +5600,7 @@ export type Database = {
           hsn_sac_code?: string | null
           id?: string
           image_url?: string | null
+          image_url_2?: string | null
           is_active?: boolean
           low_stock_threshold?: number
           merchant_id: string
@@ -5433,6 +5612,10 @@ export type Database = {
         Update: {
           admin_hidden?: boolean
           admin_hidden_reason?: string | null
+          approval_reason?: string | null
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           category_label?: string | null
           created_at?: string
           description?: string | null
@@ -5440,6 +5623,7 @@ export type Database = {
           hsn_sac_code?: string | null
           id?: string
           image_url?: string | null
+          image_url_2?: string | null
           is_active?: boolean
           low_stock_threshold?: number
           merchant_id?: string
@@ -6535,6 +6719,185 @@ export type Database = {
           },
         ]
       }
+      suggestion_remarks: {
+        Row: {
+          created_at: string
+          id: string
+          new_status_id: string | null
+          old_status_id: string | null
+          remark: string
+          staff_id: string | null
+          suggestion_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_status_id?: string | null
+          old_status_id?: string | null
+          remark: string
+          staff_id?: string | null
+          suggestion_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_status_id?: string | null
+          old_status_id?: string | null
+          remark?: string
+          staff_id?: string | null
+          suggestion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_remarks_new_status_id_fkey"
+            columns: ["new_status_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_remarks_old_status_id_fkey"
+            columns: ["old_status_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_remarks_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_remarks_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suggestion_statuses: {
+        Row: {
+          active: boolean
+          color: string
+          created_at: string
+          customer_label_en: string
+          customer_label_mr: string
+          id: string
+          is_final: boolean
+          key: string
+          label: string
+          notify_customer: boolean
+          notify_message: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          customer_label_en: string
+          customer_label_mr?: string
+          id?: string
+          is_final?: boolean
+          key: string
+          label: string
+          notify_customer?: boolean
+          notify_message?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          created_at?: string
+          customer_label_en?: string
+          customer_label_mr?: string
+          id?: string
+          is_final?: boolean
+          key?: string
+          label?: string
+          notify_customer?: boolean
+          notify_message?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      suggestions: {
+        Row: {
+          archived: boolean
+          assigned_to: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          final_at: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          photo_path: string | null
+          priority: string
+          source: string
+          status_id: string | null
+          text: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          archived?: boolean
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          final_at?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          photo_path?: string | null
+          priority?: string
+          source?: string
+          status_id?: string | null
+          text: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          archived?: boolean
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          final_at?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          photo_path?: string | null
+          priority?: string
+          source?: string
+          status_id?: string | null
+          text?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "staff_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_inquiries: {
         Row: {
           contact: string
@@ -7361,11 +7724,19 @@ export type Database = {
       award_referral_milestones: { Args: { _user_id: string }; Returns: number }
       booking_dispatch_refund_job: { Args: never; Returns: undefined }
       booking_dispatch_release_due: { Args: never; Returns: number }
+      booking_expert_mode_ok: {
+        Args: { _booking_id: string; _expert_id: string }
+        Returns: boolean
+      }
       booking_get_expert_location: {
         Args: { p_booking_id: string }
         Returns: Json
       }
       booking_journey_sweeper: { Args: never; Returns: number }
+      booking_total_expert_payout: {
+        Args: { _booking_id: string }
+        Returns: number
+      }
       booking_verify_job_secret: { Args: { _secret: string }; Returns: boolean }
       broadcast_booking_to_experts: {
         Args: { _booking_id: string; _radius?: number }
@@ -7696,6 +8067,7 @@ export type Database = {
           gst_amount: number
           gst_percent: number
           id: string
+          is_training: boolean
           last_rebroadcast_at: string | null
           no_expert_alert_sent: boolean
           on_the_way_at: string | null
@@ -7726,6 +8098,7 @@ export type Database = {
           snapshot_hourly_rate: number | null
           snapshot_hq_share: number | null
           snapshot_partner_payout: number | null
+          staff_note: string | null
           start_otp: string | null
           started_at: string | null
           status: string
@@ -7751,6 +8124,10 @@ export type Database = {
           rate: number
         }[]
       }
+      coupon_convert_phone_grants: {
+        Args: { _phone: string; _user_id: string }
+        Returns: number
+      }
       coupon_preview: {
         Args: {
           _base_amount: number
@@ -7760,7 +8137,26 @@ export type Database = {
         }
         Returns: Json
       }
+      coupon_preview_listed: {
+        Args: {
+          _base_amount: number
+          _category_id?: string
+          _code: string
+          _duration_minutes?: number
+        }
+        Returns: Json
+      }
       coupon_quote: {
+        Args: {
+          _base_amount: number
+          _category_id?: string
+          _code: string
+          _duration_minutes?: number
+          _user_id: string
+        }
+        Returns: Json
+      }
+      coupon_quote_core: {
         Args: {
           _base_amount: number
           _category_id?: string
@@ -8433,6 +8829,7 @@ export type Database = {
         Returns: Json
       }
       my_coin_balance: { Args: never; Returns: number }
+      my_coupon_claim_phone_grants: { Args: never; Returns: number }
       my_coupons: {
         Args: never
         Returns: {
@@ -8443,6 +8840,7 @@ export type Database = {
           discount_value: number
           id: string
           is_personal: boolean
+          is_targeted: boolean
           max_discount: number
           min_order_amount: number
           source: string
@@ -8561,6 +8959,10 @@ export type Database = {
         Args: { _decision: string; _extension_id: string }
         Returns: Json
       }
+      payout_batch_recalc_total: {
+        Args: { _batch_id: string }
+        Returns: undefined
+      }
       point_in_polygon: {
         Args: { _lat: number; _lng: number; _poly: Json }
         Returns: boolean
@@ -8673,9 +9075,14 @@ export type Database = {
         Args: { _at?: string; _city?: string; _service_key: string }
         Returns: Json
       }
+      service_extensions_enabled: { Args: never; Returns: boolean }
       service_holiday_notify: { Args: { _phase: string }; Returns: undefined }
       service_hours_autooffline: { Args: never; Returns: undefined }
       service_hours_bypass: { Args: never; Returns: boolean }
+      service_instant_allowed: {
+        Args: { _duration_minutes?: number; _service_key: string }
+        Returns: Json
+      }
       service_next_open: {
         Args: { _flag_id: string; _from: string }
         Returns: string
@@ -8783,6 +9190,14 @@ export type Database = {
       staff_commerce_admin_id: { Args: never; Returns: string }
       staff_confirm_payout_batch: {
         Args: { _batch_id: string }
+        Returns: undefined
+      }
+      staff_coupon_grant_phones: {
+        Args: { _id: string; _phones: string[] }
+        Returns: Json
+      }
+      staff_coupon_revoke_grant: {
+        Args: { _coupon_id: string; _grant_id: string; _kind: string }
         Returns: undefined
       }
       staff_courier_assignable_riders: {
@@ -8956,6 +9371,15 @@ export type Database = {
         Args: { _booking_id: string; _payload: Json }
         Returns: undefined
       }
+      staff_edit_payout_item: {
+        Args: {
+          _bonus: number
+          _gross: number
+          _item_id: string
+          _reason: string
+        }
+        Returns: undefined
+      }
       staff_expert_kyc_decision: {
         Args: { _decision: string; _expert_id: string; _reason: string }
         Returns: undefined
@@ -8977,8 +9401,26 @@ export type Database = {
       }
       staff_generate_merchant_payout_batch: { Args: never; Returns: string }
       staff_generate_payout_batch: { Args: never; Returns: string }
+      staff_generate_payout_batch_range: {
+        Args: {
+          _batch_type: string
+          _from: string
+          _notes?: string
+          _to: string
+        }
+        Returns: string
+      }
       staff_generate_subscription_invoices: { Args: never; Returns: Json }
       staff_get_referral_config: { Args: never; Returns: Json }
+      staff_handover_booking_expert: {
+        Args: {
+          _booking_id: string
+          _new_expert_id: string
+          _previous_payout: number
+          _reason: string
+        }
+        Returns: Json
+      }
       staff_insurance_stats: { Args: never; Returns: Json }
       staff_list_bulk_plans: { Args: never; Returns: Json }
       staff_list_notifications: {
@@ -9039,6 +9481,17 @@ export type Database = {
         Args: { _expert_id: string; _order_id: string }
         Returns: Json
       }
+      staff_record_payout_payment: {
+        Args: {
+          _item_id: string
+          _mode?: string
+          _notes?: string
+          _paid: boolean
+          _paid_on?: string
+          _utr?: string
+        }
+        Returns: undefined
+      }
       staff_redraw_zone_boundary: {
         Args: { _boundary: Json; _zone_id: string }
         Returns: undefined
@@ -9060,6 +9513,15 @@ export type Database = {
         Returns: undefined
       }
       staff_require_super_admin: { Args: never; Returns: undefined }
+      staff_reschedule_booking: {
+        Args: {
+          _booking_id: string
+          _date: string
+          _reason?: string
+          _slot: string
+        }
+        Returns: undefined
+      }
       staff_reset_receiver_location: {
         Args: { _reason: string; _receiver_id: string }
         Returns: Json
@@ -9196,6 +9658,22 @@ export type Database = {
         }
         Returns: string
       }
+      staff_set_booking_location: {
+        Args: {
+          _area: string
+          _booking_id: string
+          _city: string
+          _full_address: string
+          _lat: number
+          _lng: number
+          _pincode: string
+        }
+        Returns: undefined
+      }
+      staff_set_booking_note: {
+        Args: { _booking_id: string; _note: string }
+        Returns: undefined
+      }
       staff_set_booking_refund: {
         Args: {
           _booking_id: string
@@ -9232,6 +9710,10 @@ export type Database = {
       }
       staff_set_delivery_status: {
         Args: { _merchant_id: string; _reason: string; _status: string }
+        Returns: undefined
+      }
+      staff_set_expert_onboarding: {
+        Args: { _expert_id: string; _payload: Json }
         Returns: undefined
       }
       staff_set_expert_zones: {
@@ -9281,6 +9763,10 @@ export type Database = {
       }
       staff_set_partner_zones: {
         Args: { _partner_id: string; _zone_ids: string[] }
+        Returns: undefined
+      }
+      staff_set_payout_item_removed: {
+        Args: { _item_id: string; _reason?: string; _removed: boolean }
         Returns: undefined
       }
       staff_set_plan_active: {
@@ -9508,6 +9994,7 @@ export type Database = {
           _max_discount: number
           _min_order_amount: number
           _per_user_limit: number
+          _show_in_list?: boolean
           _title: string
           _total_usage_limit: number
           _valid_from: string
@@ -9841,6 +10328,31 @@ export type Database = {
       system_store_mark_paid: {
         Args: { _payment_id: string; _rzp_order_id: string }
         Returns: boolean
+      }
+      training_create_booking: {
+        Args: {
+          _actor: string
+          _address: Json
+          _expert_id: string
+          _price_option_id: string
+          _scheduled_date: string
+          _scheduled_time_slot: string
+        }
+        Returns: Json
+      }
+      training_delete_bookings: {
+        Args: {
+          _actor: string
+          _expert_id: string
+          _from: string
+          _ids: string[]
+          _to: string
+        }
+        Returns: Json
+      }
+      training_set_expert_mode: {
+        Args: { _actor: string; _expert_id: string; _mode: string }
+        Returns: Json
       }
       verify_commission_parity: {
         Args: never
