@@ -131,11 +131,28 @@ function Settlement({ order }: { order: OrderWithItems }) {
   const commission = Number(order.commission_amount ?? 0);
   const gst = Number(order.commission_gst_amount ?? 0);
   const net = Number(order.merchant_net ?? 0);
+  const b = (order.commission_breakdown ?? null) as Record<string, unknown> | null;
+  const split = b && b["mode"] === "split";
+  const n = (k: string) => Number((b?.[k] as number | string | undefined) ?? 0);
 
   return (
     <div className="mt-3 space-y-1 rounded-xl bg-muted/60 p-3">
       <Line label={t("itemsTotalLabel")} value={inr(items)} />
-      <Line label={`${t("commissionLabel")} (${pct}%)`} value={`- ${inr(commission)}`} />
+      {split ? (
+        <>
+          <Line
+            label={`├ ${t("mrpItems")} (${inr(n("mrp_total"))} @ ${n("mrp_pct")}%)`}
+            value={`- ${inr(n("mrp_amount"))}`}
+          />
+          <Line
+            label={`└ ${t("otherItems")} (${inr(n("other_total"))} @ ${n("other_pct")}%)`}
+            value={`- ${inr(n("other_amount"))}`}
+          />
+          <Line label={t("platformCommission")} value={`- ${inr(commission)}`} />
+        </>
+      ) : (
+        <Line label={`${t("commissionLabel")} (${pct}%)`} value={`- ${inr(commission)}`} />
+      )}
       {gst > 0 && <Line label={t("gstOnCommission")} value={`- ${inr(gst)}`} />}
       <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
         <p className="text-xs font-bold text-foreground">{t("youWillGet")}</p>

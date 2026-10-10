@@ -42,5 +42,7 @@ export async function fetchOrders(
 export function itemsSummary(order: OrderWithItems): string {
   const items = order.merchant_order_items ?? [];
   if (!items.length) return "—";
-  return items.map((i) => `${i.quantity} × ${i.product_name_snapshot}`).join(", ");
+  return items
+    .map((i) => `${i.quantity} × ${i.product_name_snapshot}${i.is_mrp_snapshot ? " [MRP]" : ""}`)
+    .join(", ");
 }
