@@ -447,10 +447,18 @@ function ProfilePage() {
               <Row label={t("state")} value={merchant.state} />
               <Row label={t("pincode")} value={merchant.pincode} />
               <Row label={t("category")} value={categoryName} />
-              <Row
-                label={t("badiyosCommission")}
-                value={`${Number(merchant.commission_value ?? 0)}%`}
-              />
+              {merchant.commission_mode === "split" ? (
+                <>
+                  <Row label={t("commissionType")} value={t("commissionSplit")} />
+                  <Row label={t("mrpItemsCommission")} value={`${Number(merchant.mrp_commission_pct ?? 0)}%`} />
+                  <Row label={t("otherItemsCommission")} value={`${Number(merchant.other_commission_pct ?? 0)}%`} />
+                </>
+              ) : (
+                <>
+                  <Row label={t("commissionType")} value={t("commissionFlat")} />
+                  <Row label={t("badiyosCommission")} value={`${Number(merchant.commission_value ?? 0)}%`} />
+                </>
+              )}
             </div>
           )}
         </section>

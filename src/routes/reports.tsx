@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { BarChart3, IndianRupee, Loader2, PackageOpen, Receipt } from "lucide-react";
+import { BarChart3, Eye, IndianRupee, Loader2, PackageOpen, Receipt } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -73,6 +74,24 @@ function ReportsPage() {
   });
 
   const summary = summarise(orders.data ?? []);
+
+  const visits = useQuery({
+    queryKey: ["store-analytics", merchant?.id],
+    enabled: !!merchant?.id && allowed,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_merchant_store_analytics", {
+        _merchant_id: merchant!.id,
+        _days: 7,
+      });
+      if (error) throw error;
+      const d = (data ?? {}) as Record<string, unknown>;
+      return {
+        totalVisits: Number(d["totalVisits"] ?? 0),
+        uniqueVisitors: Number(d["uniqueVisitors"] ?? 0),
+        orders: Number(d["orders"] ?? 0),
+      };
+    },
+  });
   const series = useMemo(() => revenueSeries(orders.data ?? [], range), [orders.data, range]);
   const top = useMemo(() => topProducts(orders.data ?? []), [orders.data]);
 
@@ -151,6 +170,30 @@ function ReportsPage() {
             </div>
           ))}
         </div>
+
+        {visits.data && (
+          <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
+              <Eye className="size-4 text-primary" /> {t("storeVisitors7d")}
+            </h2>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {[
+                [t("totalVisits"), visits.data.totalVisits],
+                [t("uniqueVisitors"), visits.data.uniqueVisitors],
+                [t("totalOrders"), visits.data.orders],
+                [
+                  t("conversion"),
+                  `${visits.data.uniqueVisitors > 0 ? ((visits.data.orders * 100) / visits.data.uniqueVisitors).toFixed(1) : "0"}%`,
+                ],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-xl bg-muted/60 p-3">
+                  <p className="num text-base font-extrabold text-foreground">{value}</p>
+                  <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {orders.isLoading && (
           <div className="flex justify-center py-10">
