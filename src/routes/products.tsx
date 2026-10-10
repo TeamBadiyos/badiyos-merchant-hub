@@ -230,6 +230,9 @@ function ProductsPage() {
                   </span>
                 </p>
                 <p className="num text-xs font-semibold text-muted-foreground">
+                  {product.is_mrp && (
+                    <span className="mr-1 rounded bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground">MRP</span>
+                  )}
                   {t("stock")}: {product.stock_quantity}
                   {product.category_label ? ` · ${product.category_label}` : ""}
                 </p>
@@ -344,6 +347,7 @@ function ProductForm({
   const [gstRate, setGstRate] = useState(String(product?.gst_rate ?? 0));
   const [hsn, setHsn] = useState(product?.hsn_sac_code ?? "");
   const [imagePath, setImagePath] = useState<string | null>(product?.image_url ?? null);
+  const [isMrp, setIsMrp] = useState<boolean>(product?.is_mrp ?? false);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -371,6 +375,7 @@ function ProductForm({
         gst_rate: Number(gstRate || 0),
         hsn_sac_code: hsn.trim() || null,
         image_url: imagePath,
+        is_mrp: isMrp,
       };
       if (product) {
         const { error } = await supabase.from("products").update(payload).eq("id", product.id);
@@ -461,6 +466,14 @@ function ProductForm({
               placeholder="Snacks, Dairy…"
             />
           </Field>
+
+          <label className="flex items-start justify-between gap-3 rounded-xl border border-border p-3">
+            <span>
+              <span className="block text-sm font-bold text-foreground">{t("mrpItem")}</span>
+              <span className="block text-xs text-muted-foreground">{t("mrpItemHelp")}</span>
+            </span>
+            <Switch checked={isMrp} onCheckedChange={setIsMrp} />
+          </label>
 
           <Field label={t("lowStockThreshold")}>
             <Input
