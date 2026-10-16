@@ -47,12 +47,22 @@ export function CsvImportDialog({
 
   const importRows = useMutation({
     mutationFn: async () => {
+      const { data: cats } = await supabase
+        .from("catalog_categories")
+        .select("id, name, name_mr, is_other")
+        .eq("service_type", "store")
+        .eq("is_active", true);
+      const list = cats ?? [];
+      const other = list.find((c) => c.is_other)?.id ?? null;
+      const norm = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
+      const match = (label: string | null) =>
+        list.find((c) => label && (norm(c.name) === norm(label) || norm(c.name_mr) === norm(label)))?.id ?? other;
       const { error } = await supabase.from("products").insert(
         valid.map((row) => ({
           merchant_id: merchantId,
           name: row.name,
           description: row.description,
-          category_label: row.category_label,
+          category_id: match(row.category_label),
           price: row.price,
           stock_quantity: row.stock_quantity,
           unit: row.unit,
