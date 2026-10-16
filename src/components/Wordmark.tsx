@@ -1,5 +1,5 @@
 import wordmarkOnDark from "@/assets/badiyos-wordmark-white.png.asset.json";
-import wordmarkOnLight from "@/assets/badiyos-wordmark-purple.png.asset.json";
+import wordmarkOnLight from "@/assets/badiyos-wordmark-brand.png.asset.json";
 
 /**
  * The badiyos wordmark. `on` picks the variant that reads correctly against the

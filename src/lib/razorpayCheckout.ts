@@ -63,7 +63,7 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
         description: opts.description,
         prefill,
         notes: opts.notes ?? {},
-        theme: { color: "#800080" },
+        theme: { color: "#6B336A" },
       };
       const res = (await Checkout.open(options as Parameters<typeof Checkout.open>[0])) as {
         response?: { razorpay_payment_id?: string };
@@ -104,7 +104,7 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
       description: opts.description,
       prefill,
       notes: opts.notes ?? {},
-      theme: { color: "#800080" },
+      theme: { color: "#6B336A" },
       handler: (resp: { razorpay_payment_id?: string }) =>
         resp.razorpay_payment_id
           ? done(resp.razorpay_payment_id)

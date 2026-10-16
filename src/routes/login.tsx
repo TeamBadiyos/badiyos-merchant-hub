@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { Wordmark } from "@/components/Wordmark";
+import merchantIcon from "@/assets/badiyos-merchant-icon.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { routeForMerchant, useAuth } from "@/lib/auth";
 import { hapticImpact, hapticNotify } from "@/lib/haptics";
@@ -177,7 +178,13 @@ function LoginPage() {
     <div className="app-scroll safe-top safe-bottom flex h-full min-h-full flex-col bg-primary">
       <div className="bg-brand-gradient px-5 pt-6 pb-10 text-primary-foreground">
         <div className="relative mx-auto w-full max-w-[520px]">
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src={merchantIcon.url}
+              alt="badiyos Merchant"
+              className="size-16 rounded-2xl shadow-brand ring-2 ring-primary-foreground/30"
+              draggable={false}
+            />
             <Wordmark on="dark" className="h-8" />
           </div>
           <div className="absolute top-0 right-0 flex items-center rounded-full bg-primary-foreground/20 p-0.5 text-[11px] font-extrabold">
