@@ -934,9 +934,24 @@ function ProductForm({
                     <Plus className="size-4" />
                     {t("pmAddAddon")}
                   </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["min", "max"] as const).map((k) => (
+                      <label key={k} className="space-y-1">
+                        <span className="block text-xs font-semibold text-muted-foreground">{t(k === "min" ? "pmMinSelect" : "pmMaxSelect")}</span>
+                        <Input
+                          inputMode="numeric"
+                          value={g[k]}
+                          onChange={(e) => setGroups((arr) => arr.map((x, j) => (j === gi ? { ...x, [k]: e.target.value.replace(/\D/g, "") } : x)))}
+                          className="num rounded-xl"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{Number(g.min || 0) > 0 ? t("pmRequiredPick") : t("pmOptionalPick")}</p>
+                  {errors[`group${gi}`] && <p className="text-xs font-semibold text-destructive">{errors[`group${gi}`]}</p>}
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={() => setGroups((a) => [...a, { name: "", items: [{ name: "", price: "" }] }])}>
+              <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={() => setGroups((a) => [...a, { name: "", min: "0", max: "1", items: [{ name: "", price: "" }] }])}>
                 <Plus className="size-4" />
                 {t("pmAddGroup")}
               </Button>
