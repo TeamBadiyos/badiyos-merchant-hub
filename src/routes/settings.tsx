@@ -351,68 +351,7 @@ function SettingsPage() {
           </ul>
         </section>
 
-        <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
-          <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
-            <CreditCard className="size-5 text-primary" />
-            {t("billingPlan")}
-          </h2>
-
-          {tier.data ? (
-            <div className="mt-4 flex items-center justify-between rounded-2xl bg-primary-soft px-4 py-4">
-              <div>
-                <p className="text-[11px] font-bold text-muted-foreground">{t("currentPlan")}</p>
-                <p className="text-base font-extrabold text-accent-foreground">{tier.data.name}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[11px] font-bold text-muted-foreground">{t("monthlyFee")}</p>
-                <p className="num text-base font-extrabold text-accent-foreground">
-                  {inr(tier.data.monthly_fee)}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-muted-foreground">{t("noPlan")}</p>
-          )}
-
-          <h3 className="mt-6 text-sm font-bold text-foreground">{t("planInvoices")}</h3>
-          <ul className="mt-3 space-y-2">
-            {(invoices.data ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("noPlanInvoices")}</p>
-            ) : (
-              (invoices.data ?? []).map((inv) => (
-                <li
-                  key={inv.id}
-                  className="flex items-center justify-between rounded-xl bg-muted/60 px-4 py-3"
-                >
-                  <div>
-                    <p className="num text-sm font-bold text-foreground">
-                      {new Date(inv.billing_month).toLocaleDateString("en-IN", {
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
-                    <p className="num text-xs text-muted-foreground">{inr(inv.amount)}</p>
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[11px] font-bold ${
-                      inv.status === "paid"
-                        ? "bg-primary/10 text-primary"
-                        : inv.status === "overdue"
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {inv.status === "paid"
-                      ? t("statusPaid")
-                      : inv.status === "overdue"
-                        ? t("statusOverdue")
-                        : t("statusPending")}
-                  </span>
-                </li>
-              ))
-            )}
-          </ul>
-        </section>
+        <CommissionCard />
 
         <section className="rounded-2xl border border-border bg-card p-5 shadow-card">
           <h2 className="text-base font-bold text-foreground">{t("legal")}</h2>
@@ -438,5 +377,57 @@ function SettingsPage() {
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function CommissionCard() {
+  const { t } = useI18n();
+  const { merchant } = useAuth();
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const since = monthStart.toISOString();
+  const month = useQuery({
+    queryKey: ["commission-month", merchant?.id, since],
+    enabled: Boolean(merchant?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("merchant_orders")
+        .select("commission_amount, commission_gst_amount")
+        .eq("store_id", merchant!.id)
+        .eq("status", "delivered")
+        .gte("created_at", since)
+        .limit(2000);
+      if (error) throw error;
+      return (data ?? []).reduce(
+        (acc, r) => ({
+          c: acc.c + Number(r.commission_amount ?? 0),
+          g: acc.g + Number(r.commission_gst_amount ?? 0),
+        }),
+        { c: 0, g: 0 },
+      );
+    },
+  });
+  const rate =
+    merchant?.commission_mode === "split"
+      ? `${merchant.mrp_commission_pct ?? 0}% / ${merchant.other_commission_pct ?? 0}%`
+      : `${merchant?.commission_pct ?? merchant?.commission_value ?? 0}%`;
+  const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-card">
+      <h2 className="text-base font-bold text-foreground">{t("yourCommission")}</h2>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {[
+          [t("commissionRateNow"), rate],
+          [t("commissionThisMonth"), inr(month.data?.c ?? 0)],
+          [t("commissionGstThisMonth"), inr(month.data?.g ?? 0)],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <p className="num text-xl font-extrabold text-primary">{value}</p>
+            <p className="mt-1 text-[11px] font-bold text-muted-foreground">{label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

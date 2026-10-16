@@ -276,24 +276,12 @@ export function PlaceholderPanel({
   icon: typeof Home;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center shadow-card">
+    <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-card">
       <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary-soft">
         <Icon className="size-7 text-primary" />
       </div>
       <h2 className="mt-4 text-base font-bold text-foreground">{title}</h2>
       <p className="mx-auto mt-2 max-w-[34ch] text-sm text-muted-foreground">{description}</p>
-      <div className="mt-6 space-y-3">
-        {[0, 1].map((i) => (
-          <div key={i} className="flex items-center gap-4 rounded-xl bg-muted/70 p-4">
-            <div className="size-8 rounded-lg bg-border/70" />
-            <div className="flex-1 space-y-2">
-              <div className="h-2 w-2/3 rounded-full bg-border/70" />
-              <div className="h-2 w-1/3 rounded-full bg-border/50" />
-            </div>
-            <ChevronRight className="size-4 text-border" />
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
