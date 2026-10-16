@@ -12458,6 +12458,10 @@ export type Database = {
         Returns: Json
       }
       merchant_my_context: { Args: never; Returns: Json }
+      merchant_order_accept_deadlines: {
+        Args: { _order_ids: string[] }
+        Returns: Json
+      }
       merchant_require: {
         Args: { _allow: string[]; _store_id: string }
         Returns: string
