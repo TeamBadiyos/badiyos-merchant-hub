@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="#800080"
+    android:background="#6B336A"
     android:padding="24dp">
 
     <TextView
@@ -52,7 +52,7 @@
         android:layout_height="64dp"
         android:layout_marginTop="32dp"
         android:backgroundTint="#FFFFFF"
-        android:textColor="#800080"
+        android:textColor="#6B336A"
         android:textSize="18sp"
         android:textStyle="bold"
         android:text="OPEN" />
