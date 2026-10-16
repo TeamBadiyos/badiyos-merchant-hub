@@ -102,6 +102,9 @@ function OnboardingPage() {
     bank_account_holder_name: "",
     upi_id: "",
     gstin: "",
+    fssai_number: "",
+    fssai_expiry: "",
+    udyam_number: "",
   });
   const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
     lat: null,
@@ -128,12 +131,21 @@ function OnboardingPage() {
     if (!merchant || hydrated) return;
     void supabase.auth.getUser().then(({ data }) => {
       const meta = (data.user?.user_metadata ?? {}) as Record<string, string>;
-      setForm((p) => ({ ...p, email: meta["contact_email"] ?? "", upi_id: meta["upi_id"] ?? "" }));
+      setForm((p) => ({
+        ...p,
+        email: p.email || meta["contact_email"] || "",
+        upi_id: p.upi_id || meta["upi_id"] || "",
+      }));
     });
     setForm((p) => ({
       ...p,
       service_type: (merchant.service_type as "store" | "food" | null) ?? "",
       owner_name: merchant.owner_name ?? "",
+      email: merchant.email ?? "",
+      upi_id: merchant.upi_id ?? "",
+      fssai_number: merchant.fssai_number ?? "",
+      fssai_expiry: merchant.fssai_expiry ?? "",
+      udyam_number: merchant.udyam_number ?? "",
       store_name: merchant.store_name ?? "",
       store_category_id: merchant.store_category_id ?? "",
       address: merchant.address ?? "",
@@ -307,7 +319,7 @@ function OnboardingPage() {
     )
       return;
     await supabase.auth.updateUser({ data: { contact_email: email || null } });
-    await save({ owner_name: form.owner_name.trim() }, 4);
+    await save({ owner_name: form.owner_name.trim(), email: email || null }, 4);
   };
 
   const submit4 = async () => {
@@ -369,10 +381,11 @@ function OnboardingPage() {
 
   const submit6 = async () => {
     const gst = form.gstin.trim();
+    const upi = form.upi_id.trim();
     const docsOk =
       Boolean(docUrl("pan")) &&
       Boolean(merchant.shop_photo_url) &&
-      (!isFood || Boolean(docUrl("shop_license")));
+      (!isFood || Boolean(docUrl("fssai")));
     if (
       !check({
         pan: validatePan(form.pan),
@@ -381,23 +394,32 @@ function OnboardingPage() {
           : t("accountNumberInvalid"),
         bank_ifsc: validateIfsc(form.bank_ifsc),
         bank_account_holder_name: form.bank_account_holder_name.trim() ? null : t("required"),
+        upi_id: !upi || /^[\w.-]{2,}@[a-zA-Z]{2,}$/.test(upi) ? null : t("upiInvalid"),
+        fssai_number: !isFood || /^\d{14}$/.test(form.fssai_number) ? null : t("fssaiInvalid"),
+        fssai_expiry: !isFood || form.fssai_expiry ? null : t("required"),
         gstin: gst ? validateGstin(gst) : null,
         docs: docsOk ? null : t("docRequired"),
       })
     )
       return;
-    await supabase.auth.updateUser({ data: { upi_id: form.upi_id.trim() || null } });
     await save(
       {
         pan: form.pan,
         bank_account_number: form.bank_account_number,
         bank_ifsc: form.bank_ifsc,
         bank_account_holder_name: form.bank_account_holder_name.trim(),
+        upi_id: upi || null,
+        fssai_number: isFood ? form.fssai_number : form.fssai_number || null,
+        fssai_expiry: form.fssai_expiry || null,
+        udyam_number: form.udyam_number.trim() || null,
         is_gst_registered: Boolean(gst),
         gstin: gst || null,
       },
       7,
     );
+    const { error } = await supabase.rpc("app_merchant_issue_signup_agreement");
+    if (error) console.error("[onboarding] agreement issue failed", error.message);
+    void agreements.refetch();
   };
 
   const submitApplication = async () => {
@@ -746,13 +768,49 @@ function OnboardingPage() {
                 existingUrl={merchant.shop_photo_url}
                 onUploaded={(p) => recordDocument("shop_photo", p)}
               />
+              {isFood && (
+                <>
+                  <p className="pt-2 text-sm font-extrabold text-foreground">{t("fssai")}</p>
+                  {field("fssai_number", t("fssaiNumber"), {
+                    numeric: true,
+                    max: 14,
+                    placeholder: "12345678901234",
+                    transform: (v) => digitsOnly(v).slice(0, 14),
+                  })}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-bold">{t("fssaiExpiry")}</Label>
+                    <Input
+                      type="date"
+                      value={form.fssai_expiry}
+                      onChange={(e) => set("fssai_expiry")(e.target.value)}
+                      className="num h-12 rounded-xl"
+                    />
+                    {errors["fssai_expiry"] && (
+                      <p className="text-xs font-bold text-destructive">{errors["fssai_expiry"]}</p>
+                    )}
+                  </div>
+                  <DocumentUpload
+                    merchantId={merchant.id}
+                    docType="fssai"
+                    label={t("fssaiCertificate")}
+                    existingUrl={docUrl("fssai")}
+                    onUploaded={(p) => recordDocument("fssai", p)}
+                  />
+                </>
+              )}
+              <p className="pt-2 text-sm font-extrabold text-foreground">{t("udyamShopAct")}</p>
+              {field("udyam_number", t("udyamNumber"), {
+                max: 19,
+                placeholder: "UDYAM-MH-00-0000000",
+                transform: (v) => v.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 19),
+              })}
               <DocumentUpload
                 merchantId={merchant.id}
-                docType="shop_license"
-                label={isFood ? t("fssai") : t("shopAct")}
-                optional={!isFood}
-                existingUrl={docUrl("shop_license")}
-                onUploaded={(p) => recordDocument("shop_license", p)}
+                docType="udyam"
+                label={t("udyamShopAct")}
+                optional
+                existingUrl={docUrl("udyam") ?? docUrl("shop_license")}
+                onUploaded={(p) => recordDocument("udyam", p)}
               />
               {field("gstin", t("gstinOptional"), {
                 max: 15,
