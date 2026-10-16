@@ -19,3 +19,6 @@
   order history with nested items to compute a screen's numbers.
 - Delivery trip packing state is device-local and keyed by courier order ID; the database remains the source for packing-list content.
 - Parcel label format is device-local; every printed trip, drop, packet number, total, and code must come from `business_get_trip_otps`.
+
+- Store app navigation lives in AppShell: top bar (store name, open/closed, avatar menu) + bottom tabs Home/Orders/Products(Menu for food)/Money(owner only); Billing (POS) route only redirects to /home — keeps one nav source.
+- Merchant signup is the 8-step /onboarding wizard (onboarding_step = resume point); pending_review shops land on its status screen — reuse it instead of new gate screens.
