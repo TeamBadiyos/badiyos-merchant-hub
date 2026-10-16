@@ -656,16 +656,17 @@ async function cropSquare(file: File): Promise<File> {
 }
 
 type VariantDraft = { name: string; price: string };
-type GroupDraft = { name: string; items: VariantDraft[] };
+type GroupDraft = { name: string; min: string; max: string; items: VariantDraft[] };
 
 function parseGroups(addons: Addon[]): GroupDraft[] {
   const groups: GroupDraft[] = [];
   for (const a of [...addons].sort((x, y) => x.sort_order - y.sort_order)) {
+    const extra = a as Addon & { group_name?: string | null; min_select?: number; max_select?: number };
     const i = a.name.indexOf(GROUP_SEP);
-    const group = i > 0 ? a.name.slice(0, i) : "";
+    const group = extra.group_name ?? (i > 0 ? a.name.slice(0, i) : "");
     const name = i > 0 ? a.name.slice(i + GROUP_SEP.length) : a.name;
     let g = groups.find((x) => x.name === group);
-    if (!g) groups.push((g = { name: group, items: [] }));
+    if (!g) groups.push((g = { name: group, min: String(extra.min_select ?? 0), max: String(extra.max_select ?? 1), items: [] }));
     g.items.push({ name, price: String(a.price) });
   }
   return groups;
@@ -715,6 +716,9 @@ function ProductForm({
       .map((i) => ({
         name: g.name.trim() ? `${g.name.trim()}${GROUP_SEP}${i.name.trim()}` : i.name.trim(),
         price: Number(i.price),
+        group_name: g.name.trim() || null,
+        min_select: Number(g.min || 0),
+        max_select: Number(g.max || 1),
       })),
   );
 
@@ -723,6 +727,14 @@ function ProductForm({
     if (!name.trim()) next["name"] = t("required");
     if (!(isFood && cleanVariants.length) && (!price || Number(price) <= 0)) next["price"] = t("required");
     if (!isFood && (stock === "" || Number(stock) < 0)) next["stock"] = t("required");
+    if (isFood) {
+      groups.forEach((g, gi) => {
+        const count = g.items.filter((i) => i.name.trim() && i.price !== "").length;
+        const mn = Number(g.min || 0);
+        const mx = Number(g.max || 1);
+        if (count && (mx < 1 || mn > mx || mx > count)) next[`group${gi}`] = t("pmLimitsInvalid");
+      });
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -922,9 +934,24 @@ function ProductForm({
                     <Plus className="size-4" />
                     {t("pmAddAddon")}
                   </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["min", "max"] as const).map((k) => (
+                      <label key={k} className="space-y-1">
+                        <span className="block text-xs font-semibold text-muted-foreground">{t(k === "min" ? "pmMinSelect" : "pmMaxSelect")}</span>
+                        <Input
+                          inputMode="numeric"
+                          value={g[k]}
+                          onChange={(e) => setGroups((arr) => arr.map((x, j) => (j === gi ? { ...x, [k]: e.target.value.replace(/\D/g, "") } : x)))}
+                          className="num rounded-xl"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{Number(g.min || 0) > 0 ? t("pmRequiredPick") : t("pmOptionalPick")}</p>
+                  {errors[`group${gi}`] && <p className="text-xs font-semibold text-destructive">{errors[`group${gi}`]}</p>}
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={() => setGroups((a) => [...a, { name: "", items: [{ name: "", price: "" }] }])}>
+              <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={() => setGroups((a) => [...a, { name: "", min: "0", max: "1", items: [{ name: "", price: "" }] }])}>
                 <Plus className="size-4" />
                 {t("pmAddGroup")}
               </Button>
