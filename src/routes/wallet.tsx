@@ -36,27 +36,27 @@ const TX = {
     title: "Money", nextPayout: "Next payout", carry: "will carry forward", sales: "Sales", deductions: "Deductions",
     receive: "You'll receive", thisWeek: "This week", month: "Month", custom: "Custom", all: "All",
     instantTitle: "Instant settlement", instantAvail: "Available now (orders up to yesterday)", getNow: "Get it now",
-    confirmTitle: "Get money now?", confirmBody: "An instant fee + GST is deducted. The exact amount is shown after the request.",
+    confirmTitle: "Get money now?", confirmBody: "This amount will be sent to your bank today.",
     confirm: "Confirm", cancel: "Cancel", requested: "Instant request today", ledger: "Ledger", noLedger: "No transactions yet",
     settlements: "Settlements", noSettlements: "No settlements yet", invoices: "Commission invoices", noInvoices: "No invoices yet",
     bank: "Bank account", changeBank: "Change bank", changeBankNote: "Bank changes are approved by badiyos. Raise a request in Help.",
     balance: "Bal", paid: "Paid", utr: "UTR", statement: "Statement", orders: "Orders", adjustments: "Adjustments",
     roundOff: "Round-off carried", downloadPdf: "Download PDF", share: "Share", moneySplit: "Money split",
     itemTotal: "Item total", commission: "Commission", gst: "GST", tcs: "TCS", tds: "TDS", net: "Net",
-    from: "From", to: "To", nothingToSettle: "Nothing to settle right now", instantDone: "Instant settlement requested",
+    fee: "Instant fee", youGet: "You'll get", from: "From", to: "To", nothingToSettle: "Nothing to settle right now", instantDone: "Instant settlement requested",
   },
   mr: {
     title: "पैसे", nextPayout: "पुढील पेमेंट", carry: "पुढे जमा होईल", sales: "विक्री", deductions: "कपात",
     receive: "तुम्हाला मिळेल", thisWeek: "हा आठवडा", month: "महिना", custom: "निवडा", all: "सर्व",
     instantTitle: "त्वरित सेटलमेंट", instantAvail: "आता उपलब्ध (कालपर्यंतच्या ऑर्डर)", getNow: "आता घ्या",
-    confirmTitle: "आता पैसे घ्यायचे?", confirmBody: "त्वरित शुल्क + GST कापले जाईल. अचूक रक्कम विनंतीनंतर दिसेल.",
+    confirmTitle: "आता पैसे घ्यायचे?", confirmBody: "ही रक्कम आज तुमच्या बँकेत पाठवली जाईल.",
     confirm: "पुष्टी करा", cancel: "रद्द करा", requested: "आजची त्वरित विनंती", ledger: "खातेवही", noLedger: "अजून व्यवहार नाहीत",
     settlements: "सेटलमेंट", noSettlements: "अजून सेटलमेंट नाहीत", invoices: "कमिशन बिले", noInvoices: "अजून बिले नाहीत",
     bank: "बँक खाते", changeBank: "बँक बदला", changeBankNote: "बँक बदल badiyos मंजूर करते. मदत विभागात विनंती करा.",
     balance: "शिल्लक", paid: "दिले", utr: "UTR", statement: "स्टेटमेंट", orders: "ऑर्डर", adjustments: "समायोजन",
     roundOff: "राउंड-ऑफ पुढे", downloadPdf: "PDF डाउनलोड", share: "शेअर", moneySplit: "पैशांचे विभाजन",
     itemTotal: "वस्तू एकूण", commission: "कमिशन", gst: "GST", tcs: "TCS", tds: "TDS", net: "निव्वळ",
-    from: "पासून", to: "पर्यंत", nothingToSettle: "आत्ता सेटल करण्यासारखे काही नाही", instantDone: "त्वरित सेटलमेंट विनंती केली",
+    fee: "त्वरित शुल्क", youGet: "तुम्हाला मिळेल", from: "पासून", to: "पर्यंत", nothingToSettle: "आत्ता सेटल करण्यासारखे काही नाही", instantDone: "त्वरित सेटलमेंट विनंती केली",
   },
 } as const;
 
@@ -366,7 +366,7 @@ function MoneyPage() {
       <Sheet open={confirmOpen} onOpenChange={setConfirmOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader><SheetTitle>{L.confirmTitle}</SheetTitle></SheetHeader>
-          <p className="px-4 text-sm text-muted-foreground">{L.confirmBody}</p>
+          <div className="px-4">{pv && <InstantBreakdown pv={pv} L={L} />}<p className="mt-2 text-sm text-muted-foreground">{L.confirmBody}</p></div>
           <div className="flex gap-2 p-4">
             <Button variant="outline" className="flex-1" onClick={() => setConfirmOpen(false)}>{L.cancel}</Button>
             <Button className="flex-1" disabled={requesting} onClick={() => void requestInstant()}>
@@ -383,6 +383,17 @@ function MoneyPage() {
 }
 
 type Dict = (typeof TX)["en"] | (typeof TX)["mr"];
+
+function InstantBreakdown({ pv, L }: { pv: Preview; L: Dict }) {
+  return (
+    <div className="mt-2">
+      <p className="text-xs font-semibold text-muted-foreground">{L.instantAvail}</p>
+      <p className="num text-2xl font-extrabold text-foreground">{inr(pv.available)}</p>
+      <Line label={`${L.fee} ${Number(pv.fee_pct)}% + ${Number(pv.fee_gst_pct)}% GST`} value={`−${inr(Number(pv.fee) + Number(pv.fee_gst))}`} />
+      <Line label={L.youGet} value={inr(pv.you_get)} strong />
+    </div>
+  );
+}
 
 function Spinner() {
   return <div className="flex justify-center py-6"><Loader2 className="size-6 animate-spin text-primary" /></div>;
