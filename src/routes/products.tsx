@@ -543,7 +543,7 @@ function StatusBadge({ product, onEdit }: { product: Product; onEdit: () => void
   }
   if (product.approval_status === "pending" || product.pending_changes) {
     return (
-      <span className="mt-1 inline-flex rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning-foreground">
+      <span className="mt-1 inline-flex rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-foreground">
         {product.approval_status === "pending" ? t("pmPending") : t("pmChangesPending")}
       </span>
     );
