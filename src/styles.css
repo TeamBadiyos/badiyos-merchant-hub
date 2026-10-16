@@ -117,6 +117,7 @@
   --color-primary-dark: var(--primary-dark);
   --color-primary-soft: var(--primary-soft);
   --color-warning: var(--warning);
+  --color-success: var(--success);
   --shadow-card: var(--shadow-card);
   --shadow-brand: var(--shadow-brand);
 }
