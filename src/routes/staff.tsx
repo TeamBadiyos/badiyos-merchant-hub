@@ -73,7 +73,7 @@ export const Route = createFileRoute("/staff")({
 });
 
 function StaffPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { can } = useAuth();
   const merchant = useRequireAuth();
   const queryClient = useQueryClient();
@@ -107,6 +107,15 @@ function StaffPage() {
     onError: () => toast.error("Could not update this staff member."),
   });
 
+  const removeStaff = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("merchant_staff").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["merchant-staff"] }),
+    onError: () => toast.error("Could not remove this staff member."),
+  });
+
   if (!merchant) return null;
 
   return (
@@ -128,6 +137,13 @@ function StaffPage() {
             <span className="shrink-0 rounded-full bg-primary-soft px-3 py-1 text-[10px] font-bold text-accent-foreground">
               {t("ownerRole")}
             </span>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-4 text-xs shadow-card">
+            <p className="font-bold text-foreground">{lang === "mr" ? "स्टाफ करू शकतात" : "Staff can"}</p>
+            <p className="mt-1 text-muted-foreground">{lang === "mr" ? "ऑर्डर स्वीकार/नाकार, तयार म्हणून चिन्हांकित करा, आयटम उपलब्ध चालू/बंद" : "Accept / reject orders, mark ready, Available toggle"}</p>
+            <p className="mt-2 font-bold text-foreground">{lang === "mr" ? "स्टाफ करू शकत नाहीत" : "Staff cannot"}</p>
+            <p className="mt-1 text-muted-foreground">{lang === "mr" ? "पैसे, बँक, GST, करार, किंमत बदल" : "Money, bank, GST, agreement, price changes"}</p>
           </div>
 
           <section className="space-y-3">
@@ -173,14 +189,26 @@ function StaffPage() {
                     {member.status === "active" ? t("active") : t("inactive")}
                   </span>
                 </div>
-                <Button
-                  variant="outline"
-                  className="mt-3 w-full rounded-xl text-xs font-bold"
-                  disabled={toggleStaff.isPending}
-                  onClick={() => toggleStaff.mutate(member)}
-                >
-                  {member.status === "active" ? t("deactivate") : t("activate")}
-                </Button>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="rounded-xl text-xs font-bold"
+                    disabled={toggleStaff.isPending}
+                    onClick={() => toggleStaff.mutate(member)}
+                  >
+                    {member.status === "active" ? t("deactivate") : t("activate")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl text-xs font-bold text-destructive"
+                    disabled={removeStaff.isPending}
+                    onClick={() => {
+                      if (window.confirm(lang === "mr" ? "हा स्टाफ काढायचा?" : "Remove this staff member?")) removeStaff.mutate(member.id);
+                    }}
+                  >
+                    {t("remove")}
+                  </Button>
+                </div>
               </div>
             ))}
           </section>
