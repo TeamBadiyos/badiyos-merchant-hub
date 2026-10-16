@@ -116,11 +116,9 @@ function Countdown({ until }: { until: string }) {
 export function OrderCard({
   order,
   hero = false,
-  acceptMinutes,
 }: {
   order: OrderWithItems;
   hero?: boolean;
-  acceptMinutes?: number;
 }) {
   const { t } = useI18n();
   const { can, context } = useAuth();
@@ -389,7 +387,19 @@ function DeliveryStatus({ order }: { order: OrderWithItems }) {
 
       {rider.data?.name && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-card p-3">
-          <p className="min-w-0 truncate text-sm font-bold text-foreground">{rider.data.name}</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-foreground">{rider.data.name}</p>
+            {!pickedUp && rider.data.distance_m != null && (
+              <p className="num text-xs font-bold text-primary">
+                {rider.data.distance_m <= 100
+                  ? t("riderAtStore")
+                  : `${t("riderAway")} ${(rider.data.distance_m / 1000).toFixed(1)} km · ~${Math.max(
+                      1,
+                      Math.round(rider.data.distance_m / 1000 / (15 / 60)),
+                    )} min`}
+              </p>
+            )}
+          </div>
           {rider.data.phone && (
             <Button asChild size="sm" className="shrink-0 rounded-xl font-bold">
               <a href={`tel:${rider.data.phone}`}>
