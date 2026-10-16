@@ -1,285 +1,150 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Gift, Loader2, Target, Undo2 } from "lucide-react";
+import { Copy, Gift, Loader2, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { AppShell, PlaceholderPanel } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { inr } from "@/lib/order-status";
 import { useRequireAuth } from "@/lib/use-require-auth";
+import { digitsOnly } from "@/lib/validation";
 
 export const Route = createFileRoute("/rewards")({
   head: () => ({
     meta: [
-      { title: "Rewards & bonuses — badiyos Merchant Portal" },
-      {
-        name: "description",
-        content:
-          "See the bonuses badiyos has credited to your shop, your running total and the reward targets currently running.",
-      },
-      { property: "og:title", content: "Rewards & bonuses — badiyos Merchant Portal" },
-      {
-        property: "og:description",
-        content: "Track credited merchant bonuses and active reward targets for your shop.",
-      },
+      { title: "Refer a merchant — badiyos Merchant Portal" },
+      { name: "description", content: "Invite other shops to badiyos on WhatsApp with your referral code and track their status." },
+      { property: "og:title", content: "Refer a merchant — badiyos" },
+      { property: "og:description", content: "Invite shops and earn referral rewards." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: RewardsPage,
+  component: ReferPage,
 });
 
-type Ledger = {
-  id: string;
-  reward_type: string;
-  reward_value: number;
-  status: string;
-  notes: string | null;
-  credited_at: string;
-  reversed_at: string | null;
-  reversal_reason: string | null;
-  program: { name: string } | null;
+const TX = {
+  en: { title: "Refer a merchant", code: "Your referral code", reward: "Reward per shop that goes live", soon: "Coming soon",
+    invite: "Invite by WhatsApp", name: "Shop / owner name", phone: "Mobile number", list: "Referred shops", empty: "No referrals yet",
+    invited: "Invited", signed_up: "Signed up", live: "Live", reward_s: "Reward earned", copied: "Copied",
+    msg: "Join badiyos as a merchant and get orders online in Latur. Use my code {c}: {u}" },
+  mr: { title: "व्यापारी रेफर करा", code: "तुमचा रेफरल कोड", reward: "लाईव्ह झालेल्या प्रत्येक दुकानासाठी बक्षीस", soon: "लवकरच",
+    invite: "WhatsApp ने आमंत्रण द्या", name: "दुकान / मालकाचे नाव", phone: "मोबाईल नंबर", list: "रेफर केलेली दुकाने", empty: "अजून रेफरल नाहीत",
+    invited: "आमंत्रित", signed_up: "साइन अप", live: "लाईव्ह", reward_s: "बक्षीस मिळाले", copied: "कॉपी झाले",
+    msg: "badiyos वर व्यापारी म्हणून जॉइन करा आणि लातूरमध्ये ऑनलाइन ऑर्डर मिळवा. माझा कोड {c} वापरा: {u}" },
 };
 
-type Program = {
-  id: string;
-  name: string;
-  trigger_type: string;
-  condition: Record<string, unknown> | null;
-  reward_type: string;
-  reward_value: number;
-  valid_until: string | null;
-};
+const STEPS = ["invited", "signed_up", "live", "reward"] as const;
 
-/** Coins are shown as a plain count; everything else is money. */
-function rewardAmount(type: string, value: number, coinLabel: string) {
-  return type.toLowerCase().includes("coin")
-    ? `${Number(value)} ${coinLabel}`
-    : inr(Number(value));
-}
-
-function periodStart(period: string) {
-  const now = new Date();
-  if (period === "monthly") return new Date(now.getFullYear(), now.getMonth(), 1);
-  const day = now.getDay(); // week starts Monday
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((day + 6) % 7));
-  return start;
-}
-
-function RewardsPage() {
-  const { t } = useI18n();
-  const { can } = useAuth();
+function ReferPage() {
+  const { lang } = useI18n();
+  const L = TX[lang === "mr" ? "mr" : "en"];
+  const { context } = useAuth();
   const merchant = useRequireAuth();
-  const allowed = can("view_reports");
-  const approved = merchant?.status === "approved";
-  const enabled = Boolean(merchant?.id) && allowed && approved;
+  const qc = useQueryClient();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const enabled = !!merchant?.id && merchant?.status === "approved" && context.isOwner;
 
-  const ledger = useQuery({
-    queryKey: ["rewards", "ledger", merchant?.id],
-    enabled,
+  const code = useQuery({
+    queryKey: ["merchant-referral-code", merchant?.id], enabled,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reward_ledger")
-        .select(
-          "id, reward_type, reward_value, status, notes, credited_at, reversed_at, reversal_reason, program:reward_programs(name)",
-        )
-        .eq("actor_type", "merchant")
-        .order("credited_at", { ascending: false })
-        .limit(200);
+      const { data, error } = await supabase.rpc("merchant_referral_code");
       if (error) throw error;
-      return (data ?? []) as unknown as Ledger[];
+      return data as string;
+    },
+  });
+  const config = useQuery({
+    queryKey: ["merchant-referral-config"], enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("merchant_referral_config").select("reward_amount, rules").eq("id", 1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const list = useQuery({
+    queryKey: ["merchant-referrals", merchant?.id], enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("merchant_my_referrals");
+      if (error) throw error;
+      return (data ?? []) as { phone: string; name: string | null; status: (typeof STEPS)[number]; at: string; reward_amount: number | null }[];
     },
   });
 
-  const programs = useQuery({
-    queryKey: ["rewards", "programs"],
-    enabled,
-    queryFn: async () => {
-      const nowIso = new Date().toISOString();
-      const { data, error } = await supabase
-        .from("reward_programs")
-        .select("id, name, trigger_type, condition, reward_type, reward_value, valid_until")
-        .eq("actor_type", "merchant")
-        .eq("is_active", true)
-        .or(`valid_until.is.null,valid_until.gte.${nowIso}`)
-        .order("created_at", { ascending: false });
+  const link = `https://merchant.badiyos.com/login?ref=${code.data ?? ""}`;
+  const invite = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("merchant_add_referral_invite", { _phone: phone, _name: name });
       if (error) throw error;
-      return (data ?? []) as unknown as Program[];
     },
-  });
-
-  /** Completed order counts per period, used for countable progress bars. */
-  const counts = useQuery({
-    queryKey: ["rewards", "counts", merchant?.id],
-    enabled,
-    queryFn: async () => {
-      const countFor = (period: "weekly" | "monthly") =>
-        supabase
-          .from("merchant_orders")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "completed")
-    .or("payment_mode.eq.cod,payment_status.eq.paid")
-          .gte("created_at", periodStart(period).toISOString());
-      const weekly = await countFor("weekly");
-      const monthly = await countFor("monthly");
-      if (weekly.error) throw weekly.error;
-      if (monthly.error) throw monthly.error;
-      return { weekly: weekly.count ?? 0, monthly: monthly.count ?? 0 };
+    onSuccess: () => {
+      const text = L.msg.replace("{c}", code.data ?? "").replace("{u}", link);
+      window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, "_blank");
+      setName(""); setPhone("");
+      void qc.invalidateQueries({ queryKey: ["merchant-referrals"] });
     },
+    onError: () => toast.error("Could not save this invite."),
   });
 
   if (!merchant) return null;
-
-  const rows = ledger.data ?? [];
-  const credited = rows.filter((row) => row.status === "credited" && !row.reversed_at);
-  const coinTotal = credited
-    .filter((row) => row.reward_type.toLowerCase().includes("coin"))
-    .reduce((s, row) => s + Number(row.reward_value ?? 0), 0);
-  const cashTotal = credited
-    .filter((row) => !row.reward_type.toLowerCase().includes("coin"))
-    .reduce((s, row) => s + Number(row.reward_value ?? 0), 0);
+  if (merchant.status !== "approved") return <AppShell title={L.title}><PendingApproval /></AppShell>;
+  if (!context.isOwner) return <AppShell title={L.title}><AccessDenied /></AppShell>;
+  const amount = Number(config.data?.reward_amount ?? 0);
+  const label = (s: string) => (s === "reward" ? L.reward_s : (L as Record<string, string>)[s] ?? s);
 
   return (
-    <AppShell
-      title={t("rewards")}
-      onRefresh={() => Promise.all([ledger.refetch(), programs.refetch(), counts.refetch()])}
-    >
-      {!approved ? (
-        <PendingApproval />
-      ) : !allowed ? (
-        <AccessDenied />
-      ) : (
-        <div className="space-y-6">
-          <div className="bg-brand-gradient rounded-3xl p-6 text-primary-foreground shadow-brand">
-            <p className="text-xs font-bold uppercase opacity-80">{t("rewardsTotal")}</p>
-            <p className="num mt-2 text-3xl font-extrabold">{inr(cashTotal)}</p>
-            {coinTotal > 0 && (
-              <p className="num mt-1 text-sm font-bold opacity-90">
-                + {coinTotal} {t("rewardCoins")}
-              </p>
-            )}
-            <p className="mt-2 text-xs font-semibold opacity-80">{t("rewardsNote")}</p>
+    <AppShell title={L.title} onRefresh={() => list.refetch()}>
+      <div className="space-y-4">
+        <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
+          <p className="text-xs font-bold text-muted-foreground">{L.code}</p>
+          <div className="mt-1 flex items-center justify-between">
+            <p className="num text-2xl font-extrabold tracking-wider text-primary">{code.data ?? "…"}</p>
+            <Button size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(link).then(() => toast.success(L.copied))}>
+              <Copy className="size-4" />
+            </Button>
           </div>
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary-soft p-3">
+            <Gift className="size-5 text-primary" />
+            <p className="flex-1 text-xs font-bold text-foreground">{L.reward}</p>
+            <p className="num text-sm font-extrabold text-primary">{amount > 0 ? inr(amount) : L.soon}</p>
+          </div>
+          {amount > 0 && config.data?.rules && <p className="mt-2 text-xs text-muted-foreground">{config.data.rules}</p>}
+        </section>
 
-          <section className="space-y-3">
-            <h2 className="text-base font-bold text-foreground">{t("activeBonuses")}</h2>
-            {programs.isLoading && (
-              <div className="flex justify-center py-8">
-                <Loader2 className="size-6 animate-spin text-primary" />
-              </div>
-            )}
-            {!programs.isLoading && (programs.data ?? []).length === 0 && (
-              <PlaceholderPanel
-                title={t("activeBonuses")}
-                description={t("noActiveBonuses")}
-                icon={Target}
-              />
-            )}
-            {(programs.data ?? []).map((program) => {
-              const condition = (program.condition ?? {}) as { count?: number; period?: string };
-              const target =
-                program.trigger_type === "count_threshold" ? Number(condition.count ?? 0) : 0;
-              const period = condition.period === "monthly" ? "monthly" : "weekly";
-              const done = target > 0 ? (counts.data?.[period] ?? 0) : 0;
-              const pct = target > 0 ? Math.min(100, Math.round((done / target) * 100)) : 0;
-              return (
-                <div
-                  key={program.id}
-                  className="rounded-2xl border border-border bg-card p-4 shadow-card"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="bg-primary-soft flex size-10 shrink-0 items-center justify-center rounded-2xl text-primary">
-                      <Gift className="size-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-foreground">{program.name}</p>
-                      <p className="num text-xs font-semibold text-muted-foreground">
-                        {rewardAmount(program.reward_type, program.reward_value, t("rewardCoins"))}
-                      </p>
-                    </div>
-                  </div>
-                  {target > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground">
-                        <span>
-                          {t("rewardProgress")} ·{" "}
-                          {period === "monthly" ? t("rewardPeriodMonth") : t("rewardPeriodWeek")}
-                        </span>
-                        <span className="num">
-                          {done}/{target}
-                        </span>
-                      </div>
-                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </section>
+        <section className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-card">
+          <Input placeholder={L.name} value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder={L.phone} inputMode="numeric" className="num" value={phone}
+            onChange={(e) => setPhone(digitsOnly(e.target.value).slice(0, 10))} />
+          <Button className="w-full" disabled={phone.length !== 10 || !code.data || invite.isPending} onClick={() => invite.mutate()}>
+            {invite.isPending ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4" />}{L.invite}
+          </Button>
+        </section>
 
-          <section className="space-y-3">
-            <h2 className="text-base font-bold text-foreground">{t("rewardHistory")}</h2>
-            {ledger.isLoading && (
-              <div className="flex justify-center py-8">
-                <Loader2 className="size-6 animate-spin text-primary" />
-              </div>
-            )}
-            {!ledger.isLoading && rows.length === 0 && (
-              <PlaceholderPanel
-                title={t("rewardHistory")}
-                description={t("noRewards")}
-                icon={Gift}
-              />
-            )}
-            {rows.map((row) => {
-              const reversed = Boolean(row.reversed_at) || row.status === "reversed";
-              return (
-                <div
-                  key={row.id}
-                  className={`flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-card ${
-                    reversed ? "opacity-70" : ""
-                  }`}
-                >
-                  <span
-                    className={`flex size-10 shrink-0 items-center justify-center rounded-2xl ${
-                      reversed
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-primary-soft text-primary"
-                    }`}
-                  >
-                    {reversed ? <Undo2 className="size-5" /> : <Gift className="size-5" />}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-foreground">
-                      {row.program?.name ?? row.reward_type}
-                    </p>
-                    <p className="num truncate text-xs font-semibold text-muted-foreground">
-                      {new Date(row.credited_at).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                      {reversed ? ` · ${t("rewardReversed")}` : ""}
-                      {reversed && row.reversal_reason ? ` · ${row.reversal_reason}` : ""}
-                    </p>
-                  </div>
-                  <p
-                    className={`num shrink-0 text-sm font-extrabold ${
-                      reversed ? "text-muted-foreground line-through" : "text-primary"
-                    }`}
-                  >
-                    {rewardAmount(row.reward_type, row.reward_value, t("rewardCoins"))}
-                  </p>
+        <section className="space-y-2">
+          <h2 className="text-sm font-bold text-foreground">{L.list}</h2>
+          {list.data?.length === 0 && <p className="text-sm text-muted-foreground">{L.empty}</p>}
+          {list.data?.map((r) => {
+            const idx = STEPS.indexOf(r.status);
+            return (
+              <div key={r.phone + r.at} className="rounded-2xl border border-border bg-card p-4 shadow-card">
+                <div className="flex justify-between">
+                  <p className="truncate text-sm font-bold">{r.name ?? `+91 ${r.phone}`}</p>
+                  <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-accent-foreground">{label(r.status)}</span>
                 </div>
-              );
-            })}
-          </section>
-        </div>
-      )}
+                <div className="mt-3 flex gap-1">
+                  {STEPS.map((s, i) => <div key={s} className={`h-1.5 flex-1 rounded-full ${i <= idx ? "bg-primary" : "bg-muted"}`} />)}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      </div>
     </AppShell>
   );
 }
