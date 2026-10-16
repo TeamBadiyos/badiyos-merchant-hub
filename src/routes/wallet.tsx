@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { BankChange } from "@/components/BankChange";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,6 +98,7 @@ type SettlementRow = {
   reference: string | null; invoice_no: string | null; round_off_carried: number | null; order_count: number;
 };
 type Invoice = { settlement_id: string; invoice_no: string; invoice_fy: string; date: string; commission: number; commission_gst: number; instant_fee: number; instant_fee_gst: number };
+type Preview = { available: number; order_count: number; fee_pct: number; fee: number; fee_gst_pct: number; fee_gst: number; you_get: number; already_today: boolean };
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const fmtDate = (s: string, opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", year: "numeric" }) =>
@@ -167,6 +169,16 @@ function MoneyPage() {
     },
   });
 
+  const preview = useQuery({
+    queryKey: ["money", "instant-preview", sid], enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("merchant_instant_settlement_preview" as never, { _store_id: sid! } as never);
+      if (error) throw error;
+      return data as unknown as Preview;
+    },
+  });
+  const pv = preview.data;
+
   const refreshAll = () => qc.invalidateQueries({ queryKey: ["money"] });
 
   if (!merchant) return null;
@@ -222,7 +234,7 @@ function MoneyPage() {
           </section>
 
           {/* 2. Instant */}
-          {(todayInstant || (s && Number(s.you_will_receive) > 0)) && (
+          {(todayInstant || (pv && Number(pv.available) > 0)) && (
             <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
               <div className="flex items-center gap-2">
                 <Zap className="size-5 text-primary" />
@@ -233,9 +245,9 @@ function MoneyPage() {
                   <p className="text-sm font-semibold text-muted-foreground">{L.requested}</p>
                   <p className="num text-lg font-extrabold text-foreground">{inr(todayInstant.net_amount)} · <span className="text-xs capitalize">{todayInstant.status}</span></p>
                 </div>
-              ) : (
+              ) : pv && (
                 <>
-                  <p className="mt-2 text-xs font-semibold text-muted-foreground">{L.instantAvail}</p>
+                  <InstantBreakdown pv={pv} L={L} />
                   <Button className="mt-3 h-12 w-full rounded-xl text-base font-bold" onClick={() => setConfirmOpen(true)}>{L.getNow}</Button>
                 </>
               )}
@@ -346,8 +358,7 @@ function MoneyPage() {
             </div>
             <p className="num mt-3 text-lg font-extrabold text-foreground">{acct ? `•••• ${acct.slice(-4)}` : "—"}</p>
             <p className="num text-xs font-semibold text-muted-foreground">{merchant.bank_ifsc ?? "—"} · {merchant.bank_account_holder_name ?? ""}</p>
-            <p className="mt-3 text-xs text-muted-foreground">{L.changeBankNote}</p>
-            <Button asChild variant="outline" className="mt-2 w-full rounded-xl"><Link to="/support">{L.changeBank}</Link></Button>
+            <BankChange storeId={merchant.id} />
           </section>
         </div>
       )}
