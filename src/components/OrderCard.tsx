@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { useI18n, type Key } from "@/lib/i18n";
-import { useDecideOrder, useMarkReady, useOrderRider, usePickupInfo } from "@/lib/order-actions";
+import {
+  useAcceptDeadline,
+  useDecideOrder,
+  useMarkReady,
+  useOrderRider,
+  usePickupInfo,
+} from "@/lib/order-actions";
 import {
   inr,
   isActionableNewOrder,
@@ -84,14 +90,14 @@ function ItemsList({ order, showPrice }: { order: OrderWithItems; showPrice: boo
   );
 }
 
-function Countdown({ from, minutes }: { from: string; minutes: number }) {
+function Countdown({ until }: { until: string }) {
   const { t } = useI18n();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
-  const left = Math.max(0, new Date(from).getTime() + minutes * 60_000 - now);
+  const left = Math.max(0, new Date(until).getTime() - now);
   const mm = Math.floor(left / 60_000);
   const ss = Math.floor((left % 60_000) / 1000);
   const urgent = left < 60_000;
@@ -110,11 +116,9 @@ function Countdown({ from, minutes }: { from: string; minutes: number }) {
 export function OrderCard({
   order,
   hero = false,
-  acceptMinutes,
 }: {
   order: OrderWithItems;
   hero?: boolean;
-  acceptMinutes?: number;
 }) {
   const { t } = useI18n();
   const { can, context } = useAuth();
@@ -128,6 +132,7 @@ export function OrderCard({
   const ready = useMarkReady(order.id);
   const busy = decide.isPending || ready.isPending;
   const actionable = isActionableNewOrder(order);
+  const deadline = useAcceptDeadline(order.id, actionable);
   const itemCount = (order.merchant_order_items ?? []).reduce((s, i) => s + i.quantity, 0);
   const closed = status === "rejected" || status === "cancelled";
 
@@ -152,8 +157,8 @@ export function OrderCard({
             })}
           </p>
         </div>
-        {actionable && acceptMinutes ? (
-          <Countdown from={order.paid_at ?? order.placed_at ?? order.created_at} minutes={acceptMinutes} />
+        {actionable && deadline.data ? (
+          <Countdown until={deadline.data} />
         ) : (
           <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold ${statusTone(order.status)}`}>
             {t(STATUS_LABEL[status] ?? "statusPending")}
@@ -382,7 +387,19 @@ function DeliveryStatus({ order }: { order: OrderWithItems }) {
 
       {rider.data?.name && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-card p-3">
-          <p className="min-w-0 truncate text-sm font-bold text-foreground">{rider.data.name}</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-foreground">{rider.data.name}</p>
+            {!pickedUp && rider.data.distance_m != null && (
+              <p className="num text-xs font-bold text-primary">
+                {rider.data.distance_m <= 100
+                  ? t("riderAtStore")
+                  : `${t("riderAway").replace("{d}", `${(rider.data.distance_m / 1000).toFixed(1)} km`)} · ~${Math.max(
+                      1,
+                      Math.round(rider.data.distance_m / 1000 / (15 / 60)),
+                    )} min`}
+              </p>
+            )}
+          </div>
           {rider.data.phone && (
             <Button asChild size="sm" className="shrink-0 rounded-xl font-bold">
               <a href={`tel:${rider.data.phone}`}>

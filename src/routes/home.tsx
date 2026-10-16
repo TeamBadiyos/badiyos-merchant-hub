@@ -92,19 +92,6 @@ function HomePage() {
   const isFood = merchant?.service_type === "food";
   const approved = merchant?.status === "approved";
 
-  // Accept window per city settings when present; Store 10 min / Food 5 min otherwise.
-  const acceptWindow = useQuery({
-    queryKey: ["accept-window", isFood],
-    enabled: approved,
-    staleTime: 10 * 60_000,
-    queryFn: async () => {
-      const key = isFood ? "food_accept_minutes" : "store_accept_minutes";
-      const { data } = await supabase.from("ops_settings").select("value").eq("key", key).maybeSingle();
-      const v = Number((data as { value?: unknown } | null)?.value);
-      return Number.isFinite(v) && v > 0 ? v : isFood ? 5 : 10;
-    },
-  });
-  const acceptMinutes = acceptWindow.data ?? (isFood ? 5 : 10);
 
   const visits = useQuery({
     queryKey: ["store-analytics", merchant?.id, 1],
@@ -198,9 +185,9 @@ function HomePage() {
           <>
             {hero && (
               <div className="space-y-3">
-                <OrderCard order={hero} hero acceptMinutes={acceptMinutes} />
+                <OrderCard order={hero} hero />
                 {queued.map((o) => (
-                  <OrderCard key={o.id} order={o} hero acceptMinutes={acceptMinutes} />
+                  <OrderCard key={o.id} order={o} hero />
                 ))}
               </div>
             )}
