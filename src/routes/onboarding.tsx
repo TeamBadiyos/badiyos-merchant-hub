@@ -1,17 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   ArrowLeft,
-  BadgeCheck,
-  Building2,
+  Check,
   CheckCircle2,
-  FileText,
   Loader2,
   MapPin,
+  Store,
+  UtensilsCrossed,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { DocumentUpload, type DocType } from "@/components/DocumentUpload";
@@ -29,13 +28,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { verifyGstin } from "@/lib/gstin.functions";
-import { hapticImpact, hapticNotify } from "@/lib/haptics";
 import { friendlyErrorMessage } from "@/lib/friendly-error";
-import { useI18n } from "@/lib/i18n";
+import { hapticImpact, hapticNotify } from "@/lib/haptics";
+import { useI18n, type Key } from "@/lib/i18n";
 import { lookupRegionDefaults } from "@/lib/locale-config";
+import { DAYS, hhmm } from "@/lib/schedule";
 import {
   digitsOnly,
   upperAlnum,
@@ -48,111 +48,107 @@ import {
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
-      { title: "Shop onboarding — badiyos Merchant Portal" },
+      { title: "Join badiyos — Merchant signup" },
       {
         name: "description",
         content:
-          "Complete your badiyos shop profile: GST or business details, category, address, documents and bank details.",
+          "Sign up your shop or restaurant on badiyos in 8 simple steps: business, timings, documents and agreement.",
       },
-      { property: "og:title", content: "Shop onboarding — badiyos" },
-      {
-        property: "og:description",
-        content: "Register your shop on badiyos in a few guided steps.",
-      },
+      { property: "og:title", content: "Join badiyos as a merchant" },
+      { property: "og:description", content: "Register your shop or restaurant on badiyos." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: OnboardingPage,
 });
 
-const TOTAL_STEPS = 4;
+const TOTAL = 8;
 const region = lookupRegionDefaults();
-
-/** Document types with their translation keys, used by the full form and the query window. */
-const DOC_LABEL_KEYS = [
-  ["aadhaar", "docAadhaar"],
-  ["pan", "docPan"],
-  ["gst_certificate", "docGst"],
-  ["shop_license", "docShopLicense"],
-  ["cancelled_cheque", "docCheque"],
-  ["shop_photo", "shopPhoto"],
-] as const satisfies ReadonlyArray<readonly [DocType, string]>;
-
 type Errors = Record<string, string | null>;
+type DayRow = { open_time: string; close_time: string; is_closed: boolean };
+type Agreement = {
+  id: string;
+  template_type: string;
+  title: string;
+  body: string;
+  status: string;
+};
 
 function OnboardingPage() {
   const { t, lang } = useI18n();
   const { merchant, ready, userId, refresh } = useAuth();
   const navigate = useNavigate();
-  const verifyGstinFn = useServerFn(verifyGstin);
 
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
-  const [gstChoice, setGstChoice] = useState<boolean | null>(null);
-  const [gstin, setGstin] = useState("");
-  const [gstStatus, setGstStatus] = useState<string | null>(null);
-  const [gstLookupDone, setGstLookupDone] = useState(false);
-  const [verifying, setVerifying] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [fixing, setFixing] = useState(false);
   const [form, setForm] = useState({
-    store_name: "",
+    service_type: "" as "" | "store" | "food",
     owner_name: "",
-    gst_legal_name: "",
+    email: "",
+    store_name: "",
+    store_category_id: "",
     address: "",
-    building: "",
     city: region.city,
-
     state: region.state,
     country: region.country,
     pincode: "",
-    store_category_id: "",
     pan: "",
     bank_account_number: "",
     bank_ifsc: "",
     bank_account_holder_name: "",
+    upi_id: "",
+    gstin: "",
   });
-  const [mapOpen, setMapOpen] = useState(false);
-  const [showFullForm, setShowFullForm] = useState(false);
   const [coords, setCoords] = useState<{ lat: number | null; lng: number | null }>({
     lat: null,
     lng: null,
   });
+  const [days, setDays] = useState<Record<number, DayRow>>(() =>
+    Object.fromEntries(
+      DAYS.map(({ day }) => [day, { open_time: "09:00", close_time: "21:00", is_closed: false }]),
+    ),
+  );
 
   useEffect(() => {
     if (ready && !userId) void navigate({ to: "/login", replace: true });
   }, [ready, userId, navigate]);
 
   useEffect(() => {
-    if (ready && merchant && merchant.status !== "draft") {
+    if (ready && merchant && merchant.status !== "draft" && merchant.status !== "pending_review") {
       void navigate({ to: "/home", replace: true });
     }
   }, [ready, merchant, navigate]);
 
-  // Hydrate the form from the saved draft exactly once per merchant load.
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     if (!merchant || hydrated) return;
-    setForm((prev) => ({
-      ...prev,
-      store_name: merchant.store_name ?? "",
+    void supabase.auth.getUser().then(({ data }) => {
+      const meta = (data.user?.user_metadata ?? {}) as Record<string, string>;
+      setForm((p) => ({ ...p, email: meta["contact_email"] ?? "", upi_id: meta["upi_id"] ?? "" }));
+    });
+    setForm((p) => ({
+      ...p,
+      service_type: (merchant.service_type as "store" | "food" | null) ?? "",
       owner_name: merchant.owner_name ?? "",
-      gst_legal_name: merchant.gst_legal_name ?? "",
+      store_name: merchant.store_name ?? "",
+      store_category_id: merchant.store_category_id ?? "",
       address: merchant.address ?? "",
       city: merchant.city ?? region.city,
       state: merchant.state ?? region.state,
       country: merchant.country ?? region.country,
       pincode: merchant.pincode ?? "",
-      store_category_id: merchant.store_category_id ?? "",
       pan: merchant.pan ?? "",
       bank_account_number: merchant.bank_account_number ?? "",
       bank_ifsc: merchant.bank_ifsc ?? "",
       bank_account_holder_name: merchant.bank_account_holder_name ?? "",
+      gstin: merchant.gstin ?? "",
     }));
     setCoords({ lat: merchant.latitude ?? null, lng: merchant.longitude ?? null });
-    setGstChoice(merchant.is_gst_registered);
-    setGstin(merchant.gstin ?? "");
-    setGstStatus(merchant.gst_status ?? null);
-    setGstLookupDone(Boolean(merchant.gstin));
-    setStep(Math.min(Math.max(merchant.onboarding_step || 1, 1), TOTAL_STEPS));
+    setStep(Math.min(Math.max(merchant.onboarding_step || 2, 2), TOTAL));
     setHydrated(true);
   }, [merchant, hydrated]);
 
@@ -161,7 +157,7 @@ function OnboardingPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_categories")
-        .select("id, name, segment_id")
+        .select("id, name, slug, segment_id")
         .eq("is_active", true)
         .order("rank", { ascending: true });
       if (error) throw error;
@@ -182,6 +178,43 @@ function OnboardingPage() {
     },
   });
 
+  const hours = useQuery({
+    queryKey: ["signup-hours", merchant?.id],
+    enabled: Boolean(merchant?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("merchant_store_hours")
+        .select("*")
+        .eq("merchant_id", merchant!.id);
+      if (error) throw error;
+      return data;
+    },
+  });
+  useEffect(() => {
+    if (!hours.data?.length) return;
+    setDays((prev) => {
+      const next = { ...prev };
+      for (const h of hours.data) {
+        next[h.day_of_week] = {
+          is_closed: h.is_closed,
+          open_time: hhmm(h.open_time) || "09:00",
+          close_time: hhmm(h.close_time) || "21:00",
+        };
+      }
+      return next;
+    });
+  }, [hours.data]);
+
+  const agreements = useQuery({
+    queryKey: ["my-agreements", merchant?.id],
+    enabled: Boolean(merchant?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("app_my_agreements");
+      if (error) throw error;
+      return (data as Agreement[] | null) ?? [];
+    },
+  });
+
   if (!ready || !merchant) {
     return (
       <div className="flex h-full items-center justify-center bg-background">
@@ -190,25 +223,39 @@ function OnboardingPage() {
     );
   }
 
+  const isFood = form.service_type === "food";
+  const agreementType = isFood ? "restaurant" : "store";
+  const agreement = (agreements.data ?? []).find((a) => a.template_type === agreementType);
+  const commissionPct = merchant.commission_pct ?? merchant.commission_value ?? null;
+  const docUrl = (d: DocType) =>
+    d === "shop_photo"
+      ? merchant.shop_photo_url
+      : ((documents.data ?? []).find((x) => x.doc_type === d)?.file_url ?? null);
+
   const set = (key: keyof typeof form) => (value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: null }));
+    setForm((p) => ({ ...p, [key]: value }));
+    setErrors((p) => ({ ...p, [key]: null }));
   };
 
-  const saveDraft = async (patch: Record<string, unknown>, nextStep: number) => {
+  const goTo = (n: number) => {
+    setStep(n);
+    document.querySelector(".app-scroll")?.scrollTo({ top: 0 });
+  };
+
+  const save = async (patch: Record<string, unknown>, next: number) => {
     setSaving(true);
     try {
       const { error } = await supabase
         .from("merchants")
-        .update({ ...patch, onboarding_step: nextStep })
+        .update({ ...patch, onboarding_step: Math.max(next, merchant.onboarding_step ?? 1) })
         .eq("id", merchant.id);
       if (error) {
         console.error(error);
-        toast.error("Could not save your details. Please try again.");
+        toast.error(friendlyErrorMessage(error, lang));
         return false;
       }
       await refresh();
-      setStep(nextStep);
+      goTo(fixing ? TOTAL : next);
       return true;
     } finally {
       setSaving(false);
@@ -221,10 +268,7 @@ function OnboardingPage() {
         .from("merchants")
         .update({ shop_photo_url: path })
         .eq("id", merchant.id);
-      if (error) {
-        console.error(error);
-        throw error;
-      }
+      if (error) throw error;
       await refresh();
       return;
     }
@@ -238,117 +282,51 @@ function OnboardingPage() {
       : await supabase
           .from("merchant_documents")
           .insert({ merchant_id: merchant.id, doc_type: docType, file_url: path });
-    if (error) {
-      console.error(error);
-      throw error;
-    }
+    if (error) throw error;
     await documents.refetch();
   };
 
-  const uploadedTypes = new Set((documents.data ?? []).map((d) => d.doc_type));
-
-  const handleGstinVerify = async () => {
-    const err = validateGstin(gstin);
-    setErrors((prev) => ({ ...prev, gstin: err }));
-    if (err) return;
-
-    setVerifying(true);
-    try {
-      const result = await verifyGstinFn({ data: { gstin } });
-      if (!result.ok) {
-        toast.error(result.message);
-        return;
-      }
-      setForm((prev) => ({
-        ...prev,
-        gst_legal_name: result.data.legal_name || prev.gst_legal_name,
-        store_name: prev.store_name || result.data.legal_name || "",
-        address: result.data.address || prev.address,
-        city: result.data.city || prev.city,
-        pincode: result.data.pincode || prev.pincode,
-      }));
-      setGstStatus(result.data.status ?? null);
-      setGstLookupDone(true);
-      toast.success("GSTIN verified");
-    } catch (error) {
-      console.error(error);
-      toast.error("Could not reach the GST service. Please try again.");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const submitStep1 = async () => {
-    if (gstChoice === null) return;
-    const next: Errors = {};
-    if (gstChoice) {
-      next["gstin"] = validateGstin(gstin);
-      if (!gstLookupDone) next["gstin"] = next["gstin"] ?? "Please verify your GSTIN first";
-      if (!form.gst_legal_name.trim()) next["gst_legal_name"] = t("required");
-    } else {
-      if (!form.store_name.trim()) next["store_name"] = t("required");
-      if (!form.owner_name.trim()) next["owner_name"] = t("required");
-    }
+  const check = (next: Errors) => {
     setErrors(next);
-    if (Object.values(next).some(Boolean)) return;
-
-    await saveDraft(
-      gstChoice
-        ? {
-            is_gst_registered: true,
-            gstin,
-            gst_legal_name: form.gst_legal_name,
-            gst_status: gstStatus,
-            store_name: form.store_name || form.gst_legal_name,
-            owner_name: form.owner_name || null,
-            address: form.address || null,
-            city: form.city,
-            pincode: form.pincode || null,
-          }
-        : {
-            is_gst_registered: false,
-            gstin: null,
-            gst_legal_name: null,
-            gst_status: null,
-            store_name: form.store_name,
-            owner_name: form.owner_name,
-          },
-      2,
-    );
+    return !Object.values(next).some(Boolean);
   };
 
-  const submitStep2 = async () => {
+  // ---------- step submits ----------
+  const submit2 = () => {
+    if (!form.service_type) return;
+    void save({ service_type: form.service_type }, 3);
+  };
+
+  const submit3 = async () => {
+    const email = form.email.trim();
+    if (
+      !check({
+        owner_name: form.owner_name.trim() ? null : t("required"),
+        email: !email || /^\S+@\S+\.\S+$/.test(email) ? null : t("required"),
+      })
+    )
+      return;
+    await supabase.auth.updateUser({ data: { contact_email: email || null } });
+    await save({ owner_name: form.owner_name.trim() }, 4);
+  };
+
+  const submit4 = async () => {
     const category = (categories.data ?? []).find((c) => c.id === form.store_category_id);
-    const next: Errors = {
-      store_category_id: category ? null : t("required"),
-      address: form.address.trim() ? null : t("required"),
-      pincode: validatePincode(form.pincode),
-    };
-    setErrors(next);
-    if (Object.values(next).some(Boolean)) return;
-
-    // Building/shop name is optional and stored as the first line of the address.
-    // If the street address already starts with the building name (e.g. the saved
-    // draft merged them earlier), don't prepend it again — that would duplicate it.
-    const building = form.building.trim();
-    const street = form.address.trim();
-    const lowerBuilding = building.toLowerCase();
-    const lowerStreet = street.toLowerCase();
-    const streetWithoutBuilding =
-      building &&
-      (lowerStreet === lowerBuilding || lowerStreet.startsWith(`${lowerBuilding}, `))
-        ? street
-            .slice(building.length)
-            .replace(/^\s*,\s*/, "")
-            .trim()
-        : street;
-    const fullAddress = [building, streetWithoutBuilding].filter(Boolean).join(", ");
-
-    await saveDraft(
+    if (
+      !check({
+        store_name: form.store_name.trim() ? null : t("required"),
+        store_category_id: category ? null : t("required"),
+        address: form.address.trim() ? null : t("required"),
+        pincode: validatePincode(form.pincode),
+      })
+    )
+      return;
+    await save(
       {
+        store_name: form.store_name.trim(),
         store_category_id: category!.id,
         segment_id: category!.segment_id,
-        address: fullAddress,
+        address: form.address.trim(),
         city: form.city,
         state: form.state,
         country: form.country,
@@ -357,68 +335,148 @@ function OnboardingPage() {
           ? { latitude: coords.lat, longitude: coords.lng }
           : {}),
       },
-      3,
+      5,
     );
   };
 
+  const submit5 = async () => {
+    setSaving(true);
+    try {
+      for (const { day } of DAYS) {
+        const v = days[day]!;
+        const payload = {
+          merchant_id: merchant.id,
+          day_of_week: day,
+          is_closed: v.is_closed,
+          open_time: v.is_closed ? null : v.open_time,
+          close_time: v.is_closed ? null : v.close_time,
+        };
+        const existing = hours.data?.find((h) => h.day_of_week === day);
+        const { error } = existing
+          ? await supabase.from("merchant_store_hours").update(payload).eq("id", existing.id)
+          : await supabase.from("merchant_store_hours").insert(payload);
+        if (error) {
+          toast.error(friendlyErrorMessage(error, lang));
+          return;
+        }
+      }
+      await hours.refetch();
+    } finally {
+      setSaving(false);
+    }
+    await save({}, 6);
+  };
 
-  const submitStep3 = async () => {
-    const next: Errors = {
-      pan: validatePan(form.pan),
-      bank_account_number: /^\d{9,18}$/.test(form.bank_account_number)
-        ? null
-        : "Enter a valid account number",
-      bank_ifsc: validateIfsc(form.bank_ifsc),
-      bank_account_holder_name: form.bank_account_holder_name.trim() ? null : t("required"),
-      docs:
-        uploadedTypes.has("aadhaar") &&
-        uploadedTypes.has("pan") &&
-        uploadedTypes.has("shop_license") &&
-        uploadedTypes.has("cancelled_cheque") &&
-        (!gstChoice || uploadedTypes.has("gst_certificate"))
+  const submit6 = async () => {
+    const gst = form.gstin.trim();
+    const docsOk =
+      Boolean(docUrl("pan")) &&
+      Boolean(merchant.shop_photo_url) &&
+      (!isFood || Boolean(docUrl("shop_license")));
+    if (
+      !check({
+        pan: validatePan(form.pan),
+        bank_account_number: /^\d{9,18}$/.test(form.bank_account_number)
           ? null
-          : "Please upload all required documents",
-    };
-    setErrors(next);
-    if (Object.values(next).some(Boolean)) return;
-
-    await saveDraft(
+          : t("accountNumberInvalid"),
+        bank_ifsc: validateIfsc(form.bank_ifsc),
+        bank_account_holder_name: form.bank_account_holder_name.trim() ? null : t("required"),
+        gstin: gst ? validateGstin(gst) : null,
+        docs: docsOk ? null : t("docRequired"),
+      })
+    )
+      return;
+    await supabase.auth.updateUser({ data: { upi_id: form.upi_id.trim() || null } });
+    await save(
       {
         pan: form.pan,
         bank_account_number: form.bank_account_number,
         bank_ifsc: form.bank_ifsc,
-        bank_account_holder_name: form.bank_account_holder_name,
+        bank_account_holder_name: form.bank_account_holder_name.trim(),
+        is_gst_registered: Boolean(gst),
+        gstin: gst || null,
       },
-      4,
+      7,
     );
   };
 
   const submitApplication = async () => {
+    if (merchant.status === "pending_review") {
+      setFixing(false);
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase.rpc("merchant_submit_application");
       if (error) {
-        console.error(error);
         toast.error(friendlyErrorMessage(error, lang));
         return;
       }
+      hapticNotify("success");
+      setFixing(false);
       await refresh();
-      toast.success("Application submitted");
     } finally {
       setSaving(false);
     }
   };
 
+  // ---------- status screen (submitted, or query raised by badiyos) ----------
+  const queryNotes = merchant.query_notes?.trim() || "";
+  const hasQuery = merchant.status === "draft" && Boolean(merchant.awaiting_reupload || queryNotes);
+  if ((merchant.status === "pending_review" || hasQuery) && !fixing) {
+    const queried = merchant.query_doc_types ?? [];
+    const fixStep = queried.includes("shop_photo") && queried.length === 1
+      ? 4
+      : queried.length > 0 || /bank|ifsc|account|pan|fssai|खात|बँक/i.test(queryNotes)
+        ? 6
+        : 4;
+    return (
+      <StatusScreen
+        status={hasQuery ? "query" : "review"}
+        queryNotes={queryNotes}
+        agreementPending={agreement?.status === "sent"}
+        onFix={() => {
+          setFixing(true);
+          goTo(fixStep);
+        }}
+        onSign={() => {
+          setFixing(true);
+          goTo(7);
+        }}
+      />
+    );
+  }
+
+  const footer = (onNext: () => void, label: Key = "saveContinue", disabled = false) => (
+    <div className="flex gap-2 pt-2">
+      {step > 2 && (
+        <Button
+          variant="outline"
+          onClick={() => goTo(step - 1)}
+          className="h-12 shrink-0 rounded-2xl px-4 text-sm font-bold"
+        >
+          <ArrowLeft className="size-5" />
+          {t("back")}
+        </Button>
+      )}
+      <Button
+        disabled={saving || disabled}
+        onClick={() => {
+          hapticImpact("light");
+          onNext();
+        }}
+        className="h-12 min-w-0 flex-1 rounded-2xl px-4 text-sm font-bold sm:text-base"
+      >
+        {saving && <Loader2 className="size-5 animate-spin" />}
+        <span className="truncate">{t(label)}</span>
+      </Button>
+    </div>
+  );
+
   const field = (
     key: keyof typeof form,
     label: string,
-    extra?: {
-      placeholder?: string;
-      inputMode?: "text" | "numeric";
-      transform?: (v: string) => string;
-      maxLength?: number;
-      disabled?: boolean;
-    },
+    extra?: { placeholder?: string; numeric?: boolean; transform?: (v: string) => string; max?: number },
   ) => (
     <div className="space-y-2">
       <Label htmlFor={key} className="text-sm font-bold">
@@ -428,335 +486,116 @@ function OnboardingPage() {
         id={key}
         value={form[key]}
         placeholder={extra?.placeholder}
-        inputMode={extra?.inputMode}
-        maxLength={extra?.maxLength}
-        disabled={extra?.disabled}
+        inputMode={extra?.numeric ? "numeric" : undefined}
+        maxLength={extra?.max}
         onChange={(e) => set(key)(extra?.transform ? extra.transform(e.target.value) : e.target.value)}
-        className={`rounded-2xl text-base font-semibold ${extra?.inputMode === "numeric" ? "num" : ""}`}
+        className={`h-12 rounded-2xl text-base font-semibold ${extra?.numeric ? "num" : ""}`}
       />
       {errors[key] && <p className="text-xs font-bold text-destructive">{errors[key]}</p>}
     </div>
   );
 
-  if (merchant.status !== "draft") {
-    return <ReviewScreen />;
-  }
-
-  const queryNotes = merchant.query_notes?.trim() || "";
-  const queryDocTypes = (merchant.query_doc_types ?? []).filter((d): d is DocType =>
-    DOC_LABEL_KEYS.some(([type]) => type === d),
-  );
-  const hasQuery = Boolean(merchant.awaiting_reupload || queryNotes);
-  const bankQueried =
-    queryDocTypes.includes("cancelled_cheque") || /bank|ifsc|account|खात|बँक/i.test(queryNotes);
-
-  const submitQuery = async () => {
-    if (queryDocTypes.length > 0) {
-      const missing = queryDocTypes.some((d) =>
-        d === "shop_photo" ? !merchant.shop_photo_url : !uploadedTypes.has(d),
-      );
-      if (missing) {
-        toast.error(t("queryDocsMissing"));
-        return;
-      }
-    }
-    if (bankQueried) {
-      const next: Errors = {
-        bank_account_number: /^\d{9,18}$/.test(form.bank_account_number)
-          ? null
-          : t("accountNumberInvalid"),
-        bank_ifsc: validateIfsc(form.bank_ifsc),
-        bank_account_holder_name: form.bank_account_holder_name.trim() ? null : t("required"),
-      };
-      setErrors(next);
-      if (Object.values(next).some(Boolean)) return;
-      setSaving(true);
-      try {
-        const { error } = await supabase
-          .from("merchants")
-          .update({
-            bank_account_number: form.bank_account_number,
-            bank_ifsc: form.bank_ifsc,
-            bank_account_holder_name: form.bank_account_holder_name,
-          })
-          .eq("id", merchant.id);
-        if (error) {
-          console.error(error);
-          toast.error(friendlyErrorMessage(error, lang));
-          return;
-        }
-      } finally {
-        setSaving(false);
-      }
-    }
-    await submitApplication();
+  const titles: Record<number, Key> = {
+    1: "su1Title",
+    2: "su2Title",
+    3: "su3Title",
+    4: "su4Title",
+    5: "su5Title",
+    6: "su6Title",
+    7: "su7Title",
+    8: "su8Title",
   };
-
-  if (hasQuery && !showFullForm) {
-    return (
-      <div className="app-scroll safe-top safe-bottom h-full bg-background pb-12">
-        <header className="bg-brand-gradient px-6 pt-10 pb-12 text-primary-foreground">
-          <div className="mx-auto w-full max-w-[520px]">
-            <Wordmark on="dark" className="h-6" />
-            <h1 className="mt-6 text-xl font-extrabold">{t("queryTitle")}</h1>
-            <p className="mt-2 text-sm text-primary-foreground/85">{t("querySub")}</p>
-          </div>
-        </header>
-
-        <main className="mx-auto -mt-6 w-full max-w-[520px] px-4 sm:px-6">
-          <div className="space-y-5 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6">
-            <div className="rounded-2xl border border-primary/30 bg-primary-soft p-4">
-              <p className="flex items-center gap-2 text-xs font-extrabold text-accent-foreground">
-                <AlertTriangle className="size-4 shrink-0" />
-                {t("queryFromTeam")}
-              </p>
-              <p className="mt-2 text-sm font-bold text-foreground">{queryNotes || "—"}</p>
-              {merchant.queried_at && (
-                <p className="num mt-2 text-xs font-semibold text-muted-foreground">
-                  {t("queryRaisedOn")} {new Date(merchant.queried_at).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-
-            {queryDocTypes.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-sm font-extrabold text-foreground">{t("queryDocsTitle")}</p>
-                {queryDocTypes.map((docType) => (
-                  <DocumentUpload
-                    key={docType}
-                    merchantId={merchant.id}
-                    docType={docType}
-                    label={t(DOC_LABEL_KEYS.find(([d]) => d === docType)![1])}
-                    existingUrl={
-                      docType === "shop_photo"
-                        ? merchant.shop_photo_url
-                        : ((documents.data ?? []).find((d) => d.doc_type === docType)?.file_url ??
-                          null)
-                    }
-                    onUploaded={(path) => recordDocument(docType, path)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {bankQueried && (
-              <div className="space-y-4 border-t border-border pt-4">
-                <p className="text-sm font-extrabold text-foreground">{t("queryBankTitle")}</p>
-                {field("bank_account_number", t("accountNumber"), {
-                  inputMode: "numeric",
-                  maxLength: 18,
-                  transform: (v) => digitsOnly(v).slice(0, 18),
-                })}
-                {field("bank_ifsc", t("ifsc"), {
-                  maxLength: 11,
-                  transform: (v) => upperAlnum(v).slice(0, 11),
-                  placeholder: "SBIN0001234",
-                })}
-                {field("bank_account_holder_name", t("accountHolder"))}
-              </div>
-            )}
-
-            <Button
-              disabled={saving}
-              onClick={() => {
-                hapticNotify("success");
-                void submitQuery();
-              }}
-              className="h-12 w-full rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
-            >
-              {saving && <Loader2 className="size-5 animate-spin" />}
-              <span className="truncate">{t("queryResubmit")}</span>
-            </Button>
-
-            <button
-              type="button"
-              onClick={() => setShowFullForm(true)}
-              className="w-full text-center text-xs font-bold text-primary underline"
-            >
-              {t("queryOpenFullForm")}
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="app-scroll safe-top safe-bottom h-full bg-background pb-12">
-      <header className="bg-brand-gradient px-6 pt-10 pb-12 text-primary-foreground">
+      <header className="sticky top-0 z-10 border-b border-border bg-card px-4 py-4">
         <div className="mx-auto w-full max-w-[520px]">
           <div className="flex items-center justify-between">
-            <Wordmark on="dark" className="h-6" />
-            <span className="num rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">
-              {t("onbStepOf")} {step} {t("onbOf")} {TOTAL_STEPS}
+            <Wordmark className="h-6" />
+            <span className="num text-xs font-bold text-muted-foreground">
+              {t("suStep")} {step} {t("suOf")} {TOTAL}
             </span>
           </div>
-          <h1 className="mt-6 text-xl font-extrabold">{t("onbTitle")}</h1>
-          <div className="mt-4 flex gap-2">
-            {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-              <div
-                key={i}
-                className={`h-2 flex-1 rounded-full ${
-                  i + 1 <= step ? "bg-primary-foreground" : "bg-primary-foreground/25"
-                }`}
-              />
-            ))}
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${(step / TOTAL) * 100}%` }}
+            />
           </div>
         </div>
       </header>
 
-      <main className="mx-auto -mt-6 w-full max-w-[520px] px-4 sm:px-6">
-        {hasQuery && (
-          <button
-            type="button"
-            onClick={() => setShowFullForm(false)}
-            className="mb-3 flex w-full items-start gap-2 rounded-2xl border border-primary/30 bg-primary-soft p-4 text-left"
-          >
+      <main className="mx-auto w-full max-w-[520px] px-4 pt-5">
+        {fixing && queryNotes && (
+          <div className="mb-4 flex items-start gap-2 rounded-2xl border border-primary/30 bg-primary-soft p-4 text-sm font-bold text-foreground">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" />
-            <span className="min-w-0">
-              <span className="block text-xs font-extrabold text-accent-foreground">
-                {queryNotes || t("queryTitle")}
-              </span>
-              <span className="mt-1 block text-xs font-bold text-primary underline">
-                {t("queryBackToQuery")}
-              </span>
-            </span>
-          </button>
+            {queryNotes}
+          </div>
         )}
-        <div className="space-y-4 rounded-3xl border border-border bg-card p-4 shadow-card sm:p-6">
+        <h1 className="text-xl font-extrabold text-foreground">{t(titles[step]!)}</h1>
+        <div className="mt-4 space-y-4 rounded-2xl border border-border bg-card p-4 shadow-card">
           {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <BadgeCheck className="size-6 text-primary" />
-                <h2 className="mt-3 text-base font-extrabold text-foreground">
-                  {t("onbGstQuestion")}
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t("onbGstHelp")}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {[true, false].map((choice) => (
-                  <button
-                    key={String(choice)}
-                    onClick={() => setGstChoice(choice)}
-                    className={`rounded-2xl border px-4 py-4 text-sm font-bold transition-colors ${
-                      gstChoice === choice
-                        ? "border-primary bg-primary-soft text-accent-foreground"
-                        : "border-border bg-background text-muted-foreground"
-                    }`}
-                  >
-                    {choice ? t("yes") : t("no")}
-                  </button>
-                ))}
-              </div>
-
-              {gstChoice === true && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="gstin" className="text-sm font-bold">
-                      {t("onbGstinTitle")}
-                    </Label>
-                    <Input
-                      id="gstin"
-                      value={gstin}
-                      placeholder="27ABCDE1234F1Z5"
-                      maxLength={15}
-                      onChange={(e) => {
-                        setGstin(upperAlnum(e.target.value).slice(0, 15));
-                        setErrors((prev) => ({ ...prev, gstin: null }));
-                        setGstLookupDone(false);
-                      }}
-                      className="num rounded-2xl text-base font-bold tracking-wide"
-                    />
-                    {errors["gstin"] && (
-                      <p className="text-xs font-bold text-destructive">{errors["gstin"]}</p>
-                    )}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    disabled={verifying || gstin.length !== 15}
-                    onClick={() => void handleGstinVerify()}
-                    className="w-full rounded-2xl font-bold"
-                  >
-                    {verifying && <Loader2 className="size-5 animate-spin" />}
-                    {t("onbVerifyGstin")}
-                  </Button>
-
-                  {gstStatus && gstStatus.toLowerCase() !== "active" && (
-                    <p className="flex items-start gap-2 rounded-2xl bg-destructive/10 p-4 text-xs font-bold text-destructive">
-                      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                      This GSTIN shows as {gstStatus} — please confirm this is correct.
-                    </p>
-                  )}
-
-                  {gstLookupDone && (
-                    <div className="space-y-4 border-t border-border pt-4">
-                      <div>
-                        <p className="text-sm font-extrabold text-foreground">
-                          {t("onbGstFetched")}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{t("onbGstFetchedHelp")}</p>
-                      </div>
-                      {field("gst_legal_name", t("legalName"))}
-                      {field("store_name", t("businessName"))}
-                      {field("owner_name", t("ownerName"))}
-                      {field("address", t("addressLine"))}
-                      <div className="grid grid-cols-2 gap-3">
-                        {field("city", t("city"))}
-                        {field("pincode", t("pincode"), {
-                          inputMode: "numeric",
-                          maxLength: 6,
-                          transform: (v) => digitsOnly(v).slice(0, 6),
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {gstChoice === false && (
-                <div className="space-y-4 border-t border-border pt-4">
-                  <p className="text-sm font-extrabold text-foreground">{t("onbManualTitle")}</p>
-                  {field("store_name", t("businessName"))}
-                  {field("owner_name", t("ownerName"))}
-                </div>
-              )}
-
-              <Button
-                size="lg"
-                disabled={gstChoice === null || saving}
-                onClick={() => {
-                    hapticImpact("light");
-                    void submitStep1();
-                  }}
-                className="w-full rounded-2xl text-base font-bold shadow-brand"
-              >
-                {saving && <Loader2 className="size-5 animate-spin" />}
-                {t("saveContinue")}
-              </Button>
-            </div>
+            <>
+              <Card>
+                <p className="num text-2xl font-extrabold text-foreground">+91 {merchant.phone}</p>
+                <p className="mt-1 flex items-center gap-1 text-xs font-bold text-primary">
+                  <CheckCircle2 className="size-4" /> {t("su1Sub")}
+                </p>
+              </Card>
+              {footer(() => goTo(2))}
+            </>
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <MapPin className="size-6 text-primary" />
-                <h2 className="mt-3 text-base font-extrabold text-foreground">
-                  {t("onbBusinessTitle")}
-                </h2>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-bold">{t("category")}</Label>
-                <Select
-                  value={form.store_category_id}
-                  onValueChange={(v) => set("store_category_id")(v)}
+            <>
+              {(
+                [
+                  ["store", Store, "suStore", "suStoreSub"],
+                  ["food", UtensilsCrossed, "suFood", "suFoodSub"],
+                ] as const
+              ).map(([value, Icon, title, sub]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, service_type: value }))}
+                  className={`flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition-colors ${
+                    form.service_type === value ? "border-primary bg-primary-soft" : "border-border"
+                  }`}
                 >
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-card text-primary shadow-card">
+                    <Icon className="size-6" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base font-extrabold text-foreground">{t(title)}</span>
+                    <span className="block text-xs text-muted-foreground">{t(sub)}</span>
+                  </span>
+                  {form.service_type === value && <Check className="size-5 text-primary" />}
+                </button>
+              ))}
+              {footer(submit2, "saveContinue", !form.service_type)}
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              {field("owner_name", t("ownerName"))}
+              {field("email", t("email"), { placeholder: "name@example.com" })}
+              {footer(() => void submit3())}
+            </>
+          )}
+
+          {step === 4 && (
+            <>
+              {field("store_name", t("businessName"))}
+              <div className="space-y-2">
+                <Label className="text-sm font-bold">{t("storeType")}</Label>
+                <Select value={form.store_category_id} onValueChange={set("store_category_id")}>
                   <SelectTrigger className="h-12 rounded-2xl text-sm font-semibold">
                     <SelectValue placeholder={t("chooseCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(categories.data ?? []).map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-sm font-semibold">
+                      <SelectItem key={c.id} value={c.id}>
                         {c.name}
                       </SelectItem>
                     ))}
@@ -769,220 +608,202 @@ function OnboardingPage() {
               <Button
                 type="button"
                 variant="outline"
-                size="lg"
-                onClick={() => {
-                  hapticImpact("light");
-                  setMapOpen(true);
-                }}
-                className="w-full justify-start rounded-2xl font-bold"
+                onClick={() => setMapOpen(true)}
+                className="h-12 w-full justify-start rounded-2xl font-bold"
               >
                 <MapPin className="size-5 text-primary" />
-                {coords.lat != null && coords.lng != null ? t("changeOnMap") : t("pickOnMap")}
+                {coords.lat != null ? t("changeOnMap") : t("pickOnMap")}
               </Button>
-              {coords.lat != null && coords.lng != null && (
-                <p className="-mt-3 text-xs font-bold text-primary">{t("locationSaved")}</p>
-              )}
-              {field("address", t("addressLine"), { placeholder: "Road / area / landmark" })}
-              {field("building", t("buildingName"), {
-                placeholder: "Shop no, building, floor",
-              })}
+              {field("address", t("addressLine"), { placeholder: "Shop no, building, road, area" })}
               <div className="grid grid-cols-2 gap-3">
                 {field("city", t("city"))}
                 {field("pincode", t("pincode"), {
-                  inputMode: "numeric",
-                  maxLength: 6,
+                  numeric: true,
+                  max: 6,
                   transform: (v) => digitsOnly(v).slice(0, 6),
                 })}
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {field("state", t("state"))}
-                {field("country", t("country"))}
+              <div className="space-y-2">
+                <Label className="text-sm font-bold">{t("contactPhone")}</Label>
+                <Input value={`+91 ${merchant.phone}`} disabled className="num h-12 rounded-2xl" />
               </div>
-              <div className="flex gap-2 sm:gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                  className="h-12 shrink-0 rounded-2xl px-4 text-sm font-bold"
-                >
-                  <ArrowLeft className="size-5" />
-                  {t("back")}
-                </Button>
-                <Button
-                  disabled={saving}
-                  onClick={() => {
-                    hapticImpact("light");
-                    void submitStep2();
-                  }}
-                  className="h-12 min-w-0 flex-1 rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
-                >
-                  {saving && <Loader2 className="size-5 animate-spin" />}
-                  <span className="truncate">{t("saveContinue")}</span>
-                </Button>
-              </div>
+              <DocumentUpload
+                merchantId={merchant.id}
+                docType="shop_photo"
+                label={t("shopPhoto")}
+                existingUrl={merchant.shop_photo_url}
+                onUploaded={(path) => recordDocument("shop_photo", path)}
+              />
+              {footer(() => void submit4())}
               <Dialog open={mapOpen} onOpenChange={setMapOpen}>
-                <DialogContent
-                  className="flex h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-3 rounded-none border-0 p-4 pb-6 left-0 top-0 sm:left-1/2 sm:top-1/2 sm:h-[90dvh] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border"
-                >
-
+                <DialogContent className="left-0 top-0 flex h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-3 rounded-none border-0 p-4 pb-6 sm:left-1/2 sm:top-1/2 sm:h-[90dvh] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border">
                   <DialogHeader className="shrink-0 pr-8 text-left">
-                    <DialogTitle className="text-base font-extrabold">
-                      {t("mapPickTitle")}
-                    </DialogTitle>
+                    <DialogTitle className="text-base font-extrabold">{t("mapPickTitle")}</DialogTitle>
                   </DialogHeader>
                   <LocationPicker
                     lat={coords.lat}
                     lng={coords.lng}
                     onChange={(lat, lng) => setCoords({ lat, lng })}
-                    onAddress={(address) => setForm((prev) => ({ ...prev, address }))}
+                    onAddress={(address) => setForm((p) => ({ ...p, address }))}
                     className="flex min-h-0 flex-1 flex-col"
                     mapClassName="min-h-0 flex-1"
                   />
                   <Button
-                    size="lg"
-                    disabled={coords.lat == null || coords.lng == null}
-                    onClick={() => {
-                      hapticImpact("light");
-                      setMapOpen(false);
-                    }}
-                    className="w-full shrink-0 rounded-2xl text-base font-bold shadow-brand"
+                    disabled={coords.lat == null}
+                    onClick={() => setMapOpen(false)}
+                    className="h-12 w-full shrink-0 rounded-2xl text-base font-bold"
                   >
                     {t("useThisLocation")}
                   </Button>
                 </DialogContent>
               </Dialog>
-
-            </div>
+            </>
           )}
 
-          {step === 3 && (
-            <div className="space-y-6">
-              <div>
-                <FileText className="size-6 text-primary" />
-                <h2 className="mt-3 text-base font-extrabold text-foreground">
-                  {t("onbDocsTitle")}
-                </h2>
-              </div>
-              <div className="space-y-3">
-                {(
-                  [
-                    ["aadhaar", t("docAadhaar"), false],
-                    ["pan", t("docPan"), false],
-                    ...(gstChoice ? [["gst_certificate", t("docGst"), false] as const] : []),
-                    ["shop_license", t("docShopLicense"), false],
-                    ["cancelled_cheque", t("docCheque"), false],
-                    ["shop_photo", t("shopPhoto"), true],
-                  ] as Array<[DocType, string, boolean]>
-                ).map(([docType, label, optional]) => (
-                  <DocumentUpload
-                    key={docType}
-                    merchantId={merchant.id}
-                    docType={docType}
-                    label={label}
-                    optional={optional}
-                    existingUrl={
-                      docType === "shop_photo"
-                        ? merchant.shop_photo_url
-                        : ((documents.data ?? []).find((d) => d.doc_type === docType)?.file_url ??
-                          null)
-                    }
-                    onUploaded={(path) => recordDocument(docType, path)}
-                  />
-                ))}
-                {errors["docs"] && <p className="text-xs font-bold text-destructive">{errors["docs"]}</p>}
-              </div>
+          {step === 5 && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const mon = days[1]!;
+                  setDays(Object.fromEntries(DAYS.map(({ day }) => [day, { ...mon }])));
+                }}
+                className="h-11 w-full rounded-2xl text-sm font-bold"
+              >
+                {t("copyMonday")}
+              </Button>
+              <ul className="space-y-2">
+                {DAYS.map(({ day, key }) => {
+                  const v = days[day]!;
+                  const upd = (patch: Partial<DayRow>) =>
+                    setDays((p) => ({ ...p, [day]: { ...p[day]!, ...patch } }));
+                  return (
+                    <li key={day} className="rounded-2xl border border-border p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-extrabold text-foreground">{t(key)}</span>
+                        <label className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                          {t("closedDay")}
+                          <Switch checked={v.is_closed} onCheckedChange={(c) => upd({ is_closed: c })} />
+                        </label>
+                      </div>
+                      {!v.is_closed && (
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <Input
+                            type="time"
+                            aria-label={t("openTime")}
+                            value={v.open_time}
+                            onChange={(e) => upd({ open_time: e.target.value })}
+                            className="num h-11 rounded-xl"
+                          />
+                          <Input
+                            type="time"
+                            aria-label={t("closeTime")}
+                            value={v.close_time}
+                            onChange={(e) => upd({ close_time: e.target.value })}
+                            className="num h-11 rounded-xl"
+                          />
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              {footer(() => void submit5())}
+            </>
+          )}
 
+          {step === 6 && (
+            <>
               {field("pan", t("panNumber"), {
-                maxLength: 10,
-                transform: (v) => upperAlnum(v).slice(0, 10),
+                max: 10,
                 placeholder: "ABCDE1234F",
+                transform: (v) => upperAlnum(v).slice(0, 10),
               })}
-
-              <div className="space-y-4 border-t border-border pt-4">
-                <p className="text-sm font-extrabold text-foreground">{t("bankDetails")}</p>
-                {field("bank_account_number", t("accountNumber"), {
-                  inputMode: "numeric",
-                  maxLength: 18,
-                  transform: (v) => digitsOnly(v).slice(0, 18),
-                })}
-                {field("bank_ifsc", t("ifsc"), {
-                  maxLength: 11,
-                  transform: (v) => upperAlnum(v).slice(0, 11),
-                  placeholder: "SBIN0001234",
-                })}
-                {field("bank_account_holder_name", t("accountHolder"))}
-              </div>
-
-              <div className="flex gap-2 sm:gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(2)}
-                  className="h-12 shrink-0 rounded-2xl px-4 text-sm font-bold"
-                >
-                  <ArrowLeft className="size-5" />
-                  {t("back")}
-                </Button>
-                <Button
-                  disabled={saving}
-                  onClick={() => {
-                    hapticImpact("light");
-                    void submitStep3();
-                  }}
-                  className="h-12 min-w-0 flex-1 rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
-                >
-                  {saving && <Loader2 className="size-5 animate-spin" />}
-                  <span className="truncate">{t("saveContinue")}</span>
-                </Button>
-              </div>
-            </div>
+              <DocumentUpload
+                merchantId={merchant.id}
+                docType="pan"
+                label={t("docPan")}
+                existingUrl={docUrl("pan")}
+                onUploaded={(p) => recordDocument("pan", p)}
+              />
+              <p className="pt-2 text-sm font-extrabold text-foreground">{t("bankDetails")}</p>
+              {field("bank_account_holder_name", t("accountHolder"))}
+              {field("bank_account_number", t("accountNumber"), {
+                numeric: true,
+                max: 18,
+                transform: (v) => digitsOnly(v).slice(0, 18),
+              })}
+              {field("bank_ifsc", t("ifsc"), {
+                max: 11,
+                placeholder: "SBIN0001234",
+                transform: (v) => upperAlnum(v).slice(0, 11),
+              })}
+              {field("upi_id", t("upiId"), { placeholder: "name@upi" })}
+              <DocumentUpload
+                merchantId={merchant.id}
+                docType="shop_photo"
+                label={t("shopPhoto")}
+                existingUrl={merchant.shop_photo_url}
+                onUploaded={(p) => recordDocument("shop_photo", p)}
+              />
+              <DocumentUpload
+                merchantId={merchant.id}
+                docType="shop_license"
+                label={isFood ? t("fssai") : t("shopAct")}
+                optional={!isFood}
+                existingUrl={docUrl("shop_license")}
+                onUploaded={(p) => recordDocument("shop_license", p)}
+              />
+              {field("gstin", t("gstinOptional"), {
+                max: 15,
+                placeholder: "27ABCDE1234F1Z5",
+                transform: (v) => upperAlnum(v).slice(0, 15),
+              })}
+              {form.gstin.length === 15 && (
+                <DocumentUpload
+                  merchantId={merchant.id}
+                  docType="gst_certificate"
+                  label={t("docGst")}
+                  optional
+                  existingUrl={docUrl("gst_certificate")}
+                  onUploaded={(p) => recordDocument("gst_certificate", p)}
+                />
+              )}
+              {errors["docs"] && <p className="text-xs font-bold text-destructive">{errors["docs"]}</p>}
+              {footer(() => void submit6())}
+            </>
           )}
 
-          {step === 4 && (
-            <div className="space-y-6">
-              <div>
-                <Building2 className="size-6 text-primary" />
-                <h2 className="mt-3 text-base font-extrabold text-foreground">
-                  {form.store_name || merchant.store_name}
-                </h2>
-                <p className="num mt-1 text-sm text-muted-foreground">+91 {merchant.phone}</p>
-              </div>
-              <dl className="space-y-2 rounded-2xl bg-muted/50 p-4 text-sm">
+          {step === 7 && (
+            <AgreementStep
+              agreement={agreement}
+              commissionPct={commissionPct}
+              onSigned={() => void agreements.refetch()}
+              footer={footer(() => void save({}, 8))}
+            />
+          )}
+
+          {step === 8 && (
+            <>
+              <dl className="space-y-2 text-sm">
                 {[
-                  [t("category"), (categories.data ?? []).find((c) => c.id === form.store_category_id)?.name],
-                  [t("addressLine"), [form.address, form.city, form.pincode].filter(Boolean).join(", ")],
-                  [gstChoice ? "GSTIN" : t("ownerName"), gstChoice ? gstin : form.owner_name],
+                  [t("su2Title"), form.service_type === "food" ? t("suFood") : t("suStore")],
+                  [t("businessName"), form.store_name],
+                  [t("ownerName"), form.owner_name],
+                  [t("addressLine"), [form.address, form.pincode].filter(Boolean).join(", ")],
                   [t("panNumber"), form.pan],
                   [t("ifsc"), form.bank_ifsc],
+                  [t("su7Title"), agreement?.status === "accepted" ? t("suSigned") : "—"],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between gap-4">
+                  <div key={label} className="flex justify-between gap-4 border-b border-border pb-2">
                     <dt className="font-semibold text-muted-foreground">{label}</dt>
                     <dd className="num text-right font-bold text-foreground">{value || "—"}</dd>
                   </div>
                 ))}
               </dl>
-              <div className="flex gap-2 sm:gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(3)}
-                  className="h-12 shrink-0 rounded-2xl px-4 text-sm font-bold"
-                >
-                  <ArrowLeft className="size-5" />
-                  {t("back")}
-                </Button>
-                <Button
-                  disabled={saving}
-                  onClick={() => {
-                    hapticNotify("success");
-                    void submitApplication();
-                  }}
-                  className="h-12 min-w-0 flex-1 rounded-2xl px-4 text-sm font-bold shadow-brand sm:text-base"
-                >
-                  {saving && <Loader2 className="size-5 animate-spin" />}
-                  <span className="truncate">{t("submitApplication")}</span>
-                </Button>
-              </div>
+              {footer(() => void submitApplication(), "suSubmit")}
               <LegalConsent />
-            </div>
+            </>
           )}
         </div>
       </main>
@@ -990,24 +811,206 @@ function OnboardingPage() {
   );
 }
 
-function ReviewScreen() {
-  const { t } = useI18n();
-  const navigate = useNavigate();
+function Card({ children }: { children: ReactNode }) {
+  return <div className="rounded-2xl border border-border p-4">{children}</div>;
+}
+
+function AgreementStep({
+  agreement,
+  commissionPct,
+  onSigned,
+  footer,
+}: {
+  agreement: Agreement | undefined;
+  commissionPct: number | null;
+  onSigned: () => void;
+  footer: ReactNode;
+}) {
+  const { t, lang } = useI18n();
+  const [readToEnd, setReadToEnd] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [busy, setBusy] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = boxRef.current;
+    if (el && el.scrollHeight <= el.clientHeight + 8) setReadToEnd(true);
+  }, [agreement?.id]);
+
+  const requestOtp = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc("app_agreement_request_otp", { _agreement_id: agreement!.id });
+    setBusy(false);
+    if (error) {
+      toast.error(friendlyErrorMessage(error, lang));
+      return;
+    }
+    setOtpSent(true);
+    toast.success(t("suOtpSent"));
+  };
+  const accept = async () => {
+    setBusy(true);
+    const { error } = await supabase.rpc("app_agreement_accept", {
+      _agreement_id: agreement!.id,
+      _otp: otp,
+      _device: navigator.userAgent,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(friendlyErrorMessage(error, lang));
+      return;
+    }
+    hapticNotify("success");
+    toast.success(t("suSigned"));
+    onSigned();
+  };
 
   return (
-    <div className="safe-top safe-bottom flex h-full flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-      <div className="flex size-16 items-center justify-center rounded-3xl bg-primary-soft">
-        <CheckCircle2 className="size-8 text-primary" />
+    <>
+      <div className="rounded-2xl border-2 border-primary bg-primary-soft p-4 text-center">
+        <p className="text-xs font-bold text-muted-foreground">{t("suCommissionBox")}</p>
+        <p className="num text-3xl font-extrabold text-primary">
+          {commissionPct != null ? `${commissionPct}%` : "—"}
+        </p>
+        <p className="text-[11px] font-semibold text-muted-foreground">+ GST</p>
       </div>
-      <h1 className="text-xl font-extrabold text-foreground">{t("onbReviewTitle")}</h1>
-      <p className="max-w-[36ch] text-sm text-muted-foreground">{t("onbReviewSub")}</p>
-      <Button
-        size="lg"
-        onClick={() => void navigate({ to: "/home", replace: true })}
-        className="mt-4 rounded-2xl text-base font-bold shadow-brand"
-      >
-        {t("home")}
-      </Button>
+
+      {!agreement ? (
+        <p className="text-sm text-muted-foreground">{t("suAgreementLater")}</p>
+      ) : agreement.status === "accepted" ? (
+        <p className="flex items-center gap-2 text-sm font-bold text-primary">
+          <CheckCircle2 className="size-5" /> {t("suSigned")}
+        </p>
+      ) : (
+        <>
+          <div
+            ref={boxRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setReadToEnd(true);
+            }}
+            className="selectable max-h-72 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-border p-4 text-sm leading-relaxed text-foreground"
+          >
+            {agreement.body.replace(/^#+\s*/gm, "").replace(/\*\*/g, "")}
+          </div>
+          {!readToEnd && (
+            <p className="text-xs font-bold text-muted-foreground">{t("suScrollToEnd")}</p>
+          )}
+          {!otpSent ? (
+            <Button
+              disabled={!readToEnd || busy}
+              onClick={() => void requestOtp()}
+              className="h-12 w-full rounded-2xl font-bold"
+            >
+              {busy && <Loader2 className="size-5 animate-spin" />}
+              {t("suIAgree")}
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <Label className="text-sm font-bold">{t("suEnterOtp")}</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={otp}
+                  inputMode="numeric"
+                  maxLength={6}
+                  onChange={(e) => setOtp(digitsOnly(e.target.value).slice(0, 6))}
+                  className="num h-12 flex-1 rounded-2xl text-center text-lg font-bold tracking-widest"
+                />
+                <Button
+                  disabled={otp.length < 4 || busy}
+                  onClick={() => void accept()}
+                  className="h-12 rounded-2xl px-5 font-bold"
+                >
+                  {busy && <Loader2 className="size-5 animate-spin" />}
+                  {t("suSign")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      {(!agreement || agreement.status === "accepted") && footer}
+    </>
+  );
+}
+
+function StatusScreen({
+  status,
+  queryNotes,
+  agreementPending,
+  onFix,
+  onSign,
+}: {
+  status: "review" | "query";
+  queryNotes: string;
+  agreementPending: boolean;
+  onFix: () => void;
+  onSign: () => void;
+}) {
+  const { t } = useI18n();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const stages: Key[] = ["stSubmitted", "stReview", "stApproved", "stAddItems", "stLive"];
+  const current = 1;
+  return (
+    <div className="app-scroll safe-top safe-bottom h-full bg-background px-4 pb-12">
+      <div className="mx-auto w-full max-w-[520px] pt-8">
+        <Wordmark className="h-6" />
+        <h1 className="mt-6 text-2xl font-extrabold text-foreground">{t("su8Title")}</h1>
+
+        {status === "query" && (
+          <div className="mt-5 rounded-2xl border border-primary/30 bg-primary-soft p-4">
+            <p className="flex items-center gap-2 text-xs font-extrabold text-accent-foreground">
+              <AlertTriangle className="size-4" /> {t("queryFromTeam")}
+            </p>
+            <p className="mt-2 text-sm font-bold text-foreground">{queryNotes || "—"}</p>
+            <Button onClick={onFix} className="mt-3 h-11 w-full rounded-2xl font-bold">
+              {t("fixNow")}
+            </Button>
+          </div>
+        )}
+
+        <ol className="mt-6 space-y-0 rounded-2xl border border-border bg-card p-4 shadow-card">
+          {stages.map((key, i) => {
+            const done = i < current;
+            const active = i === current;
+            return (
+              <li key={key} className="flex items-center gap-3 py-2.5">
+                <span
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
+                    done
+                      ? "bg-primary text-primary-foreground"
+                      : active
+                        ? "border-2 border-primary text-primary"
+                        : "border border-border text-muted-foreground"
+                  }`}
+                >
+                  {done ? <Check className="size-4" /> : i + 1}
+                </span>
+                <span
+                  className={`text-sm font-bold ${done || active ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                  {t(key)}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+
+        {agreementPending && (
+          <Button variant="outline" onClick={onSign} className="mt-4 h-12 w-full rounded-2xl font-bold">
+            {t("signAgreement")}
+          </Button>
+        )}
+        <button
+          type="button"
+          onClick={() => void signOut().then(() => navigate({ to: "/login", replace: true }))}
+          className="mt-6 w-full text-center text-xs font-bold text-muted-foreground underline"
+        >
+          {t("logout")}
+        </button>
+      </div>
     </div>
   );
 }
