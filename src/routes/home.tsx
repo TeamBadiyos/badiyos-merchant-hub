@@ -47,7 +47,8 @@ const LIVE = ["placed", "paid", "pending", "accepted", "preparing", "ready"];
 
 function HomePage() {
   const { t } = useI18n();
-  const { can, isOwner } = useAuth();
+  const { can, context } = useAuth();
+  const isOwner = context.isOwner;
   const merchant = useRequireAuth();
   const [lowStockDismissed, setLowStockDismissed] = useState(false);
   const allowed = can("view_orders");
@@ -142,9 +143,7 @@ function HomePage() {
     },
   });
 
-  const { schedule, openState, availability, setOpen } = useAvailability() as ReturnType<
-    typeof useAvailability
-  > & { setOpen?: (v: boolean) => void };
+  const { schedule, openState, availability, setAccepting } = useAvailability();
 
   const pending = (live.data ?? []).filter((o) => isActionableNewOrder(o));
   useOrderRing(approved && allowed && pending.length > 0);
@@ -210,11 +209,14 @@ function HomePage() {
               <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3">
                 <AlertTriangle className="size-4 shrink-0 text-destructive" />
                 <p className="min-w-0 flex-1 text-xs font-bold text-destructive">{t("alertClosedInHours")}</p>
-                {setOpen && (
-                  <Button size="sm" className="rounded-xl font-bold" onClick={() => setOpen(true)}>
-                    {t("openStoreNow")}
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  className="rounded-xl font-bold"
+                  disabled={setAccepting.isPending}
+                  onClick={() => setAccepting.mutate(true)}
+                >
+                  {t("openStoreNow")}
+                </Button>
               </div>
             )}
 

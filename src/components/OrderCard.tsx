@@ -18,7 +18,7 @@ import {
 } from "@/lib/order-status";
 import type { OrderItem, OrderWithItems } from "@/lib/orders";
 
-type Addon = { name: string; price?: number };
+type Addon = { name: string; price?: number | undefined };
 
 /** Add-ons are saved as JSON; accept arrays of strings or {name, price}. */
 export function parseAddons(raw: unknown): Addon[] {
@@ -117,7 +117,8 @@ export function OrderCard({
   acceptMinutes?: number;
 }) {
   const { t } = useI18n();
-  const { can, isOwner } = useAuth();
+  const { can, context } = useAuth();
+  const isOwner = context.isOwner;
   const status = order.status as OrderStatus;
   const next = NEXT_STATUS[status];
   const [rejectOpen, setRejectOpen] = useState(false);
