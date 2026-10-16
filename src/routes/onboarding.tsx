@@ -401,6 +401,10 @@ function OnboardingPage() {
   };
 
   const submitApplication = async () => {
+    if (merchant.status === "pending_review") {
+      setFixing(false);
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase.rpc("merchant_submit_application");
