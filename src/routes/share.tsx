@@ -65,9 +65,7 @@ function SharePage() {
     if (!qr) return;
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ unit: "mm", format: "a5" });
-    const brand = getComputedStyle(document.documentElement).getPropertyValue("--brand").trim();
     doc.setFillColor(107, 51, 106); // brand #6B336A
-    void brand;
     doc.rect(0, 0, 148, 40, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
