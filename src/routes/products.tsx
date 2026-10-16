@@ -61,7 +61,23 @@ type ProductRow = Database["public"]["Tables"]["products"]["Row"];
 type Variant = Database["public"]["Tables"]["product_variants"]["Row"];
 type Addon = Database["public"]["Tables"]["product_addons"]["Row"];
 type Product = ProductRow & { product_variants: Variant[]; product_addons: Addon[] };
-type Category = { id: string; name: string; sort_order: number };
+type Category = { id: string; name: string; name_mr: string | null; is_other: boolean; sort_order: number };
+type Suggestion = {
+  product_id: string | null;
+  suggested_name: string;
+  status: string;
+  reason: string | null;
+  created_at: string;
+};
+
+const catName = (c: Category, lang: string) => (lang === "mr" && c.name_mr ? c.name_mr : c.name);
+const suggestionLabel = (s: Suggestion, lang: string) => {
+  const mr = lang === "mr";
+  if (s.status === "rejected")
+    return `${mr ? "सुचवले" : "Suggested"}: ${s.suggested_name} · ${mr ? "मंजूर नाही" : "Not approved"}${s.reason ? ` (${s.reason})` : ""}`;
+  if (s.status === "approved") return `${mr ? "सुचवले" : "Suggested"}: ${s.suggested_name} · ${mr ? "मंजूर" : "Approved"}`;
+  return `${mr ? "सुचवले" : "Suggested"}: ${s.suggested_name} · ${mr ? "तपासणी सुरू" : "under review"}`;
+};
 
 const UNITS: { value: string; key: Key }[] = [
   { value: "gm", key: "unitGm" },
@@ -107,7 +123,7 @@ export const Route = createFileRoute("/products")({
 const imageOf = (p: ProductRow) => p.image_path ?? p.image_url;
 
 function ProductsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { can } = useAuth();
   const merchant = useRequireAuth();
   const queryClient = useQueryClient();
@@ -146,7 +162,7 @@ function ProductsPage() {
       const [cats, order] = await Promise.all([
         supabase
           .from("catalog_categories")
-          .select("id, name, sort_order")
+          .select("id, name, name_mr, is_other, sort_order")
           .eq("service_type", svc)
           .eq("is_active", true)
           .order("sort_order"),
@@ -155,10 +171,32 @@ function ProductsPage() {
       if (cats.error) throw cats.error;
       const rank = new Map((order.data ?? []).map((o) => [o.category_id, o.sort_order]));
       return (cats.data as Category[]).sort(
-        (a, b) => (rank.get(a.id) ?? 1000 + a.sort_order) - (rank.get(b.id) ?? 1000 + b.sort_order),
+        (a, b) =>
+          Number(a.is_other) - Number(b.is_other) ||
+          (rank.get(a.id) ?? 1000 + a.sort_order) - (rank.get(b.id) ?? 1000 + b.sort_order),
       );
     },
   });
+
+  const suggestionsQ = useQuery({
+    queryKey: ["products", "category-suggestions", merchant?.id],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("category_suggestions")
+        .select("product_id, suggested_name, status, reason, created_at")
+        .eq("merchant_id", merchant!.id)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      return data as Suggestion[];
+    },
+  });
+  const suggestions = useMemo(() => {
+    const m = new Map<string, Suggestion>();
+    for (const s of suggestionsQ.data ?? []) if (s.product_id && !m.has(s.product_id)) m.set(s.product_id, s);
+    return m;
+  }, [suggestionsQ.data]);
 
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ["products"] });
   const fail = (e: unknown) => {
@@ -246,19 +284,23 @@ function ProductsPage() {
     const q = query.trim().toLowerCase();
     let list = products.data ?? [];
     if (low && !isFood) list = list.filter((p) => p.stock_quantity <= p.low_stock_threshold);
-    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q) || (p.category_label ?? "").toLowerCase().includes(q));
+    if (q) list = list.filter((p) => p.name.toLowerCase().includes(q));
     const cats = categories.data ?? [];
     const known = new Set(cats.map((c) => c.id));
+    const otherId = cats.find((c) => c.is_other)?.id ?? null;
     const out: { id: string | null; name: string; items: Product[] }[] = cats.map((c) => ({
       id: c.id,
-      name: c.name,
-      items: list.filter((p) => p.category_id === c.id),
+      name: catName(c, lang),
+      items: list.filter(
+        (p) => p.category_id === c.id || (c.id === otherId && (!p.category_id || !known.has(p.category_id))),
+      ),
     }));
-    // Legacy items without a Command Center category: group by their old label.
-    const rest = list.filter((p) => !p.category_id || !known.has(p.category_id));
-    out.push({ id: null, name: t("pmUncategorised"), items: rest });
+    if (!otherId) {
+      const rest = list.filter((p) => !p.category_id || !known.has(p.category_id));
+      out.push({ id: null, name: t("pmUncategorised"), items: rest });
+    }
     return out.filter((s) => s.items.length > 0);
-  }, [products.data, categories.data, query, low, isFood, t]);
+  }, [products.data, categories.data, query, low, isFood, t, lang]);
 
   if (!merchant) return null;
 
@@ -391,6 +433,10 @@ function ProductsPage() {
                     <ItemRow
                       key={product.id}
                       product={product}
+                      suggestion={(() => {
+                        const s = suggestions.get(product.id);
+                        return s && s.status !== "approved" ? suggestionLabel(s, lang) : null;
+                      })()}
                       isFood={isFood}
                       selecting={selecting}
                       selected={selected.has(product.id)}
@@ -456,6 +502,7 @@ function ProductsPage() {
           isFood={isFood}
           categories={categories.data ?? []}
           product={editing}
+          suggestionRow={editing ? suggestions.get(editing.id) ?? null : null}
           onClose={() => {
             setCreating(false);
             setEditing(null);
@@ -568,6 +615,7 @@ function ItemRow(props: {
   onToggleRecommended: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  suggestion?: string | null;
 }) {
   const { t } = useI18n();
   const { product: p, isFood } = props;
@@ -616,6 +664,9 @@ function ItemRow(props: {
           </p>
         ) : (
           <StatusBadge product={p} onEdit={props.onEdit} />
+          {props.suggestion && (
+            <p className="mt-1 text-[11px] font-semibold text-muted-foreground">{props.suggestion}</p>
+          )}
         )}
         <div className="mt-2 flex items-center gap-2">
           <Switch checked={p.is_available} onCheckedChange={props.onToggleAvailable} aria-label={t("pmAvailable")} />
