@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.merchant_insights(integer), public.merchant_set_busy(integer), public.merchant_referral_code(), public.merchant_add_referral_invite(text,text), public.merchant_my_referrals(), public.merchant_busy_release() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.merchant_insights(integer), public.merchant_set_busy(integer), public.merchant_referral_code(), public.merchant_add_referral_invite(text,text), public.merchant_my_referrals() TO authenticated;
