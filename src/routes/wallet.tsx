@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Banknote, Download, Loader2, Share2, Zap } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { BankChange } from "@/components/BankChange";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,27 +36,27 @@ const TX = {
     title: "Money", nextPayout: "Next payout", carry: "will carry forward", sales: "Sales", deductions: "Deductions",
     receive: "You'll receive", thisWeek: "This week", month: "Month", custom: "Custom", all: "All",
     instantTitle: "Instant settlement", instantAvail: "Available now (orders up to yesterday)", getNow: "Get it now",
-    confirmTitle: "Get money now?", confirmBody: "An instant fee + GST is deducted. The exact amount is shown after the request.",
+    confirmTitle: "Get money now?", confirmBody: "This amount will be sent to your bank today.",
     confirm: "Confirm", cancel: "Cancel", requested: "Instant request today", ledger: "Ledger", noLedger: "No transactions yet",
     settlements: "Settlements", noSettlements: "No settlements yet", invoices: "Commission invoices", noInvoices: "No invoices yet",
     bank: "Bank account", changeBank: "Change bank", changeBankNote: "Bank changes are approved by badiyos. Raise a request in Help.",
     balance: "Bal", paid: "Paid", utr: "UTR", statement: "Statement", orders: "Orders", adjustments: "Adjustments",
     roundOff: "Round-off carried", downloadPdf: "Download PDF", share: "Share", moneySplit: "Money split",
     itemTotal: "Item total", commission: "Commission", gst: "GST", tcs: "TCS", tds: "TDS", net: "Net",
-    from: "From", to: "To", nothingToSettle: "Nothing to settle right now", instantDone: "Instant settlement requested",
+    fee: "Instant fee", youGet: "You'll get", from: "From", to: "To", nothingToSettle: "Nothing to settle right now", instantDone: "Instant settlement requested",
   },
   mr: {
     title: "पैसे", nextPayout: "पुढील पेमेंट", carry: "पुढे जमा होईल", sales: "विक्री", deductions: "कपात",
     receive: "तुम्हाला मिळेल", thisWeek: "हा आठवडा", month: "महिना", custom: "निवडा", all: "सर्व",
     instantTitle: "त्वरित सेटलमेंट", instantAvail: "आता उपलब्ध (कालपर्यंतच्या ऑर्डर)", getNow: "आता घ्या",
-    confirmTitle: "आता पैसे घ्यायचे?", confirmBody: "त्वरित शुल्क + GST कापले जाईल. अचूक रक्कम विनंतीनंतर दिसेल.",
+    confirmTitle: "आता पैसे घ्यायचे?", confirmBody: "ही रक्कम आज तुमच्या बँकेत पाठवली जाईल.",
     confirm: "पुष्टी करा", cancel: "रद्द करा", requested: "आजची त्वरित विनंती", ledger: "खातेवही", noLedger: "अजून व्यवहार नाहीत",
     settlements: "सेटलमेंट", noSettlements: "अजून सेटलमेंट नाहीत", invoices: "कमिशन बिले", noInvoices: "अजून बिले नाहीत",
     bank: "बँक खाते", changeBank: "बँक बदला", changeBankNote: "बँक बदल badiyos मंजूर करते. मदत विभागात विनंती करा.",
     balance: "शिल्लक", paid: "दिले", utr: "UTR", statement: "स्टेटमेंट", orders: "ऑर्डर", adjustments: "समायोजन",
     roundOff: "राउंड-ऑफ पुढे", downloadPdf: "PDF डाउनलोड", share: "शेअर", moneySplit: "पैशांचे विभाजन",
     itemTotal: "वस्तू एकूण", commission: "कमिशन", gst: "GST", tcs: "TCS", tds: "TDS", net: "निव्वळ",
-    from: "पासून", to: "पर्यंत", nothingToSettle: "आत्ता सेटल करण्यासारखे काही नाही", instantDone: "त्वरित सेटलमेंट विनंती केली",
+    fee: "त्वरित शुल्क", youGet: "तुम्हाला मिळेल", from: "पासून", to: "पर्यंत", nothingToSettle: "आत्ता सेटल करण्यासारखे काही नाही", instantDone: "त्वरित सेटलमेंट विनंती केली",
   },
 } as const;
 
@@ -97,6 +98,7 @@ type SettlementRow = {
   reference: string | null; invoice_no: string | null; round_off_carried: number | null; order_count: number;
 };
 type Invoice = { settlement_id: string; invoice_no: string; invoice_fy: string; date: string; commission: number; commission_gst: number; instant_fee: number; instant_fee_gst: number };
+type Preview = { available: number; order_count: number; fee_pct: number; fee: number; fee_gst_pct: number; fee_gst: number; you_get: number; already_today: boolean };
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const fmtDate = (s: string, opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", year: "numeric" }) =>
@@ -167,6 +169,16 @@ function MoneyPage() {
     },
   });
 
+  const preview = useQuery({
+    queryKey: ["money", "instant-preview", sid], enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("merchant_instant_settlement_preview" as never, { _store_id: sid! } as never);
+      if (error) throw error;
+      return data as unknown as Preview;
+    },
+  });
+  const pv = preview.data;
+
   const refreshAll = () => qc.invalidateQueries({ queryKey: ["money"] });
 
   if (!merchant) return null;
@@ -222,7 +234,7 @@ function MoneyPage() {
           </section>
 
           {/* 2. Instant */}
-          {(todayInstant || (s && Number(s.you_will_receive) > 0)) && (
+          {(todayInstant || (pv && Number(pv.available) > 0)) && (
             <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
               <div className="flex items-center gap-2">
                 <Zap className="size-5 text-primary" />
@@ -233,9 +245,9 @@ function MoneyPage() {
                   <p className="text-sm font-semibold text-muted-foreground">{L.requested}</p>
                   <p className="num text-lg font-extrabold text-foreground">{inr(todayInstant.net_amount)} · <span className="text-xs capitalize">{todayInstant.status}</span></p>
                 </div>
-              ) : (
+              ) : pv && (
                 <>
-                  <p className="mt-2 text-xs font-semibold text-muted-foreground">{L.instantAvail}</p>
+                  <InstantBreakdown pv={pv} L={L} />
                   <Button className="mt-3 h-12 w-full rounded-xl text-base font-bold" onClick={() => setConfirmOpen(true)}>{L.getNow}</Button>
                 </>
               )}
@@ -346,8 +358,7 @@ function MoneyPage() {
             </div>
             <p className="num mt-3 text-lg font-extrabold text-foreground">{acct ? `•••• ${acct.slice(-4)}` : "—"}</p>
             <p className="num text-xs font-semibold text-muted-foreground">{merchant.bank_ifsc ?? "—"} · {merchant.bank_account_holder_name ?? ""}</p>
-            <p className="mt-3 text-xs text-muted-foreground">{L.changeBankNote}</p>
-            <Button asChild variant="outline" className="mt-2 w-full rounded-xl"><Link to="/support">{L.changeBank}</Link></Button>
+            <BankChange storeId={merchant.id} />
           </section>
         </div>
       )}
@@ -355,7 +366,7 @@ function MoneyPage() {
       <Sheet open={confirmOpen} onOpenChange={setConfirmOpen}>
         <SheetContent side="bottom" className="rounded-t-3xl">
           <SheetHeader><SheetTitle>{L.confirmTitle}</SheetTitle></SheetHeader>
-          <p className="px-4 text-sm text-muted-foreground">{L.confirmBody}</p>
+          <div className="px-4">{pv && <InstantBreakdown pv={pv} L={L} />}<p className="mt-2 text-sm text-muted-foreground">{L.confirmBody}</p></div>
           <div className="flex gap-2 p-4">
             <Button variant="outline" className="flex-1" onClick={() => setConfirmOpen(false)}>{L.cancel}</Button>
             <Button className="flex-1" disabled={requesting} onClick={() => void requestInstant()}>
@@ -372,6 +383,17 @@ function MoneyPage() {
 }
 
 type Dict = (typeof TX)["en"] | (typeof TX)["mr"];
+
+function InstantBreakdown({ pv, L }: { pv: Preview; L: Dict }) {
+  return (
+    <div className="mt-2">
+      <p className="text-xs font-semibold text-muted-foreground">{L.instantAvail}</p>
+      <p className="num text-2xl font-extrabold text-foreground">{inr(pv.available)}</p>
+      <Line label={`${L.fee} ${Number(pv.fee_pct)}% + ${Number(pv.fee_gst_pct)}% GST`} value={`−${inr(Number(pv.fee) + Number(pv.fee_gst))}`} />
+      <Line label={L.youGet} value={inr(pv.you_get)} strong />
+    </div>
+  );
+}
 
 function Spinner() {
   return <div className="flex justify-center py-6"><Loader2 className="size-6 animate-spin text-primary" /></div>;
