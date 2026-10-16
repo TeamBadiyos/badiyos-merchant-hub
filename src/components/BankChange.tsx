@@ -59,7 +59,7 @@ export function BankChange({ storeId }: { storeId: string }) {
   const valid = holder.trim().length >= 2 && /^[0-9]{9,18}$/.test(acc) && acc === acc2 && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc) && file;
 
   const sendOtp = async () => {
-    if (!valid) return toast.error(acc !== acc2 ? L.mismatch : L.invalid);
+    if (!valid) { toast.error(acc !== acc2 ? L.mismatch : L.invalid); return; }
     setBusy(true);
     try {
       const { data, error } = await supabase.rpc("merchant_bank_change_request_otp" as never, { _store_id: storeId } as never);
@@ -73,7 +73,7 @@ export function BankChange({ storeId }: { storeId: string }) {
     try {
       const ext = (file!.name.split(".").pop() || "jpg").toLowerCase();
       const path = `${storeId}/bank_change-${Date.now()}.${ext}`;
-      const up = await supabase.storage.from("merchant-documents").upload(path, file!, { contentType: file!.type || undefined });
+      const up = await supabase.storage.from("merchant-documents").upload(path, file!, { contentType: file!.type || "image/jpeg" });
       if (up.error) throw up.error;
       const { error } = await supabase.rpc("merchant_bank_change_submit" as never, {
         _store_id: storeId, _holder: holder.trim(), _account: acc, _ifsc: ifsc, _proof_path: path, _otp: otp.trim(),
