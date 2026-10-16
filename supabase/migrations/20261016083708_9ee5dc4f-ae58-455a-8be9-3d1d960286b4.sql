@@ -1,0 +1,3 @@
+REVOKE EXECUTE ON FUNCTION public.merchant_ledger, public.merchant_settlement_summary, public.merchant_settlements_list, public.merchant_settlement_statement, public.merchant_commission_invoices, public.ledger_can_read FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.ledger_trg_order, public.ledger_trg_adj, public.ledger_validate_type, public.ledger_immutable FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.merchant_ledger, public.merchant_settlement_summary, public.merchant_settlements_list, public.merchant_settlement_statement, public.merchant_commission_invoices, public.ledger_can_read TO authenticated;
