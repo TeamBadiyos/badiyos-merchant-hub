@@ -2,16 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAppMode } from "@/lib/delivery/mode";
-import {
-  AlertTriangle,
-  Clock,
-  IndianRupee,
-  Loader2,
-  PackageOpen,
-  RefreshCw,
-  Star,
-  TrendingUp,
-} from "lucide-react";
+import { AlertTriangle, Copy, Eye, IndianRupee, PackageOpen, QrCode, Share2, Star } from "lucide-react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useOrderRing } from "@/lib/use-order-ring";
 
 import { AppShell } from "@/components/AppShell";
 import { SwipeDismiss } from "@/components/SwipeRow";
@@ -53,7 +47,8 @@ const LIVE = ["placed", "paid", "pending", "accepted", "preparing", "ready"];
 
 function HomePage() {
   const { t } = useI18n();
-  const { can } = useAuth();
+  const { can, context } = useAuth();
+  const isOwner = context.isOwner;
   const merchant = useRequireAuth();
   const [lowStockDismissed, setLowStockDismissed] = useState(false);
   const allowed = can("view_orders");
@@ -94,55 +89,104 @@ function HomePage() {
     },
   });
 
-  const { schedule, openState, availability } = useAvailability();
+  const isFood = merchant?.service_type === "food";
+  const approved = merchant?.status === "approved";
+
+  // Accept window per city settings when present; Store 10 min / Food 5 min otherwise.
+  const acceptWindow = useQuery({
+    queryKey: ["accept-window", isFood],
+    enabled: approved,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const key = isFood ? "food_accept_minutes" : "store_accept_minutes";
+      const { data } = await supabase.from("ops_settings").select("value").eq("key", key).maybeSingle();
+      const v = Number((data as { value?: unknown } | null)?.value);
+      return Number.isFinite(v) && v > 0 ? v : isFood ? 5 : 10;
+    },
+  });
+  const acceptMinutes = acceptWindow.data ?? (isFood ? 5 : 10);
+
+  const visits = useQuery({
+    queryKey: ["store-analytics", merchant?.id, 1],
+    enabled: Boolean(merchant?.id) && approved,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_merchant_store_analytics", {
+        _merchant_id: merchant!.id,
+        _days: 1,
+      });
+      if (error) throw error;
+      return Number(((data ?? {}) as Record<string, unknown>)["totalVisits"] ?? 0);
+    },
+  });
+
+  const pendingItems = useQuery({
+    queryKey: ["products", "pending-approval", merchant?.id],
+    enabled: Boolean(merchant?.id) && approved && can("manage_products"),
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("approval_status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const agreementPending = useQuery({
+    queryKey: ["my-agreements", merchant?.id, "pending"],
+    enabled: Boolean(merchant?.id) && approved && isOwner,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("app_my_agreements");
+      if (error) return false;
+      const list = (data as { status?: string }[] | null) ?? [];
+      return list.some((a) => a.status && !["accepted", "signed", "superseded", "revoked"].includes(a.status));
+    },
+  });
+
+  const { schedule, openState, availability, setAccepting } = useAvailability();
+
+  const pending = (live.data ?? []).filter((o) => isActionableNewOrder(o));
+  useOrderRing(approved && allowed && pending.length > 0);
 
   if (!merchant) return null;
 
-  const openLabel =
-    openState.kind === "open"
-      ? `${t("openNow")} · ${t("openTill")} ${openState.till}`
-      : openState.kind === "outside"
-        ? `${t("closed")} · ${openState.from}–${openState.till}`
-        : openState.kind === "closed"
-          ? t("closedTodayMsg")
-          : t("scheduleNotSet");
-
-  const availLabel = availability.open
-    ? t("availOpen")
-    : availability.reason === "outside_hours"
-      ? t("availPausedSchedule")
-      : availability.reason === "closed_today"
-        ? t("availPausedClosedDay")
-        : t("availPausedManual");
-
-  const lowStockCount = lowStock.data?.length ?? 0;
-
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-  const todays = (today.data ?? []).filter((o) => new Date(o.created_at) >= startOfDay);
+  const todays = today.data ?? [];
   // Goods sold today — the delivery fee is not the shop's money.
   const sales = todays
     .filter((o) => !["rejected", "cancelled"].includes(o.status))
     .reduce((sum, o) => sum + Number(o.items_total ?? 0), 0);
 
-  // Online checkouts still waiting on the customer's payment are not the shop's
-  // orders yet — the backend refuses accept/reject on them, so keep them out.
-  const pending = (live.data ?? []).filter((o) => isActionableNewOrder(o));
-  const inProgress = (live.data ?? []).filter(
-    (o) => !isNewOrder(o.status),
-  );
+  const [hero, ...queued] = pending;
+  const preparing = (live.data ?? []).filter((o) => !isNewOrder(o.status) && o.status !== "ready");
+  const readyOrders = (live.data ?? []).filter((o) => o.status === "ready");
+
+  const lowStockCount = !isFood ? (lowStock.data?.length ?? 0) : 0;
+  const closedInHours = openState.kind === "open" && !availability.open;
 
   const stats = [
     { label: t("todayOrders"), value: String(todays.length), icon: PackageOpen },
     { label: t("todaySales"), value: inr(sales), icon: IndianRupee },
-    { label: t("rating"), value: "—", icon: Star },
+    { label: t("todayVisits"), value: String(visits.data ?? "—"), icon: Eye },
+    {
+      label: t("rating"),
+      value: Number(merchant.rating_count ?? 0) > 0 ? Number(merchant.rating_avg).toFixed(1) : "—",
+      icon: Star,
+    },
   ];
+
+  const alerts: { key: string; text: string; to: "/profile" | "/products" | "/onboarding" | "/settings" }[] = [];
+  if (isOwner && !merchant.bank_account_number) alerts.push({ key: "bank", text: t("alertBank"), to: "/profile" });
+  if (agreementPending.data) alerts.push({ key: "agr", text: t("alertAgreement"), to: "/onboarding" });
+  if ((pendingItems.data ?? 0) > 0)
+    alerts.push({ key: "items", text: `${pendingItems.data} ${t("alertPendingItems")}`, to: "/products" });
+  if (lowStockCount > 0 && can("manage_products") && !lowStockDismissed)
+    alerts.push({ key: "low", text: `${lowStockCount} ${t("lowStockBanner")}`, to: "/products" });
 
   return (
     <AppShell
       title={t("home")}
       onRefresh={() =>
-        Promise.all([live.refetch(), today.refetch(), lowStock.refetch(), schedule.refetch()])
+        Promise.all([live.refetch(), today.refetch(), lowStock.refetch(), schedule.refetch(), visits.refetch()])
       }
     >
       <div className="space-y-5">
@@ -152,116 +196,132 @@ function HomePage() {
           <AccessDenied />
         ) : (
           <>
-            <FssaiReminder />
-            {/* Compact status strip — replaces the old greeting + status + timings cards */}
-            <Link
-              to="/settings"
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 shadow-card"
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <span
-                  className={`size-2 shrink-0 rounded-full ${
-                    availability.open ? "bg-primary" : "bg-destructive"
-                  }`}
-                />
-                <span
-                  className={`truncate text-xs font-bold ${
-                    availability.open ? "text-foreground" : "text-destructive"
-                  }`}
-                >
-                  {availability.open ? t("openNow") : availLabel}
-                </span>
-              </span>
-              <span className="num flex shrink-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-                <Clock className="size-3.5" />
-                {openLabel}
-              </span>
-            </Link>
-
-            {/* New orders — the merchant's primary job, kept at the top */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
-                  <TrendingUp className="size-5 text-primary" />
-                  {t("newOrders")}
-                  {pending.length > 0 && (
-                    <span className="num rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
-                      {pending.length}
-                    </span>
-                  )}
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-primary"
-                  onClick={() => void live.refetch()}
-                >
-                  {live.isFetching ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="size-4" />
-                  )}
-                  {t("refresh")}
-                </Button>
-              </div>
-
-              {pending.length === 0 ? (
-                <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary-soft">
-                    <PackageOpen className="size-5 text-primary" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-foreground">{t("noOrders")}</p>
-                    <p className="truncate text-xs text-muted-foreground">{t("noOrdersSub")}</p>
-                  </div>
-                </div>
-              ) : (
-                pending.map((order) => <OrderCard key={order.id} order={order} />)
-              )}
-            </div>
-
-            {inProgress.length > 0 && (
+            {hero && (
               <div className="space-y-3">
-                <h2 className="text-base font-bold text-foreground">{t("inProgress")}</h2>
-                {inProgress.map((order) => (
-                  <OrderCard key={order.id} order={order} />
+                <OrderCard order={hero} hero acceptMinutes={acceptMinutes} />
+                {queued.map((o) => (
+                  <OrderCard key={o.id} order={o} hero acceptMinutes={acceptMinutes} />
                 ))}
               </div>
             )}
 
-            {/* Secondary: today's numbers */}
-            <div className="grid grid-cols-3 gap-3">
-              {stats.map(({ label, value, icon: Icon }) => (
-                <div
-                  key={label}
-                  className="rounded-2xl border border-border bg-card p-3 shadow-card"
+            {closedInHours && (
+              <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <AlertTriangle className="size-4 shrink-0 text-destructive" />
+                <p className="min-w-0 flex-1 text-xs font-bold text-destructive">{t("alertClosedInHours")}</p>
+                <Button
+                  size="sm"
+                  className="rounded-xl font-bold"
+                  disabled={setAccepting.isPending}
+                  onClick={() => setAccepting.mutate(true)}
                 >
+                  {t("openStoreNow")}
+                </Button>
+              </div>
+            )}
+
+            <FssaiReminder />
+
+            {alerts.map((a) => (
+              <SwipeDismiss key={a.key} onDismiss={() => a.key === "low" && setLowStockDismissed(true)}>
+                <Link
+                  to={a.to}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-card"
+                >
+                  <AlertTriangle className="size-4 shrink-0 text-primary" />
+                  <p className="num min-w-0 flex-1 truncate text-xs font-bold text-foreground">{a.text}</p>
+                </Link>
+              </SwipeDismiss>
+            ))}
+
+            <div className="grid grid-cols-4 gap-2">
+              {stats.map(({ label, value, icon: Icon }) => (
+                <div key={label} className="rounded-2xl border border-border bg-card p-3 shadow-card">
                   <Icon className="size-4 text-primary" />
-                  <p className="num mt-1.5 text-base font-extrabold text-foreground">{value}</p>
-                  <p className="text-[11px] leading-tight font-semibold text-muted-foreground">
-                    {label}
-                  </p>
+                  <p className="num mt-1.5 truncate text-base font-extrabold text-foreground">{value}</p>
+                  <p className="truncate text-[10px] font-bold uppercase text-muted-foreground">{label}</p>
                 </div>
               ))}
             </div>
 
-            {lowStockCount > 0 && can("manage_products") && !lowStockDismissed && (
-              <SwipeDismiss onDismiss={() => setLowStockDismissed(true)}>
-                <Link
-                  to="/products"
-                  search={{ low: true }}
-                  className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2"
-                >
-                  <AlertTriangle className="size-4 shrink-0 text-destructive" />
-                  <p className="num min-w-0 truncate text-xs font-bold text-destructive">
-                    {lowStockCount} {t("lowStockBanner")}
-                  </p>
-                </Link>
-              </SwipeDismiss>
+            <section className="space-y-3">
+              <h2 className="text-xs font-bold uppercase text-muted-foreground">{t("statusPreparing")}</h2>
+              {preparing.length === 0 && readyOrders.length === 0 && !hero ? (
+                <p className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+                  {t("noActive")}
+                </p>
+              ) : preparing.length === 0 ? (
+                <p className="text-sm text-muted-foreground">—</p>
+              ) : (
+                preparing.map((o) => <OrderCard key={o.id} order={o} />)
+              )}
+            </section>
+
+            {readyOrders.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-xs font-bold uppercase text-muted-foreground">{t("waitingRider")}</h2>
+                {readyOrders.map((o) => (
+                  <OrderCard key={o.id} order={o} />
+                ))}
+              </section>
             )}
+
+            <ShareStore slug={merchant.store_slug} name={merchant.store_name} />
           </>
         )}
       </div>
     </AppShell>
+  );
+}
+
+function ShareStore({ slug, name }: { slug: string | null; name: string | null }) {
+  const { t } = useI18n();
+  const [qr, setQr] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  if (!slug) return null;
+  const url = `https://badiyos.com/store/${slug}`;
+  const showQr = async () => {
+    const QR = (await import("qrcode")).default;
+    setQr(await QR.toDataURL(url, { width: 512, margin: 1 }));
+    setQrOpen(true);
+  };
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+      <p className="text-sm font-bold text-foreground">{t("shareStoreTitle")}</p>
+      <p className="truncate text-xs text-muted-foreground">{url}</p>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <Button
+          variant="outline"
+          className="rounded-xl font-bold"
+          onClick={() => void navigator.clipboard.writeText(url).then(() => toast.success(t("shareCopied")))}
+        >
+          <Copy className="size-4" />
+          {t("copyLink")}
+        </Button>
+        <Button variant="outline" className="rounded-xl font-bold" asChild>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`${name ?? "badiyos"} — ${url}`)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Share2 className="size-4" />
+            {t("whatsapp")}
+          </a>
+        </Button>
+        <Button variant="outline" className="rounded-xl font-bold" onClick={() => void showQr()}>
+          <QrCode className="size-4" />
+          {t("qrCode")}
+        </Button>
+      </div>
+      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+        <DialogContent className="max-w-xs rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{name}</DialogTitle>
+          </DialogHeader>
+          {qr && <img src={qr} alt={url} className="mx-auto w-full rounded-xl" />}
+          <p className="text-center text-xs text-muted-foreground">{url}</p>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

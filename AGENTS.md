@@ -24,3 +24,4 @@
 - Merchant signup is the 8-step /onboarding wizard (onboarding_step = resume point); pending_review shops land on its status screen — reuse it instead of new gate screens.
 - Staff access is two-tier: Owner (full) and one standard "Staff" role (ensureStaffRole in staff.tsx); custom roles are not offered but old merchant_roles rows are kept — keeps permissions simple for merchants.
 - Signup step 6 calls app_merchant_issue_signup_agreement so the Store/Restaurant agreement exists before step 7 signing — merchants cannot call agreement_issue directly.
+- New-order ringing in the foreground lives in useOrderRing (Home only); background ringing stays with native push — avoids double alarms.
