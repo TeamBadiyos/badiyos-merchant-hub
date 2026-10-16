@@ -52,12 +52,14 @@ export const Route = createFileRoute("/profile")({
   component: ProfilePage,
 });
 
-const DOC_LABEL_KEYS: Record<string, "docAadhaar" | "docPan" | "docGst" | "docShopLicense" | "docCheque"> = {
+const DOC_LABEL_KEYS: Record<string, "docAadhaar" | "docPan" | "docGst" | "docShopLicense" | "docCheque" | "fssai" | "udyamShopAct"> = {
   aadhaar: "docAadhaar",
   pan: "docPan",
   gst_certificate: "docGst",
   shop_license: "docShopLicense",
   cancelled_cheque: "docCheque",
+  fssai: "fssai",
+  udyam: "udyamShopAct",
 };
 
 type Errors = Record<string, string | null>;
@@ -87,7 +89,8 @@ function ShopPhoto({ path }: { path: string | null }) {
 
 function ProfilePage() {
   const { t, lang, setLang } = useI18n();
-  const { signOut, refresh } = useAuth();
+  const { signOut, refresh, context } = useAuth();
+  const isOwner = context.isOwner;
   const navigate = useNavigate();
   const merchant = useRequireAuth();
 
@@ -463,6 +466,8 @@ function ProfilePage() {
           )}
         </section>
 
+        {isOwner ? (
+          <>
         {/* Bank details */}
         <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
           <div className="flex items-center justify-between">
@@ -563,6 +568,15 @@ function ProfilePage() {
               </>
             )}
             <Row label={t("panNumber")} value={merchant.pan} />
+            <Row label={t("email")} value={merchant.email} />
+            <Row label="UPI" value={merchant.upi_id} />
+            {(merchant.fssai_number || merchant.service_type === "food") && (
+              <>
+                <Row label={t("fssaiNumber")} value={merchant.fssai_number} />
+                <Row label={t("fssaiExpiry")} value={merchant.fssai_expiry} />
+              </>
+            )}
+            <Row label={t("udyamNumber")} value={merchant.udyam_number} />
           </div>
           <Link
             to="/support"
@@ -607,6 +621,10 @@ function ProfilePage() {
             </ul>
           )}
         </section>
+          </>
+        ) : (
+          <p className="rounded-2xl bg-muted/60 p-4 text-xs font-semibold text-muted-foreground">{t("ownerOnlySection")}</p>
+        )}
 
         {/* Language */}
         <section className="rounded-3xl border border-border bg-card p-5 shadow-card">

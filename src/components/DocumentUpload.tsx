@@ -12,6 +12,8 @@ export type DocType =
   | "gst_certificate"
   | "shop_license"
   | "cancelled_cheque"
+  | "fssai"
+  | "udyam"
   | "shop_photo";
 
 type Props = {
