@@ -52,7 +52,7 @@ type DayForm = { is_closed: boolean; open_time: string; close_time: string };
 
 function BusyCard() {
   const { lang } = useI18n();
-  const { merchant, refresh } = useAuth() as ReturnType<typeof useAuth> & { refresh?: () => Promise<unknown> };
+  const { merchant, refresh } = useAuth();
   const queryClient = useQueryClient();
   const mr = lang === "mr";
   const until = (merchant as { busy_until?: string | null } | null)?.busy_until;
@@ -63,7 +63,7 @@ function BusyCard() {
       if (error) throw error;
     },
     onSuccess: () => {
-      void refresh?.();
+      void refresh();
       void queryClient.invalidateQueries();
       toast.success(mr ? "जतन केले" : "Saved");
     },
