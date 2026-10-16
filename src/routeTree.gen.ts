@@ -21,6 +21,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RewardsRouteImport } from './routes/rewards'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ShareRouteImport } from './routes/share'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as WalletRouteImport } from './routes/wallet'
@@ -95,6 +96,11 @@ const RewardsRoute = RewardsRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffRoute = StaffRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof ReportsRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/reports': typeof ReportsRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/reports': typeof ReportsRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/rewards'
     | '/settings'
+    | '/share'
     | '/staff'
     | '/support'
     | '/wallet'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/rewards'
     | '/settings'
+    | '/share'
     | '/staff'
     | '/support'
     | '/wallet'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/rewards'
     | '/settings'
+    | '/share'
     | '/staff'
     | '/support'
     | '/wallet'
@@ -363,6 +375,7 @@ export interface RootRouteChildren {
   ReportsRoute: typeof ReportsRoute
   RewardsRoute: typeof RewardsRoute
   SettingsRoute: typeof SettingsRoute
+  ShareRoute: typeof ShareRoute
   StaffRoute: typeof StaffRoute
   SupportRoute: typeof SupportRoute
   WalletRoute: typeof WalletRoute
@@ -454,6 +467,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/staff': {
@@ -607,6 +627,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsRoute: ReportsRoute,
   RewardsRoute: RewardsRoute,
   SettingsRoute: SettingsRoute,
+  ShareRoute: ShareRoute,
   StaffRoute: StaffRoute,
   SupportRoute: SupportRoute,
   WalletRoute: WalletRoute,

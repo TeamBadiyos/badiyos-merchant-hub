@@ -1,263 +1,177 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { BarChart3, Eye, IndianRupee, Loader2, PackageOpen, Receipt } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Loader2, Star } from "lucide-react";
+import { useState } from "react";
 
-import { AppShell, PlaceholderPanel } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useI18n, type Key } from "@/lib/i18n";
-import { inr } from "@/lib/order-status";
-import {
-  fetchCompletedOrders,
-  resolveRange,
-  revenueSeries,
-  summarise,
-  topProducts,
-  type RangeKey,
-} from "@/lib/reports";
+import { useI18n } from "@/lib/i18n";
 import { useRequireAuth } from "@/lib/use-require-auth";
-
-const RANGES: { key: RangeKey; label: Key }[] = [
-  { key: "today", label: "rangeToday" },
-  { key: "week", label: "rangeWeek" },
-  { key: "month", label: "rangeMonth" },
-  { key: "custom", label: "rangeCustom" },
-];
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
     meta: [
-      { title: "Reports — badiyos Merchant Portal" },
-      {
-        name: "description",
-        content:
-          "See sales totals, average order value, revenue trends and your top selling products for any date range.",
-      },
-      { property: "og:title", content: "Reports — badiyos Merchant Portal" },
-      { property: "og:description", content: "Sales analytics for your badiyos shop." },
+      { title: "Insights — badiyos Merchant Portal" },
+      { name: "description", content: "Store visits, conversion, visit sources, top items, repeat customers, ratings and peak hours." },
+      { property: "og:title", content: "Insights — badiyos Merchant Portal" },
+      { property: "og:description", content: "How customers find and order from your badiyos shop." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ReportsPage,
+  component: InsightsPage,
 });
 
-function ReportsPage() {
-  const { t } = useI18n();
+const TX = {
+  en: {
+    title: "Insights", today: "Today", d7: "7 days", d30: "30 days", visits: "Store visits", unique: "Unique visitors",
+    orders: "Orders", conv: "Conversion", sources: "Visits by source", browse: "App browse", search: "Search",
+    link: "Store link", banner: "Banner", top: "Top 5 items", repeat: "Repeat customers", rating: "Average rating",
+    reviews: "Last 5 reviews", peak: "Peak order hours", none: "No data yet", noReviews: "No reviews yet", sold: "sold",
+  },
+  mr: {
+    title: "इनसाइट्स", today: "आज", d7: "७ दिवस", d30: "३० दिवस", visits: "दुकान भेटी", unique: "वेगळे भेट देणारे",
+    orders: "ऑर्डर्स", conv: "रूपांतरण", sources: "भेटींचा स्रोत", browse: "अ‍ॅप ब्राउझ", search: "शोध",
+    link: "दुकान लिंक", banner: "बॅनर", top: "टॉप ५ आयटम", repeat: "पुन्हा येणारे ग्राहक", rating: "सरासरी रेटिंग",
+    reviews: "शेवटचे ५ रिव्ह्यू", peak: "जास्त ऑर्डरचे तास", none: "अजून माहिती नाही", noReviews: "अजून रिव्ह्यू नाहीत", sold: "विकले",
+  },
+};
+
+type Insights = {
+  visits: number; unique: number; orders: number;
+  sources: Record<"browse" | "search" | "link" | "banner", number>;
+  top_items: { name: string; qty: number }[];
+  customers: number; repeat_customers: number;
+  rating_avg: number | null; rating_count: number;
+  reviews: { rating: number; comment: string | null; at: string }[];
+  hours: { h: number; n: number }[];
+};
+
+function InsightsPage() {
+  const { lang } = useI18n();
+  const L = TX[lang === "mr" ? "mr" : "en"];
   const { can } = useAuth();
   const merchant = useRequireAuth();
   const allowed = can("view_reports");
-  const [rangeKey, setRangeKey] = useState<RangeKey>("week");
-  const today = new Date().toISOString().slice(0, 10);
-  const [from, setFrom] = useState(today);
-  const [to, setTo] = useState(today);
+  const [days, setDays] = useState(1);
 
-  const range = useMemo(() => resolveRange(rangeKey, from, to), [rangeKey, from, to]);
-
-  const orders = useQuery({
-    queryKey: ["reports", merchant?.id, rangeKey, range.from.toISOString(), range.to.toISOString()],
-    enabled: Boolean(merchant?.id) && allowed && merchant?.status === "approved",
-    queryFn: () => fetchCompletedOrders(range),
-  });
-
-  const summary = summarise(orders.data ?? []);
-
-  const visits = useQuery({
-    queryKey: ["store-analytics", merchant?.id],
-    enabled: !!merchant?.id && allowed,
+  const q = useQuery({
+    queryKey: ["merchant-insights", merchant?.id, days],
+    enabled: !!merchant?.id && allowed && merchant?.status === "approved",
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_merchant_store_analytics", {
-        _merchant_id: merchant!.id,
-        _days: 7,
-      });
+      const { data, error } = await supabase.rpc("merchant_insights", { _days: days });
       if (error) throw error;
-      const d = (data ?? {}) as Record<string, unknown>;
-      return {
-        totalVisits: Number(d["totalVisits"] ?? 0),
-        uniqueVisitors: Number(d["uniqueVisitors"] ?? 0),
-        orders: Number(d["orders"] ?? 0),
-      };
+      return data as unknown as Insights;
     },
   });
-  const series = useMemo(() => revenueSeries(orders.data ?? [], range), [orders.data, range]);
-  const top = useMemo(() => topProducts(orders.data ?? []), [orders.data]);
 
   if (!merchant) return null;
-  if (merchant.status !== "approved")
-    return (
-      <AppShell title={t("reports")} onRefresh={() => orders.refetch()}>
-        <PendingApproval />
-      </AppShell>
-    );
-  if (!allowed)
-    return (
-      <AppShell title={t("reports")}>
-        <AccessDenied />
-      </AppShell>
-    );
+  if (merchant.status !== "approved") return <AppShell title={L.title}><PendingApproval /></AppShell>;
+  if (!allowed) return <AppShell title={L.title}><AccessDenied /></AppShell>;
 
-  const stats = [
-    { label: t("totalOrders"), value: String(summary.count), icon: PackageOpen },
-    { label: t("totalRevenue"), value: inr(summary.revenue), icon: IndianRupee },
-    { label: t("avgOrderValue"), value: inr(summary.average), icon: Receipt },
-  ];
+  const d = q.data;
+  const conv = d && d.unique > 0 ? Math.round((d.orders / d.unique) * 1000) / 10 : 0;
+  const repeat = d && d.customers > 0 ? Math.round((d.repeat_customers / d.customers) * 100) : 0;
+  const srcTotal = d ? Object.values(d.sources).reduce((a, b) => a + Number(b), 0) : 0;
+  const maxHour = d ? Math.max(1, ...d.hours.map((h) => Number(h.n))) : 1;
+  const card = "rounded-2xl border border-border bg-card p-4 shadow-card";
 
   return (
-    <AppShell title={t("reports")}>
-      <div className="space-y-6">
-        <div className="flex flex-wrap gap-2">
-          {RANGES.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setRangeKey(key)}
-              className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
-                rangeKey === key
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {t(label)}
+    <AppShell title={L.title} onRefresh={() => q.refetch()}>
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          {([[1, L.today], [7, L.d7], [30, L.d30]] as const).map(([n, label]) => (
+            <button key={n} onClick={() => setDays(n)}
+              className={`rounded-full px-4 py-2 text-xs font-bold ${days === n ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              {label}
             </button>
           ))}
         </div>
 
-        {rangeKey === "custom" && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold">{t("from")}</Label>
-              <Input
-                type="date"
-                value={from}
-                max={to}
-                onChange={(e) => setFrom(e.target.value)}
-                className="num rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold">{t("to")}</Label>
-              <Input
-                type="date"
-                value={to}
-                min={from}
-                onChange={(e) => setTo(e.target.value)}
-                className="num rounded-xl"
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-3 gap-3">
-          {stats.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="rounded-2xl border border-border bg-card p-4 shadow-card">
-              <Icon className="size-5 text-primary" />
-              <p className="num mt-2 text-base font-extrabold text-foreground">{value}</p>
-              <p className="text-[11px] leading-tight font-semibold text-muted-foreground">
-                {label}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {visits.data && (
-          <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
-              <Eye className="size-4 text-primary" /> {t("storeVisitors7d")}
-            </h2>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              {[
-                [t("totalVisits"), visits.data.totalVisits],
-                [t("uniqueVisitors"), visits.data.uniqueVisitors],
-                [t("totalOrders"), visits.data.orders],
-                [
-                  t("conversion"),
-                  `${visits.data.uniqueVisitors > 0 ? ((visits.data.orders * 100) / visits.data.uniqueVisitors).toFixed(1) : "0"}%`,
-                ],
-              ].map(([label, value]) => (
-                <div key={String(label)} className="rounded-xl bg-muted/60 p-3">
-                  <p className="num text-base font-extrabold text-foreground">{value}</p>
-                  <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+        {q.isLoading || !d ? (
+          <Loader2 className="mx-auto size-6 animate-spin text-primary" />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {[[L.visits, d.visits], [L.unique, d.unique], [L.orders, d.orders], [L.conv, `${conv}%`]].map(([l, v]) => (
+                <div key={String(l)} className={card}>
+                  <p className="num text-2xl font-extrabold text-primary">{v}</p>
+                  <p className="mt-1 text-xs font-bold text-muted-foreground">{l}</p>
                 </div>
               ))}
             </div>
-          </section>
-        )}
 
-        {orders.isLoading && (
-          <div className="flex justify-center py-10">
-            <Loader2 className="size-6 animate-spin text-primary" />
-          </div>
-        )}
-
-        {!orders.isLoading && summary.count === 0 && (
-          <PlaceholderPanel
-            title={t("reports")}
-            description={t("noReportData")}
-            icon={BarChart3}
-          />
-        )}
-
-        {summary.count > 0 && (
-          <>
-            <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
-              <h2 className="text-sm font-bold text-foreground">{t("revenueOverTime")}</h2>
-              <div className="mt-4 h-52 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={series} margin={{ left: -18, right: 4, top: 4 }}>
-                    <CartesianGrid vertical={false} strokeOpacity={0.15} />
-                    <XAxis
-                      dataKey="label"
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={10}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis tickLine={false} axisLine={false} fontSize={10} width={48} />
-                    <Tooltip
-                      formatter={(value) => inr(Number(value))}
-                      contentStyle={{ borderRadius: 12, fontSize: 12 }}
-                    />
-                    <Bar
-                      dataKey="revenue"
-                      fill="var(--color-primary)"
-                      radius={[6, 6, 0, 0]}
-                      maxBarSize={28}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+            <section className={card}>
+              <h2 className="text-sm font-bold text-foreground">{L.sources}</h2>
+              <div className="mt-3 space-y-2">
+                {(["browse", "search", "link", "banner"] as const).map((k) => {
+                  const n = Number(d.sources[k] ?? 0);
+                  return (
+                    <div key={k}>
+                      <div className="flex justify-between text-xs font-semibold"><span>{L[k]}</span><span className="num">{n}</span></div>
+                      <div className="mt-1 h-2 rounded-full bg-muted">
+                        <div className="h-2 rounded-full bg-primary" style={{ width: `${srcTotal ? (n / srcTotal) * 100 : 0}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
-            <section className="space-y-3">
-              <h2 className="text-base font-bold text-foreground">{t("topProducts")}</h2>
-              {top.map((product, i) => (
-                <div
-                  key={`${product.name}-${i}`}
-                  className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-card"
-                >
-                  <span className="num flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-xs font-extrabold text-primary">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-foreground">{product.name}</p>
-                    <p className="num text-xs font-semibold text-muted-foreground">
-                      {product.quantity} {t("qtySold")} · {inr(product.revenue)}
-                    </p>
+            <section className={card}>
+              <h2 className="text-sm font-bold text-foreground">{L.top}</h2>
+              {d.top_items.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">{L.none}</p> : (
+                <ol className="mt-2 space-y-1">
+                  {d.top_items.map((it, i) => (
+                    <li key={it.name} className="flex justify-between text-sm">
+                      <span className="truncate"><span className="num mr-2 font-bold text-primary">{i + 1}</span>{it.name}</span>
+                      <span className="num shrink-0 text-muted-foreground">{Number(it.qty)} {L.sold}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className={card}>
+                <p className="num text-2xl font-extrabold text-primary">{repeat}%</p>
+                <p className="mt-1 text-xs font-bold text-muted-foreground">{L.repeat}</p>
+              </div>
+              <div className={card}>
+                <p className="num flex items-center gap-1 text-2xl font-extrabold text-primary">
+                  {d.rating_avg ?? "—"} <Star className="size-5 fill-primary" />
+                </p>
+                <p className="mt-1 text-xs font-bold text-muted-foreground">{L.rating} · {d.rating_count}</p>
+              </div>
+            </div>
+
+            <section className={card}>
+              <h2 className="text-sm font-bold text-foreground">{L.reviews}</h2>
+              {d.reviews.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">{L.noReviews}</p> : (
+                <ul className="mt-2 divide-y divide-border">
+                  {d.reviews.map((r, i) => (
+                    <li key={i} className="py-2">
+                      <p className="text-xs font-bold text-primary">{"★".repeat(r.rating)}<span className="text-muted-foreground">{"★".repeat(5 - r.rating)}</span>
+                        <span className="ml-2 font-semibold text-muted-foreground">{new Date(r.at).toLocaleDateString()}</span></p>
+                      {r.comment && <p className="mt-1 text-sm text-foreground">{r.comment}</p>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className={card}>
+              <h2 className="text-sm font-bold text-foreground">{L.peak}</h2>
+              <div className="mt-3 flex h-28 items-end gap-[2px]">
+                {d.hours.map((h) => (
+                  <div key={h.h} className="flex flex-1 flex-col items-center justify-end">
+                    <div className="w-full rounded-t bg-primary" style={{ height: `${(Number(h.n) / maxHour) * 100}%`, minHeight: Number(h.n) ? 2 : 0 }} />
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="num mt-1 flex justify-between text-[10px] text-muted-foreground"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div>
             </section>
           </>
         )}

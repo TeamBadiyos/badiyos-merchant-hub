@@ -50,6 +50,7 @@ const tabs: NavItem[] = [
 const links: NavItem[] = [
   { to: "/profile", key: "storeProfile", icon: User },
   { to: "/reports", key: "insights", icon: BarChart3, permission: "view_reports" },
+  { to: "/share", key: "shareStore", icon: Share2 },
   { to: "/rewards", key: "referMerchant", icon: Gift, ownerOnly: true },
   { to: "/staff", key: "staff", icon: Users, ownerOnly: true },
   { to: "/settings", key: "timingsHolidays", icon: Clock },

@@ -446,6 +446,16 @@ function ProfilePage() {
               <Row label={t("businessName")} value={merchant.store_name} />
               <Row label={t("ownerName")} value={merchant.owner_name} />
               <Row label={t("addressLine")} value={merchant.address} />
+              {merchant.latitude != null && merchant.longitude != null && (
+                <a
+                  href={`https://www.google.com/maps?q=${merchant.latitude},${merchant.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block py-2 text-right text-xs font-bold text-primary"
+                >
+                  📍 {lang === "mr" ? "नकाशावर पिन पहा" : "View map pin"}
+                </a>
+              )}
               <Row label={t("city")} value={merchant.city} />
               <Row label={t("state")} value={merchant.state} />
               <Row label={t("pincode")} value={merchant.pincode} />
@@ -586,6 +596,8 @@ function ProfilePage() {
           </Link>
         </section>
 
+        {isOwner && <AgreementSection />}
+
         {/* Documents — list only */}
         <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
           <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
@@ -662,5 +674,55 @@ function ProfilePage() {
         </Button>
       </div>
     </ModeShell>
+  );
+}
+
+function AgreementSection() {
+  const { lang } = useI18n();
+  const mr = lang === "mr";
+  const q = useQuery({
+    queryKey: ["my-agreements"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("app_my_agreements");
+      if (error) throw error;
+      return (data ?? []) as { id: string; title: string; version: number; body: string; status: string; accepted_at: string | null }[];
+    },
+  });
+  async function download(a: { title: string; body: string; accepted_at: string | null; version: number }) {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const text = a.body.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|h\d|li)>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text(a.title, 15, 18);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    const lines = doc.splitTextToSize(text, 180) as string[];
+    let y = 28;
+    for (const line of lines) { if (y > 280) { doc.addPage(); y = 18; } doc.text(line, 15, y); y += 5; }
+    if (a.accepted_at) { if (y > 270) { doc.addPage(); y = 18; } doc.setFont("helvetica", "bold"); doc.text(`Signed by OTP on ${new Date(a.accepted_at).toLocaleString()} (v${a.version})`, 15, y + 8); }
+    doc.save(`${a.title.replace(/\W+/g, "-")}.pdf`);
+  }
+  return (
+    <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
+      <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+        <FileText className="size-5 text-primary" />
+        {mr ? "करार" : "Agreement"}
+      </h2>
+      {q.isLoading ? <Loader2 className="mt-4 size-5 animate-spin text-primary" /> : (q.data ?? []).length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">{mr ? "अजून करार नाही" : "No agreement yet"}</p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {q.data!.map((a) => (
+            <li key={a.id} className="flex items-center gap-3 rounded-xl bg-muted/60 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold">{a.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {a.status === "accepted" ? `${mr ? "सही केले" : "Signed"} · ${a.accepted_at ? new Date(a.accepted_at).toLocaleDateString() : ""}` : (mr ? "सही बाकी" : "Not signed")}
+                </p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => void download(a)}>PDF</Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

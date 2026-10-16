@@ -685,7 +685,9 @@ function ProductForm({
   product: Product | null;
   onClose: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const { context } = useAuth();
+  const priceLocked = !!product && !context.isOwner;
   const queryClient = useQueryClient();
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -874,7 +876,8 @@ function ProductForm({
 
           {!(isFood && cleanVariants.length) && (
             <Field label={t("price")} error={errors["price"]}>
-              <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} className="num rounded-xl" />
+              <Input inputMode="decimal" disabled={priceLocked} value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} className="num rounded-xl" />
+              {priceLocked && <p className="text-xs text-muted-foreground">{lang === "mr" ? "फक्त मालक किंमत बदलू शकतात" : "Only the owner can change prices"}</p>}
             </Field>
           )}
 
@@ -884,6 +887,7 @@ function ProductForm({
               {variants.map((v, i) => (
                 <PairRow
                   key={i}
+                  locked={priceLocked}
                   value={v}
                   onChange={(nv) => setVariants((arr) => arr.map((x, j) => (j === i ? nv : x)))}
                   onRemove={() => setVariants((arr) => arr.filter((_, j) => j !== i))}
@@ -915,6 +919,7 @@ function ProductForm({
                   {g.items.map((it, ii) => (
                     <PairRow
                       key={ii}
+                      locked={priceLocked}
                       value={it}
                       onChange={(nv) =>
                         setGroups((arr) => arr.map((x, j) => (j === gi ? { ...x, items: x.items.map((y, k) => (k === ii ? nv : y)) } : x)))
@@ -1026,13 +1031,14 @@ function ProductForm({
   );
 }
 
-function PairRow({ value, onChange, onRemove }: { value: VariantDraft; onChange: (v: VariantDraft) => void; onRemove: () => void }) {
+function PairRow({ value, onChange, onRemove, locked }: { value: VariantDraft; onChange: (v: VariantDraft) => void; onRemove: () => void; locked?: boolean }) {
   const { t } = useI18n();
   return (
     <div className="flex gap-2">
       <Input value={value.name} placeholder={t("pmVariantName")} onChange={(e) => onChange({ ...value, name: e.target.value })} className="flex-1 rounded-xl" />
       <Input
         inputMode="decimal"
+        disabled={locked}
         value={value.price}
         placeholder="₹"
         onChange={(e) => onChange({ ...value, price: e.target.value.replace(/[^0-9.]/g, "") })}
