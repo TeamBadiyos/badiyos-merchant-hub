@@ -50,8 +50,51 @@ export const Route = createFileRoute("/settings")({
 
 type DayForm = { is_closed: boolean; open_time: string; close_time: string };
 
+function BusyCard() {
+  const { lang } = useI18n();
+  const { merchant, refresh } = useAuth() as ReturnType<typeof useAuth> & { refresh?: () => Promise<unknown> };
+  const queryClient = useQueryClient();
+  const mr = lang === "mr";
+  const until = (merchant as { busy_until?: string | null } | null)?.busy_until;
+  const active = until && new Date(until) > new Date();
+  const set = useMutation({
+    mutationFn: async (minutes: number) => {
+      const { error } = await supabase.rpc("merchant_set_busy", { _minutes: minutes });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void refresh?.();
+      void queryClient.invalidateQueries();
+      toast.success(mr ? "जतन केले" : "Saved");
+    },
+    onError: () => toast.error("Could not update busy mode."),
+  });
+  return (
+    <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
+      <h2 className="text-base font-bold text-foreground">{mr ? "व्यस्त मोड" : "Busy mode"}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {active
+          ? `${mr ? "नवीन ऑर्डर बंद, पुन्हा सुरू" : "New orders paused until"} ${new Date(until!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+          : mr ? "थोड्या वेळासाठी नवीन ऑर्डर थांबवा" : "Pause new orders for a short time"}
+      </p>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {[15, 30, 60].map((m) => (
+          <Button key={m} variant="outline" disabled={set.isPending} onClick={() => set.mutate(m)}>
+            {m} {mr ? "मि" : "min"}
+          </Button>
+        ))}
+      </div>
+      {active && (
+        <Button className="mt-2 w-full" disabled={set.isPending} onClick={() => set.mutate(0)}>
+          {mr ? "आता ऑर्डर सुरू करा" : "Resume orders now"}
+        </Button>
+      )}
+    </section>
+  );
+}
+
 function SettingsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const merchant = useRequireAuth();
   const queryClient = useQueryClient();
   const merchantId = merchant?.id;
@@ -194,6 +237,7 @@ function SettingsPage() {
   return (
     <AppShell title={t("settings")}>
       <div className="space-y-4">
+        <BusyCard />
         <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
           <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
             <Clock className="size-5 text-primary" />
@@ -264,6 +308,21 @@ function SettingsPage() {
                   </div>
                 );
               })}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() =>
+                  setForm((prev) => {
+                    const mon = prev[1];
+                    if (!mon) return prev;
+                    const next = { ...prev };
+                    for (const { day } of DAYS) next[day] = { ...mon };
+                    return next;
+                  })
+                }
+              >
+                {lang === "mr" ? "सोमवारच्या वेळा सर्व दिवसांना लावा" : "Copy Monday to all"}
+              </Button>
               <Button
                 className="w-full"
                 size="lg"
