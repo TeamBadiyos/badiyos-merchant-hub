@@ -68,7 +68,30 @@ export function usePickupInfo(orderId: string, enabled: boolean) {
   });
 }
 
-export type OrderRider = { name: string | null; phone: string | null };
+export type OrderRider = {
+  name: string | null;
+  phone: string | null;
+  /** Metres from the rider's live location to the shop (null when unknown). */
+  distance_m?: number | null;
+  location_updated_at?: string | null;
+};
+
+/** Auto-reject deadline from the backend — same city setting the auto-reject job uses. */
+export function useAcceptDeadline(orderId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["orders", "accept-deadline", orderId],
+    enabled,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("merchant_order_accept_deadlines" as never, {
+        _order_ids: [orderId],
+      } as never);
+      if (error) throw error;
+      const map = (data ?? {}) as Record<string, string>;
+      return map[orderId] ?? null;
+    },
+  });
+}
 
 /** Rider details while assigned → picked up (backend returns null otherwise). */
 export function useOrderRider(orderId: string, enabled: boolean) {
