@@ -395,7 +395,7 @@ function CommissionCard() {
       const { data, error } = await supabase
         .from("merchant_orders")
         .select("commission_amount, commission_gst_amount")
-        .eq("store_id", merchant!.id)
+        .eq("merchant_id", merchant!.id)
         .eq("status", "delivered")
         .gte("created_at", since)
         .limit(2000);
