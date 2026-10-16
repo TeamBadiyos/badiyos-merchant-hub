@@ -664,9 +664,9 @@ function ItemRow(props: {
           </p>
         ) : (
           <StatusBadge product={p} onEdit={props.onEdit} />
-          {props.suggestion && (
-            <p className="mt-1 text-[11px] font-semibold text-muted-foreground">{props.suggestion}</p>
-          )}
+        )}
+        {props.suggestion && (
+          <p className="mt-1 text-[11px] font-semibold text-muted-foreground">{props.suggestion}</p>
         )}
         <div className="mt-2 flex items-center gap-2">
           <Switch checked={p.is_available} onCheckedChange={props.onToggleAvailable} aria-label={t("pmAvailable")} />
