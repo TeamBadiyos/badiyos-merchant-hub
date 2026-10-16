@@ -794,6 +794,7 @@ export type Database = {
           coupon_id: string | null
           created_at: string | null
           current_search_radius_km: number | null
+          customer_note: string | null
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
@@ -821,10 +822,12 @@ export type Database = {
           razorpay_payment_id: string | null
           refund_amount: number | null
           refund_attempts: number
+          refund_destination: string | null
           refund_error: string | null
           refund_id: string | null
           refund_next_attempt_at: string | null
           refund_status: string | null
+          refund_wallet_amount: number | null
           reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
@@ -866,6 +869,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string | null
           current_search_radius_km?: number | null
+          customer_note?: string | null
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
@@ -893,10 +897,12 @@ export type Database = {
           razorpay_payment_id?: string | null
           refund_amount?: number | null
           refund_attempts?: number
+          refund_destination?: string | null
           refund_error?: string | null
           refund_id?: string | null
           refund_next_attempt_at?: string | null
           refund_status?: string | null
+          refund_wallet_amount?: number | null
           reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
@@ -938,6 +944,7 @@ export type Database = {
           coupon_id?: string | null
           created_at?: string | null
           current_search_radius_km?: number | null
+          customer_note?: string | null
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
@@ -965,10 +972,12 @@ export type Database = {
           razorpay_payment_id?: string | null
           refund_amount?: number | null
           refund_attempts?: number
+          refund_destination?: string | null
           refund_error?: string | null
           refund_id?: string | null
           refund_next_attempt_at?: string | null
           refund_status?: string | null
+          refund_wallet_amount?: number | null
           reminder_sent?: boolean
           review_text?: string | null
           scheduled_date?: string | null
@@ -2390,33 +2399,50 @@ export type Database = {
       }
       catalog_categories: {
         Row: {
+          city_id: string | null
           created_at: string
           id: string
           image_path: string | null
           is_active: boolean
+          is_other: boolean
           name: string
+          name_mr: string | null
           service_type: string
           sort_order: number
         }
         Insert: {
+          city_id?: string | null
           created_at?: string
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name: string
+          name_mr?: string | null
           service_type: string
           sort_order?: number
         }
         Update: {
+          city_id?: string | null
           created_at?: string
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name?: string
+          name_mr?: string | null
           service_type?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "catalog_categories_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cities: {
         Row: {
@@ -2450,6 +2476,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      city_boundaries: {
+        Row: {
+          city_id: string
+          geom: unknown
+          saved_by: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          city_id: string
+          geom: unknown
+          saved_by?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string
+          geom?: unknown
+          saved_by?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "city_boundaries_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: true
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       city_interest_leads: {
         Row: {
@@ -2559,8 +2617,12 @@ export type Database = {
         Row: {
           city_id: string
           default_accept_timeout_minutes: number | null
+          delivery_base_fare: number
+          delivery_included_km: number
           delivery_min_fare: number | null
           delivery_per_km: number | null
+          delivery_platform_fee: number
+          rider_share_pct: number | null
           service_key: string
           timings: Json | null
           updated_at: string
@@ -2568,8 +2630,12 @@ export type Database = {
         Insert: {
           city_id: string
           default_accept_timeout_minutes?: number | null
+          delivery_base_fare?: number
+          delivery_included_km?: number
           delivery_min_fare?: number | null
           delivery_per_km?: number | null
+          delivery_platform_fee?: number
+          rider_share_pct?: number | null
           service_key: string
           timings?: Json | null
           updated_at?: string
@@ -2577,8 +2643,12 @@ export type Database = {
         Update: {
           city_id?: string
           default_accept_timeout_minutes?: number | null
+          delivery_base_fare?: number
+          delivery_included_km?: number
           delivery_min_fare?: number | null
           delivery_per_km?: number | null
+          delivery_platform_fee?: number
+          rider_share_pct?: number | null
           service_key?: string
           timings?: Json | null
           updated_at?: string
@@ -3315,6 +3385,7 @@ export type Database = {
           incident_code: string | null
           incident_notes: string | null
           incident_resolution: string | null
+          is_training: boolean
           merchant_order_id: string | null
           needs_ops_attention: boolean
           order_code: string
@@ -3399,6 +3470,7 @@ export type Database = {
           incident_code?: string | null
           incident_notes?: string | null
           incident_resolution?: string | null
+          is_training?: boolean
           merchant_order_id?: string | null
           needs_ops_attention?: boolean
           order_code?: string
@@ -3483,6 +3555,7 @@ export type Database = {
           incident_code?: string | null
           incident_notes?: string | null
           incident_resolution?: string | null
+          is_training?: boolean
           merchant_order_id?: string | null
           needs_ops_attention?: boolean
           order_code?: string
@@ -3985,6 +4058,7 @@ export type Database = {
           invoice_id: string
           note_date: string
           reason: string | null
+          refund_destination: string | null
           sgst: number
           taxable_value: number
           total: number
@@ -4001,6 +4075,7 @@ export type Database = {
           invoice_id: string
           note_date?: string
           reason?: string | null
+          refund_destination?: string | null
           sgst?: number
           taxable_value?: number
           total?: number
@@ -4017,6 +4092,7 @@ export type Database = {
           invoice_id?: string
           note_date?: string
           reason?: string | null
+          refund_destination?: string | null
           sgst?: number
           taxable_value?: number
           total?: number
@@ -6270,21 +6346,33 @@ export type Database = {
       merchant_referral_config: {
         Row: {
           id: number
+          is_active: boolean
           reward_amount: number
           rules: string | null
+          target_orders: number
           updated_at: string
+          updated_by: string | null
+          window_days: number
         }
         Insert: {
           id?: number
+          is_active?: boolean
           reward_amount?: number
           rules?: string | null
+          target_orders?: number
           updated_at?: string
+          updated_by?: string | null
+          window_days?: number
         }
         Update: {
           id?: number
+          is_active?: boolean
           reward_amount?: number
           rules?: string | null
+          target_orders?: number
           updated_at?: string
+          updated_by?: string | null
+          window_days?: number
         }
         Relationships: []
       }
@@ -6329,6 +6417,115 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_referrals: {
+        Row: {
+          adjustment_id: string | null
+          created_at: string
+          delivered_count: number
+          earned_at: string | null
+          earned_by: string | null
+          id: string
+          live_at: string | null
+          referred_store_id: string
+          referrer_id: string
+          reversal_adjustment_id: string | null
+          reversal_reason: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          reward_amount: number
+          status: string
+          target_orders: number
+          updated_at: string
+          window_days: number
+          window_expires_at: string | null
+        }
+        Insert: {
+          adjustment_id?: string | null
+          created_at?: string
+          delivered_count?: number
+          earned_at?: string | null
+          earned_by?: string | null
+          id?: string
+          live_at?: string | null
+          referred_store_id: string
+          referrer_id: string
+          reversal_adjustment_id?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          reward_amount?: number
+          status?: string
+          target_orders?: number
+          updated_at?: string
+          window_days?: number
+          window_expires_at?: string | null
+        }
+        Update: {
+          adjustment_id?: string | null
+          created_at?: string
+          delivered_count?: number
+          earned_at?: string | null
+          earned_by?: string | null
+          id?: string
+          live_at?: string | null
+          referred_store_id?: string
+          referrer_id?: string
+          reversal_adjustment_id?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          reward_amount?: number
+          status?: string
+          target_orders?: number
+          updated_at?: string
+          window_days?: number
+          window_expires_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_referrals_adjustment_id_fkey"
+            columns: ["adjustment_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_settlement_adjustments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_referrals_referred_store_id_fkey"
+            columns: ["referred_store_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_referrals_referred_store_id_fkey"
+            columns: ["referred_store_id"]
+            isOneToOne: true
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "public_stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_referrals_reversal_adjustment_id_fkey"
+            columns: ["reversal_adjustment_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_settlement_adjustments"
             referencedColumns: ["id"]
           },
         ]
@@ -6419,7 +6616,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
-          order_id: string
+          order_id: string | null
           reason: string
           settlement_id: string | null
           store_id: string
@@ -6428,7 +6625,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
-          order_id: string
+          order_id?: string | null
           reason?: string
           settlement_id?: string | null
           store_id: string
@@ -6437,7 +6634,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
-          order_id?: string
+          order_id?: string | null
           reason?: string
           settlement_id?: string | null
           store_id?: string
@@ -7318,6 +7515,7 @@ export type Database = {
           expense_date: string
           gst_paid: number
           id: string
+          is_system: boolean
           note: string | null
           paid_via: string
           subscription_id: string | null
@@ -7333,6 +7531,7 @@ export type Database = {
           expense_date?: string
           gst_paid?: number
           id?: string
+          is_system?: boolean
           note?: string | null
           paid_via?: string
           subscription_id?: string | null
@@ -7348,6 +7547,7 @@ export type Database = {
           expense_date?: string
           gst_paid?: number
           id?: string
+          is_system?: boolean
           note?: string | null
           paid_via?: string
           subscription_id?: string | null
@@ -9414,6 +9614,7 @@ export type Database = {
           default_accept_timeout_minutes: number
           delivery_min_fare: number
           delivery_per_km: number
+          hide_low_item_sections: boolean
           is_live: boolean
           rider_share_pct: number
           service_key: string
@@ -9425,6 +9626,7 @@ export type Database = {
           default_accept_timeout_minutes?: number
           delivery_min_fare?: number
           delivery_per_km?: number
+          hide_low_item_sections?: boolean
           is_live?: boolean
           rider_share_pct?: number
           service_key: string
@@ -9436,6 +9638,7 @@ export type Database = {
           default_accept_timeout_minutes?: number
           delivery_min_fare?: number
           delivery_per_km?: number
+          hide_low_item_sections?: boolean
           is_live?: boolean
           rider_share_pct?: number
           service_key?: string
@@ -9836,12 +10039,15 @@ export type Database = {
       }
       store_categories: {
         Row: {
+          city_id: string | null
           icon: string | null
           icon_url: string | null
           id: string
           image_path: string | null
           is_active: boolean
+          is_other: boolean
           name: string
+          name_mr: string | null
           rank: number
           segment_id: string
           slug: string
@@ -9849,12 +10055,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city_id?: string | null
           icon?: string | null
           icon_url?: string | null
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name: string
+          name_mr?: string | null
           rank?: number
           segment_id: string
           slug: string
@@ -9862,12 +10071,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city_id?: string | null
           icon?: string | null
           icon_url?: string | null
           id?: string
           image_path?: string | null
           is_active?: boolean
+          is_other?: boolean
           name?: string
+          name_mr?: string | null
           rank?: number
           segment_id?: string
           slug?: string
@@ -9875,6 +10087,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "store_categories_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "store_categories_segment_id_fkey"
             columns: ["segment_id"]
@@ -10423,6 +10642,7 @@ export type Database = {
           full_name: string | null
           id: string
           notification_preferences: Json
+          offer_notifications: boolean
           phone: string | null
           pin_hash: string | null
           preferred_language: string
@@ -10441,6 +10661,7 @@ export type Database = {
           full_name?: string | null
           id: string
           notification_preferences?: Json
+          offer_notifications?: boolean
           phone?: string | null
           pin_hash?: string | null
           preferred_language?: string
@@ -10459,6 +10680,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           notification_preferences?: Json
+          offer_notifications?: boolean
           phone?: string | null
           pin_hash?: string | null
           preferred_language?: string
@@ -10741,40 +10963,52 @@ export type Database = {
       waitlist_requests: {
         Row: {
           address_text: string | null
+          area: string | null
           city: string | null
           created_at: string
           id: string
-          latitude: number
-          longitude: number
+          latitude: number | null
+          longitude: number | null
           notified_at: string | null
           notify_count: number
+          phone: string | null
           segment_id: string | null
+          services: string[]
+          source: string
           status: string
           user_id: string | null
         }
         Insert: {
           address_text?: string | null
+          area?: string | null
           city?: string | null
           created_at?: string
           id?: string
-          latitude: number
-          longitude: number
+          latitude?: number | null
+          longitude?: number | null
           notified_at?: string | null
           notify_count?: number
+          phone?: string | null
           segment_id?: string | null
+          services?: string[]
+          source?: string
           status?: string
           user_id?: string | null
         }
         Update: {
           address_text?: string | null
+          area?: string | null
           city?: string | null
           created_at?: string
           id?: string
-          latitude?: number
-          longitude?: number
+          latitude?: number | null
+          longitude?: number | null
           notified_at?: string | null
           notify_count?: number
+          phone?: string | null
           segment_id?: string | null
+          services?: string[]
+          source?: string
           status?: string
           user_id?: string | null
         }
@@ -10840,6 +11074,33 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_expiry_reminders: {
+        Row: {
+          amount: number
+          created_at: string
+          days_before: number
+          expires_on: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          days_before: number
+          expires_on: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          days_before?: number
+          expires_on?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallet_ledger: {
         Row: {
           amount: number
@@ -10883,6 +11144,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wallet_migration_log: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          kind: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          kind: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          kind?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       wallet_topups: {
         Row: {
@@ -10947,45 +11232,127 @@ export type Database = {
         }
         Relationships: []
       }
+      zone_draft_cells: {
+        Row: {
+          city_id: string
+          colour: string
+          created_at: string
+          geom: unknown
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          city_id: string
+          colour?: string
+          created_at?: string
+          geom: unknown
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          city_id?: string
+          colour?: string
+          created_at?: string
+          geom?: unknown
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zone_draft_cells_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zone_draft_history: {
+        Row: {
+          actor: string | null
+          city_id: string
+          created_at: string
+          id: number
+          op: string
+          snapshot: Json
+        }
+        Insert: {
+          actor?: string | null
+          city_id: string
+          created_at?: string
+          id?: number
+          op: string
+          snapshot: Json
+        }
+        Update: {
+          actor?: string | null
+          city_id?: string
+          created_at?: string
+          id?: number
+          op?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zone_draft_history_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zones: {
         Row: {
           boundary: Json
           city: string
           city_id: string | null
+          colour: string | null
           created_at: string
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
+          geom: unknown
           id: string
           name: string
           segment_id: string
           status: string
+          version: number
         }
         Insert: {
           boundary: Json
           city: string
           city_id?: string | null
+          colour?: string | null
           created_at?: string
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          geom?: unknown
           id?: string
           name: string
           segment_id: string
           status?: string
+          version?: number
         }
         Update: {
           boundary?: Json
           city?: string
           city_id?: string | null
+          colour?: string | null
           created_at?: string
           delete_reason?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          geom?: unknown
           id?: string
           name?: string
           segment_id?: string
           status?: string
+          version?: number
         }
         Relationships: [
           {
@@ -11222,11 +11589,45 @@ export type Database = {
         Args: { _city_id?: string; _service_key: string }
         Returns: number
       }
+      app_book_now_allowed: {
+        Args: { _city_id: string; _service_key: string }
+        Returns: Json
+      }
+      app_booking_quote: {
+        Args: { _city_id: string; _price_option_id: string }
+        Returns: Json
+      }
+      app_cancel_booking: {
+        Args: { _booking_id: string; _destination?: string }
+        Returns: Json
+      }
+      app_cancel_quote: { Args: { _booking_id: string }; Returns: Json }
+      app_cancellation_policy: {
+        Args: { _city_id?: string; _service_key: string }
+        Returns: Json
+      }
+      app_catalog_url: { Args: { _p: string }; Returns: string }
+      app_categories: {
+        Args: { _city_id?: string; _kind: string }
+        Returns: Json
+      }
       app_city_for_location: {
         Args: { _lat: number; _lng: number }
         Returns: string
       }
       app_city_price_options: { Args: { _city_id: string }; Returns: Json }
+      app_clean_media: { Args: { _city?: string }; Returns: Json }
+      app_commerce_home: {
+        Args: {
+          _category_id?: string
+          _city_id: string
+          _lat?: number
+          _lng?: number
+          _service_key: string
+        }
+        Returns: Json
+      }
+      app_create_booking_wallet: { Args: { _payload: Json }; Returns: Json }
       app_expert_application_agreements: { Args: never; Returns: Json }
       app_expert_application_get: { Args: never; Returns: Json }
       app_expert_application_save: {
@@ -11234,12 +11635,51 @@ export type Database = {
         Returns: Json
       }
       app_expert_application_submit: { Args: never; Returns: Json }
+      app_fully_booked_slots: {
+        Args: {
+          _city_id: string
+          _from: string
+          _service_key: string
+          _to: string
+        }
+        Returns: Json
+      }
+      app_item_card: { Args: { _p: string }; Returns: Json }
+      app_item_live: { Args: { _p: string }; Returns: boolean }
       app_list_banners: {
         Args: { _city_id: string; _tab: string }
         Returns: Json
       }
       app_merchant_issue_signup_agreement: { Args: never; Returns: string }
       app_my_agreements: { Args: never; Returns: Json }
+      app_ops_value: { Args: { _city: string; _key: string }; Returns: string }
+      app_order_again: { Args: { _service_key: string }; Returns: Json }
+      app_service_content: {
+        Args: { _city_id: string; _service_key: string }
+        Returns: Json
+      }
+      app_service_hours: {
+        Args: { _city_id: string; _service_key: string }
+        Returns: Json
+      }
+      app_set_offer_notifications: { Args: { _on: boolean }; Returns: Json }
+      app_store_card: {
+        Args: { _lat: number; _lng: number; _m: string }
+        Returns: Json
+      }
+      app_store_is_open: {
+        Args: { _at?: string; _m: string }
+        Returns: boolean
+      }
+      app_store_live: { Args: { _m: string }; Returns: boolean }
+      app_store_next_open: { Args: { _m: string }; Returns: string }
+      app_store_page: { Args: { _store_id: string }; Returns: Json }
+      app_svc_key: { Args: { _k: string }; Returns: string }
+      app_wallet_history: {
+        Args: { _before?: string; _limit?: number }
+        Returns: Json
+      }
+      app_wallet_summary: { Args: never; Returns: Json }
       apply_referral_code: { Args: { _code: string }; Returns: string }
       auto_cancel_minutes: {
         Args: { _city_id: string; _service_key: string }
@@ -11249,6 +11689,17 @@ export type Database = {
       booking_auto_cancel_minutes: {
         Args: { _booking_id: string }
         Returns: number
+      }
+      booking_cancel_core: {
+        Args: {
+          _actor: string
+          _actor_uid: string
+          _booking_id: string
+          _destination: string
+          _mode: string
+          _reason: string
+        }
+        Returns: Json
       }
       booking_capacity_group: {
         Args: { _category_id: string; _label: string }
@@ -11264,7 +11715,13 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: Json
       }
+      booking_group_of: { Args: { _booking_id: string }; Returns: string }
+      booking_gst_percent: { Args: { _category_id: string }; Returns: number }
       booking_journey_sweeper: { Args: never; Returns: number }
+      booking_refund_split: {
+        Args: { _booking_id: string; _mode?: string }
+        Returns: Json
+      }
       booking_total_expert_payout: {
         Args: { _booking_id: string }
         Returns: number
@@ -11570,6 +12027,7 @@ export type Database = {
         Args: { _audience: string; _targets: string[]; _uid: string }
         Returns: boolean
       }
+      cat_is_admin: { Args: never; Returns: boolean }
       cc_uid: { Args: never; Returns: string }
       cc_visible_cities: { Args: never; Returns: string[] }
       check_booking_capacity: { Args: { _booking_id: string }; Returns: Json }
@@ -11631,6 +12089,7 @@ export type Database = {
           coupon_id: string | null
           created_at: string | null
           current_search_radius_km: number | null
+          customer_note: string | null
           delete_reason: string | null
           deleted_at: string | null
           deleted_by: string | null
@@ -11658,10 +12117,12 @@ export type Database = {
           razorpay_payment_id: string | null
           refund_amount: number | null
           refund_attempts: number
+          refund_destination: string | null
           refund_error: string | null
           refund_id: string | null
           refund_next_attempt_at: string | null
           refund_status: string | null
+          refund_wallet_amount: number | null
           reminder_sent: boolean
           review_text: string | null
           scheduled_date: string | null
@@ -11692,6 +12153,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      clean_media_normalize: { Args: { _p: Json }; Returns: Json }
+      clean_media_require: { Args: { _city: string }; Returns: undefined }
       coins_release_stale_reservations: { Args: never; Returns: number }
       compute_tds: {
         Args: { _gross: number; _owner_id: string; _owner_type: string }
@@ -11955,6 +12418,7 @@ export type Database = {
           incident_code: string | null
           incident_notes: string | null
           incident_resolution: string | null
+          is_training: boolean
           merchant_order_id: string | null
           needs_ops_attention: boolean
           order_code: string
@@ -12185,7 +12649,16 @@ export type Database = {
         Returns: Json
       }
       customer_lucky_draw_status: { Args: never; Returns: Json }
-      customer_notify_me: { Args: { _service_key: string }; Returns: Json }
+      customer_notify_me: {
+        Args: {
+          _area?: string
+          _city?: string
+          _lat?: number
+          _lng?: number
+          _service_key: string
+        }
+        Returns: Json
+      }
       customer_register_device: {
         Args: { _device_id: string; _device_label?: string }
         Returns: Json
@@ -12233,7 +12706,20 @@ export type Database = {
         Returns: Json
       }
       customer_wallet_start_topup: { Args: { _amount: number }; Returns: Json }
+      default_cancel_policy: { Args: never; Returns: Json }
       default_city_id: { Args: never; Returns: string }
+      delivery_fee_calc: {
+        Args: {
+          _base: number
+          _incl: number
+          _km: number
+          _min: number
+          _per_km: number
+          _pf: number
+        }
+        Returns: number
+      }
+      demand_waiting_count: { Args: { _city: string }; Returns: number }
       dispatch_limit_minutes: {
         Args: { _city: string; _svc: string }
         Returns: number
@@ -12291,6 +12777,7 @@ export type Database = {
         }[]
       }
       expert_has_push_device: { Args: { _expert_id: string }; Returns: boolean }
+      expert_job_details: { Args: { _booking_id: string }; Returns: Json }
       expert_mark_arrived: { Args: { p_booking_id: string }; Returns: string }
       expert_mark_on_the_way: {
         Args: { p_booking_id: string }
@@ -12660,6 +13147,14 @@ export type Database = {
         Returns: Json
       }
       merchant_referral_code: { Args: never; Returns: string }
+      merchant_referral_credit: {
+        Args: { _by: string; _ref_id: string }
+        Returns: undefined
+      }
+      merchant_referral_evaluate: {
+        Args: { _store_id: string }
+        Returns: undefined
+      }
       merchant_require: {
         Args: { _allow: string[]; _store_id: string }
         Returns: string
@@ -13039,6 +13534,34 @@ export type Database = {
         Args: { _at?: string; _service_key: string }
         Returns: boolean
       }
+      service_content_banner: {
+        Args: { _c: Json; _key: string }
+        Returns: Json
+      }
+      service_content_banner_texts_default: {
+        Args: { _key: string }
+        Returns: Json
+      }
+      service_content_check_extras: { Args: { _p: Json }; Returns: undefined }
+      service_content_check_key: { Args: { _k: string }; Returns: undefined }
+      service_content_check_text: {
+        Args: { _label: string; _max: number; _required: boolean; _v: string }
+        Returns: undefined
+      }
+      service_content_defaults: { Args: { _key: string }; Returns: Json }
+      service_content_extras_defaults: { Args: { _key: string }; Returns: Json }
+      service_content_merge_extras: {
+        Args: { _c: Json; _key: string }
+        Returns: Json
+      }
+      service_content_options: {
+        Args: { _city: string; _key: string }
+        Returns: Json
+      }
+      service_content_resolve: {
+        Args: { _city: string; _key: string }
+        Returns: Record<string, unknown>
+      }
       service_effective_state: {
         Args: { _at?: string; _city?: string; _service_key: string }
         Returns: Json
@@ -13198,6 +13721,13 @@ export type Database = {
       slot_step:
         | { Args: never; Returns: number }
         | { Args: { _city: string }; Returns: number }
+      slot_window: {
+        Args: { _cid: string; _date: string; _g: string }
+        Returns: {
+          first_min: number
+          last_min: number
+        }[]
+      }
       staff_accept_booking: {
         Args: { _booking_id: string }
         Returns: undefined
@@ -13234,6 +13764,10 @@ export type Database = {
         Returns: Json
       }
       staff_allowed_city_ids: { Args: never; Returns: string[] }
+      staff_apply_product_category_map: {
+        Args: { _map: Json }
+        Returns: number
+      }
       staff_approve_settlement: {
         Args: { _settlement_id: string }
         Returns: undefined
@@ -13290,6 +13824,15 @@ export type Database = {
         Args: { _booking_id: string; _reason: string }
         Returns: undefined
       }
+      staff_cancel_booking_v2: {
+        Args: {
+          _apply_fee?: boolean
+          _booking_id: string
+          _destination?: string
+          _reason: string
+        }
+        Returns: Json
+      }
       staff_cancel_store_order_apply: {
         Args: {
           _order_id: string
@@ -13299,6 +13842,22 @@ export type Database = {
           _refund_status: string
         }
         Returns: Json
+      }
+      staff_category_copy_default: {
+        Args: { _city_id: string; _kind: string }
+        Returns: number
+      }
+      staff_category_delete: {
+        Args: { _id: string; _kind: string; _move_to?: string }
+        Returns: Json
+      }
+      staff_category_reorder: {
+        Args: { _ids: string[]; _kind: string }
+        Returns: undefined
+      }
+      staff_category_usage: {
+        Args: { _id: string; _kind: string }
+        Returns: number
       }
       staff_city_template: { Args: { _from: string }; Returns: Json }
       staff_clear_availability_override: {
@@ -13585,7 +14144,12 @@ export type Database = {
         Args: { _city_id: string; _keys: string[] }
         Returns: Json
       }
+      staff_get_clean_media: { Args: { _city: string }; Returns: Json }
       staff_get_referral_config: { Args: never; Returns: Json }
+      staff_get_service_content: {
+        Args: { _city: string; _service_key: string }
+        Returns: Json
+      }
       staff_handover_booking_expert: {
         Args: {
           _booking_id: string
@@ -13663,6 +14227,10 @@ export type Database = {
         Returns: undefined
       }
       staff_mark_all_notifications_read: { Args: never; Returns: undefined }
+      staff_mark_merchant_referral_earned: {
+        Args: { _id: string }
+        Returns: undefined
+      }
       staff_mark_notification_read: {
         Args: { _id: string; _read?: boolean }
         Returns: undefined
@@ -13695,6 +14263,7 @@ export type Database = {
         Args: { _doc_types: string[]; _merchant_id: string; _notes: string }
         Returns: undefined
       }
+      staff_merchant_referrals: { Args: never; Returns: Json }
       staff_move_banner: {
         Args: { _dir: number; _id: string }
         Returns: undefined
@@ -13815,8 +14384,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      staff_reset_clean_media: { Args: { _city: string }; Returns: Json }
       staff_reset_receiver_location: {
         Args: { _reason: string; _receiver_id: string }
+        Returns: Json
+      }
+      staff_reset_service_content: {
+        Args: { _city: string; _service_key: string }
         Returns: Json
       }
       staff_retry_refund: {
@@ -13825,6 +14399,10 @@ export type Database = {
       }
       staff_retry_store_refund: {
         Args: { _order_id: string }
+        Returns: undefined
+      }
+      staff_reverse_merchant_referral: {
+        Args: { _id: string; _reason: string }
         Returns: undefined
       }
       staff_reverse_referral_reward: {
@@ -13915,7 +14493,15 @@ export type Database = {
         Args: { _payload: Json }
         Returns: undefined
       }
+      staff_save_clean_media: {
+        Args: { _city: string; _payload: Json }
+        Returns: Json
+      }
       staff_save_company_profile: { Args: { _p: Json }; Returns: undefined }
+      staff_save_service_content: {
+        Args: { _city: string; _payload: Json; _service_key: string }
+        Returns: Json
+      }
       staff_save_wallet_bonus_rule: {
         Args: { _id: string; _p: Json }
         Returns: string
@@ -14246,6 +14832,10 @@ export type Database = {
         Returns: boolean
       }
       staff_set_view_city: { Args: { _city_id: string }; Returns: undefined }
+      staff_set_wallet_bonus_days: {
+        Args: { _days: number }
+        Returns: undefined
+      }
       staff_slot_band_summary:
         | { Args: { _date: string; _service_key: string }; Returns: Json }
         | {
@@ -14301,6 +14891,15 @@ export type Database = {
       }
       staff_update_dispatch_config: {
         Args: { _payload: Json }
+        Returns: undefined
+      }
+      staff_update_merchant_referral_config: {
+        Args: {
+          _active: boolean
+          _days: number
+          _reward: number
+          _target: number
+        }
         Returns: undefined
       }
       staff_update_referral_config: {
@@ -14686,6 +15285,19 @@ export type Database = {
         Args: { _booking_id: string; _rating: number; _review: string }
         Returns: undefined
       }
+      submit_demand_request: {
+        Args: {
+          _address_text?: string
+          _area?: string
+          _city: string
+          _lat?: number
+          _lng?: number
+          _phone?: string
+          _services: string[]
+          _source?: string
+        }
+        Returns: Json
+      }
       submit_store_rating: {
         Args: { p_comment?: string; p_order_id: string; p_rating: number }
         Returns: string
@@ -14893,6 +15505,16 @@ export type Database = {
         Args: { p_phone: string; p_pin: string }
         Returns: Json
       }
+      wallet_bonus_days: { Args: never; Returns: number }
+      wallet_bonus_lots: {
+        Args: { _uid: string }
+        Returns: {
+          credited_at: string
+          expires_at: string
+          ledger_id: string
+          remaining: number
+        }[]
+      }
       wallet_expire_bonuses: { Args: never; Returns: number }
       wallet_post: {
         Args: {
@@ -14908,7 +15530,77 @@ export type Database = {
         }
         Returns: Json
       }
+      wallet_return: {
+        Args: {
+          _reason: string
+          _ref_id: string
+          _ref_type: string
+          _uid: string
+        }
+        Returns: number
+      }
+      wallet_send_expiry_reminders: { Args: never; Returns: number }
+      wallet_spend: {
+        Args: {
+          _amount: number
+          _bonus_first?: boolean
+          _partial?: boolean
+          _reason: string
+          _ref_id: string
+          _ref_type: string
+          _type: string
+          _uid: string
+        }
+        Returns: Json
+      }
       zone_delete_impact: { Args: { _zone_id: string }; Returns: Json }
+      zone_lookup: { Args: { _lat: number; _lng: number }; Returns: Json }
+      zv2_assert_no_overlap: { Args: { _city: string }; Returns: undefined }
+      zv2_clean: { Args: { _g: unknown }; Returns: unknown }
+      zv2_from_jsonb: { Args: { _b: Json }; Returns: unknown }
+      zv2_merge: { Args: { _a: string; _b: string }; Returns: Json }
+      zv2_move_point: {
+        Args: {
+          _city: string
+          _lat: number
+          _lng: number
+          _old_lat: number
+          _old_lng: number
+        }
+        Returns: Json
+      }
+      zv2_normalize: { Args: { _city: string }; Returns: number }
+      zv2_require: {
+        Args: { _city: string; _super?: boolean }
+        Returns: undefined
+      }
+      zv2_save_boundary: {
+        Args: {
+          _city: string
+          _geojson: Json
+          _reset: boolean
+          _source: string
+        }
+        Returns: Json
+      }
+      zv2_set_cell_geom: {
+        Args: { _cell: string; _geojson: Json }
+        Returns: Json
+      }
+      zv2_snapshot: { Args: { _city: string; _op: string }; Returns: undefined }
+      zv2_split: { Args: { _cell: string; _line: Json }; Returns: Json }
+      zv2_state: { Args: { _city: string }; Returns: Json }
+      zv2_switchover_apply: {
+        Args: { _city: string; _mapping: Json }
+        Returns: Json
+      }
+      zv2_switchover_preview: { Args: { _city: string }; Returns: Json }
+      zv2_to_jsonb: { Args: { _g: unknown }; Returns: Json }
+      zv2_undo: { Args: { _city: string }; Returns: Json }
+      zv2_update_cell: {
+        Args: { _cell: string; _colour: string; _name: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
