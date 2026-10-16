@@ -144,7 +144,7 @@ function MoneyPage() {
     queryKey: ["money", "ledger", sid, dates.from, dates.to, chip], enabled,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("merchant_ledger", {
-        _store_id: sid!, _from: dates.from, _to: dates.to, _types: types ?? undefined, _limit: 200, _offset: 0,
+        _store_id: sid!, _from: dates.from, _to: dates.to, ...(types ? { _types: types } : {}), _limit: 200, _offset: 0,
       });
       if (error) throw error;
       return (data as unknown as { rows: LedgerRow[] }).rows ?? [];
@@ -455,7 +455,7 @@ function StatementSheet({ settlementId, onClose, L }: { settlementId: string | n
                 <Line label={L.gst} value={`−${inr(st.commission_gst_total)}`} />
                 <Line label={L.tcs} value={`−${inr(st.tcs_total)}`} />
                 <Line label={L.tds} value={`−${inr(st.tds_total)}`} />
-                {Number(st.instant_fee) > 0 && <Line label={TYPE_LABEL.instant_fee.en} value={`−${inr(Number(st.instant_fee) + Number(st.instant_fee_gst))}`} />}
+                {Number(st.instant_fee) > 0 && <Line label={"Instant fee"} value={`−${inr(Number(st.instant_fee) + Number(st.instant_fee_gst))}`} />}
                 {Number(st.adjustment_total) !== 0 && <Line label={L.adjustments} value={inr(st.adjustment_total)} />}
                 {Number(d.round_off_carried) > 0 && <Line label={L.roundOff} value={inr(d.round_off_carried!)} />}
                 <div className="border-t border-border pt-1"><Line label={L.paid} value={inr(st.net_amount)} strong /></div>
