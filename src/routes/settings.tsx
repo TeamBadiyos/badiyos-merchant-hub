@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { inr } from "@/lib/order-status";
 import { DAYS, hhmm, todayIso, type ScheduleOverride, type StoreHour } from "@/lib/schedule";
@@ -412,7 +413,6 @@ function CommissionCard() {
     merchant?.commission_mode === "split"
       ? `${merchant.mrp_commission_pct ?? 0}% / ${merchant.other_commission_pct ?? 0}%`
       : `${merchant?.commission_pct ?? merchant?.commission_value ?? 0}%`;
-  const inr = (n: number) => `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-card">
       <h2 className="text-base font-bold text-foreground">{t("yourCommission")}</h2>
