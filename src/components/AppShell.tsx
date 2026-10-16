@@ -1,16 +1,16 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { toast } from "sonner";
 import {
   BarChart3,
+  Clock,
+  Languages,
+  Share2,
   Boxes,
   ChevronRight,
   Home,
   LifeBuoy,
   LogOut,
-  Menu,
   Receipt,
-  ScanLine,
-  Settings,
-  Store,
   Gift,
   User,
   Users,
@@ -37,22 +37,23 @@ import { useEdgeSwipeBack } from "@/lib/use-edge-swipe-back";
 import { useNativeBack } from "@/lib/use-native-back";
 import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 
-const tabs: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
+type NavItem = { to: string; key: Key; icon: typeof Home; permission?: Permission; ownerOnly?: boolean };
+
+const tabs: NavItem[] = [
   { to: "/home", key: "home", icon: Home, permission: "view_orders" },
   { to: "/orders", key: "orders", icon: Receipt, permission: "view_orders" },
-  { to: "/pos", key: "pos", icon: ScanLine, permission: "manage_orders" },
-  { to: "/profile", key: "profile", icon: User },
+  { to: "/products", key: "products", icon: Boxes, permission: "manage_products" },
+  { to: "/wallet", key: "navMoney", icon: Wallet, ownerOnly: true },
 ];
 
-/** Live screens in the side menu, gated by role permissions. */
-const links: { to: string; key: Key; icon: typeof Home; permission?: Permission }[] = [
-  { to: "/products", key: "products", icon: Boxes, permission: "manage_products" },
-  { to: "/reports", key: "reports", icon: BarChart3, permission: "view_reports" },
-  { to: "/wallet", key: "wallet", icon: Wallet, permission: "view_reports" },
-  { to: "/rewards", key: "rewards", icon: Gift, permission: "view_reports" },
-  { to: "/staff", key: "rolesStaff", icon: Users, permission: "manage_staff" },
-  { to: "/settings", key: "settings", icon: Settings },
-  { to: "/support", key: "support", icon: LifeBuoy },
+/** Avatar menu. Billing (POS) and the separate wallet/rewards/reports entries are gone. */
+const links: NavItem[] = [
+  { to: "/profile", key: "storeProfile", icon: User },
+  { to: "/reports", key: "insights", icon: BarChart3, permission: "view_reports" },
+  { to: "/rewards", key: "referMerchant", icon: Gift, ownerOnly: true },
+  { to: "/staff", key: "staff", icon: Users, ownerOnly: true },
+  { to: "/settings", key: "timingsHolidays", icon: Clock },
+  { to: "/support", key: "helpChat", icon: LifeBuoy },
 ];
 
 export function AppShell({
@@ -65,7 +66,7 @@ export function AppShell({
   /** Enables native-style pull-to-refresh on this screen's scroll area. */
   onRefresh?: () => Promise<unknown> | void;
 }) {
-  const { t } = useI18n();
+  const { t, lang, setLang } = useI18n();
   const { merchant, signOut, can, context, ready } = useAuth();
   const navigate = useNavigate();
   const { hasStore, hasDelivery } = useAppMode();
@@ -101,39 +102,102 @@ export function AppShell({
         }`}
         style={dragX ? { transform: `translate3d(${dragX}px,0,0)` } : undefined}
       >
-        <header className="bg-brand-gradient safe-top z-20 shrink-0 px-6 pb-8 text-primary-foreground">
-          <div className="flex items-center gap-4 pt-6">
+        <header className="safe-top z-20 shrink-0 border-b border-border bg-card px-4">
+          <div className="flex items-center gap-3 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-extrabold text-foreground">
+                {merchant?.store_name ?? "badiyos"}
+              </p>
+              <p className="truncate text-xs font-semibold text-muted-foreground">{title}</p>
+            </div>
+            <ModeSwitch current="store" />
+            <button
+              type="button"
+              disabled={setAccepting.isPending || merchant?.status !== "approved"}
+              onClick={() => {
+                hapticImpact("medium");
+                setAccepting.mutate(!accepting);
+              }}
+              aria-label={t("shopStatus")}
+              title={scheduleBlocked ? t("availPausedHint") : undefined}
+              className={`flex h-10 items-center gap-2 rounded-full border px-3 text-xs font-extrabold transition-colors disabled:opacity-60 ${
+                availability.open
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-muted text-muted-foreground"
+              }`}
+            >
+              <span
+                className={`size-2.5 rounded-full ${availability.open ? "bg-primary-foreground" : "bg-muted-foreground"}`}
+              />
+              {availability.open ? t("openUpper") : t("closedUpper")}
+              <Switch checked={accepting} tabIndex={-1} className="pointer-events-none scale-90" />
+            </button>
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger
                 aria-label={t("menu")}
-                className="-ml-2 rounded-xl p-2 transition-colors hover:bg-primary-foreground/15"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-extrabold text-primary"
               >
-                <Menu className="size-6" />
+                {(merchant?.store_name ?? "b").trim().charAt(0).toUpperCase()}
               </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] p-0">
-                <div className="bg-brand-gradient px-6 pt-12 pb-6 text-primary-foreground">
-                  <Wordmark on="dark" className="h-6" />
-                  <p className="mt-4 text-base font-bold">{merchant?.store_name ?? "badiyos"}</p>
-                  <p className="num text-sm opacity-80">
+              <SheetContent side="right" className="w-[300px] p-0">
+                <div className="border-b border-border px-6 pt-12 pb-5">
+                  <Wordmark className="h-6" />
+                  <p className="mt-4 text-base font-extrabold text-foreground">
+                    {merchant?.store_name ?? "badiyos"}
+                  </p>
+                  <p className="num text-sm text-muted-foreground">
                     {merchant?.phone ? `+91 ${merchant.phone}` : t("tagline")}
                   </p>
                 </div>
-                <nav className="flex flex-col p-4">
+                <nav className="flex flex-col p-3">
                   {links
-                    .filter((item) => !item.permission || can(item.permission))
+                    .filter((item) => (item.ownerOnly ? context.isOwner : !item.permission || can(item.permission)))
                     .map(({ to, key, icon: Icon }) => (
                       <Link
                         key={to}
                         to={to}
                         onClick={() => setOpen(false)}
-                        className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                        className="flex items-center gap-4 rounded-xl px-4 py-3.5 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent"
                       >
                         <Icon className="size-5 text-primary" />
                         <span className="flex-1">{t(key)}</span>
                         <ChevronRight className="size-4 text-muted-foreground" />
                       </Link>
                     ))}
-                  <div className="my-4 h-px bg-border" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = merchant?.store_slug
+                        ? `https://badiyos.com/store/${merchant.store_slug}`
+                        : "https://badiyos.com";
+                      if (navigator.share) {
+                        void navigator.share({ title: merchant?.store_name ?? "badiyos", url }).catch(() => {});
+                      } else {
+                        void navigator.clipboard.writeText(url).then(() => toast.success(t("shareCopied")));
+                      }
+                    }}
+                    className="flex items-center gap-4 rounded-xl px-4 py-3.5 text-left text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                  >
+                    <Share2 className="size-5 text-primary" />
+                    <span className="flex-1">{t("shareStore")}</span>
+                  </button>
+                  <div className="flex items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold text-foreground">
+                    <Languages className="size-5 text-primary" />
+                    <span className="flex-1">{t("language")}</span>
+                    <div className="flex rounded-full bg-muted p-1 text-xs font-bold">
+                      {(["en", "mr"] as const).map((l) => (
+                        <button
+                          key={l}
+                          type="button"
+                          onClick={() => setLang(l)}
+                          className={`rounded-full px-3 py-1 ${lang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                        >
+                          {l === "en" ? "EN" : "मराठी"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="my-3 h-px bg-border" />
                   <button
                     onClick={() => {
                       void signOut().then(() => {
@@ -141,7 +205,7 @@ export function AppShell({
                         return navigate({ to: "/login", replace: true });
                       });
                     }}
-                    className="flex items-center gap-4 rounded-xl px-4 py-4 text-left text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                    className="flex items-center gap-4 rounded-xl px-4 py-3.5 text-left text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
                   >
                     <LogOut className="size-5" />
                     {t("logout")}
@@ -149,30 +213,6 @@ export function AppShell({
                 </nav>
               </SheetContent>
             </Sheet>
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold uppercase opacity-80">{title}</p>
-              <p className="truncate text-base font-bold">{merchant?.store_name ?? "badiyos"}</p>
-            </div>
-
-            <ModeSwitch current="store" />
-            <label className="flex items-center gap-2 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold">
-              <Store className="size-4" />
-              <span className="hidden sm:inline">
-                {availability.open ? t("openNow") : t("closed")}
-              </span>
-              <Switch
-                checked={accepting}
-                disabled={setAccepting.isPending}
-                onCheckedChange={(next) => {
-                  hapticImpact("medium");
-                  setAccepting.mutate(next);
-                }}
-                aria-label={t("shopStatus")}
-                title={scheduleBlocked ? t("availPausedHint") : undefined}
-                className="data-[state=checked]:bg-primary-foreground/90 data-[state=unchecked]:bg-primary-foreground/30 [&_span]:bg-primary"
-              />
-            </label>
           </div>
         </header>
 
@@ -182,20 +222,21 @@ export function AppShell({
             className={pull ? "" : "transition-transform duration-200 ease-out"}
             style={{ transform: `translate3d(0,${pull}px,0)` }}
           >
-            <div className="px-6 pt-6 pb-32">{children}</div>
+            <div className="px-4 pt-4 pb-32">{children}</div>
           </div>
         </main>
 
         <nav className="safe-bottom fixed bottom-0 z-20 w-full max-w-[520px] border-t border-border bg-card/95 backdrop-blur print:hidden">
           {(() => {
-            const visible = tabs.filter((tab) => !tab.permission || can(tab.permission));
+            const visible = tabs.filter((tab) => (tab.ownerOnly ? context.isOwner : !tab.permission || can(tab.permission)));
             return (
               <ul
                 className="grid"
                 style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))` }}
               >
                 {visible.map(({ to, key, icon: Icon }) => {
-              const active = pathname === to;
+              const label = to === "/products" && merchant?.service_type === "food" ? t("navMenu") : t(key);
+              const active = pathname === to || pathname.startsWith(`${to}/`);
               return (
                 <li key={to}>
                   <Link
@@ -211,7 +252,7 @@ export function AppShell({
                     >
                       <Icon className="size-5" />
                     </span>
-                    {t(key)}
+                    {label}
                   </Link>
                 </li>
               );
