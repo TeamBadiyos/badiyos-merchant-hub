@@ -685,7 +685,9 @@ function ProductForm({
   product: Product | null;
   onClose: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const { context } = useAuth();
+  const priceLocked = !!product && !context.isOwner;
   const queryClient = useQueryClient();
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -874,7 +876,8 @@ function ProductForm({
 
           {!(isFood && cleanVariants.length) && (
             <Field label={t("price")} error={errors["price"]}>
-              <Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} className="num rounded-xl" />
+              <Input inputMode="decimal" disabled={priceLocked} value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} className="num rounded-xl" />
+              {priceLocked && <p className="text-xs text-muted-foreground">{lang === "mr" ? "फक्त मालक किंमत बदलू शकतात" : "Only the owner can change prices"}</p>}
             </Field>
           )}
 
