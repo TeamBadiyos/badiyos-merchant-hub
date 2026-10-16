@@ -215,7 +215,7 @@ export function useAuth() {
 /** Where should a signed-in merchant land, based on their application state? */
 export function routeForMerchant(merchant: Merchant | null): string {
   if (!merchant) return "/login";
-  if (merchant.status === "draft") return "/onboarding";
+  if (merchant.status === "draft" || (merchant.status === "pending_review" && !merchant.deleted_at)) return "/onboarding";
   // Delivery-only businesses never see the store app: land them in delivery.
   if (merchant.store_enabled === false && merchant.delivery_enabled) return "/delivery";
   return "/home";
