@@ -156,7 +156,7 @@ function Chat({ ticket, onBack, L }: { ticket: Ticket; onBack: () => void; L: (t
       }
       const { error } = await supabase.from("support_ticket_messages").insert({
         ticket_id: ticket.id, sender_type: "customer", sender_id: u.user!.id,
-        body: file ? (text.trim() || null) : text.trim(), attachment_url: path,
+        body: text.trim(), attachment_url: path,
       });
       if (error) throw error;
     },
