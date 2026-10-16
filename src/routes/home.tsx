@@ -17,6 +17,7 @@ import { AppShell } from "@/components/AppShell";
 import { SwipeDismiss } from "@/components/SwipeRow";
 import { AccessDenied, PendingApproval } from "@/components/GateNotice";
 import { FssaiReminder } from "@/components/FssaiReminder";
+import { FssaiReminder } from "@/components/FssaiReminder";
 import { OrderCard } from "@/components/OrderCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
