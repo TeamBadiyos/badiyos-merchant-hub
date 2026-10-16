@@ -393,7 +393,7 @@ function DeliveryStatus({ order }: { order: OrderWithItems }) {
               <p className="num text-xs font-bold text-primary">
                 {rider.data.distance_m <= 100
                   ? t("riderAtStore")
-                  : `${t("riderAway")} ${(rider.data.distance_m / 1000).toFixed(1)} km · ~${Math.max(
+                  : `${t("riderAway").replace("{d}", `${(rider.data.distance_m / 1000).toFixed(1)} km`)} · ~${Math.max(
                       1,
                       Math.round(rider.data.distance_m / 1000 / (15 / 60)),
                     )} min`}
