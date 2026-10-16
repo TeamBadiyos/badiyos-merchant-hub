@@ -591,7 +591,12 @@ function ItemRow(props: {
             <Star className={`size-4 ${p.is_recommended ? "fill-primary text-primary" : "text-muted-foreground"}`} />
           </button>
         </div>
-        <p className="num text-sm font-extrabold text-primary">{priceText(p)}</p>
+        <p className="num text-sm font-extrabold text-primary">
+          {priceText(p)}
+          {p.original_price != null && Number(p.original_price) > Number(p.price) && (
+            <span className="ml-1.5 text-xs font-semibold text-muted-foreground line-through">{inr(Number(p.original_price))}</span>
+          )}
+        </p>
         {!isFood && (
           <p className="num flex flex-wrap items-center gap-1.5 text-xs font-semibold text-muted-foreground">
             {p.is_mrp && <span className="rounded bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground">MRP</span>}
@@ -695,6 +700,7 @@ function ProductForm({
   const [description, setDescription] = useState(product?.description ?? "");
   const [categoryId, setCategoryId] = useState<string>(product?.category_id ?? "");
   const [price, setPrice] = useState(product ? String(product.price) : "");
+  const [mrp, setMrp] = useState(product?.original_price != null ? String(product.original_price) : "");
   const [stock, setStock] = useState(product ? String(product.stock_quantity) : "0");
   const [unit, setUnit] = useState(product?.unit ?? (isFood ? "plate" : "piece"));
   const [threshold, setThreshold] = useState(String(product?.low_stock_threshold ?? 5));
@@ -728,6 +734,9 @@ function ProductForm({
     const next: Record<string, string> = {};
     if (!name.trim()) next["name"] = t("required");
     if (!(isFood && cleanVariants.length) && (!price || Number(price) <= 0)) next["price"] = t("required");
+    if (!(isFood && cleanVariants.length) && mrp !== "" && !(Number(mrp) >= Number(price))) {
+      next["mrp"] = lang === "mr" ? "MRP किमतीपेक्षा कमी नसावी" : "MRP must be at least the price";
+    }
     if (!isFood && (stock === "" || Number(stock) < 0)) next["stock"] = t("required");
     if (isFood) {
       groups.forEach((g, gi) => {
@@ -751,6 +760,7 @@ function ProductForm({
         description: description.trim() || null,
         category_id: categoryId || null,
         price: basePrice,
+        original_price: !(isFood && cleanVariants.length) && mrp !== "" ? Number(mrp) : null,
         image_path: imagePath,
       };
       if (isFood) {
@@ -875,10 +885,17 @@ function ProductForm({
           )}
 
           {!(isFood && cleanVariants.length) && (
-            <Field label={t("price")} error={errors["price"]}>
-              <Input inputMode="decimal" disabled={priceLocked} value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} className="num rounded-xl" />
+            <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t("price")} error={errors["price"]}>
+                  <Input inputMode="decimal" disabled={priceLocked} value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))} className="num rounded-xl" />
+                </Field>
+                <Field label={lang === "mr" ? "MRP ₹ (ऐच्छिक)" : "MRP ₹ (optional)"} error={errors["mrp"]}>
+                  <Input inputMode="decimal" disabled={priceLocked} value={mrp} onChange={(e) => setMrp(e.target.value.replace(/[^0-9.]/g, ""))} className="num rounded-xl" />
+                </Field>
+              </div>
               {priceLocked && <p className="text-xs text-muted-foreground">{lang === "mr" ? "फक्त मालक किंमत बदलू शकतात" : "Only the owner can change prices"}</p>}
-            </Field>
+            </div>
           )}
 
           {isFood && (
