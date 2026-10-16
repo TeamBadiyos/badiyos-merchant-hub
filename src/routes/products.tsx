@@ -682,12 +682,14 @@ function ProductForm({
   isFood,
   categories,
   product,
+  suggestionRow,
   onClose,
 }: {
   merchantId: string;
   isFood: boolean;
   categories: Category[];
   product: Product | null;
+  suggestionRow: Suggestion | null;
   onClose: () => void;
 }) {
   const { t, lang } = useI18n();
@@ -698,7 +700,15 @@ function ProductForm({
   const cameraRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(product?.name ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
-  const [categoryId, setCategoryId] = useState<string>(product?.category_id ?? "");
+  const otherId = categories.find((c) => c.is_other)?.id ?? "";
+  const known = !!product?.category_id && categories.some((c) => c.id === product.category_id);
+  const [categoryId, setCategoryId] = useState<string>(
+    known ? product!.category_id! : product ? otherId : "",
+  );
+  const isOtherSelected = !!categoryId && categoryId === otherId;
+  const [suggestion, setSuggestion] = useState(
+    suggestionRow?.status === "pending" ? suggestionRow.suggested_name : "",
+  );
   const [price, setPrice] = useState(product ? String(product.price) : "");
   const [mrp, setMrp] = useState(product?.original_price != null ? String(product.original_price) : "");
   const [stock, setStock] = useState(product ? String(product.stock_quantity) : "0");
@@ -790,6 +800,12 @@ function ProductForm({
         if (!product) extra.image_url = imagePath;
         const { error: e2 } = await supabase.from("products").update(extra).eq("id", id);
         if (e2) throw e2;
+        const wanted = isOtherSelected ? suggestion.trim() : "";
+        const current = suggestionRow?.status === "pending" ? suggestionRow.suggested_name : "";
+        if (wanted !== current) {
+          const { error: e3 } = await supabase.rpc("merchant_suggest_category", { _product_id: id, _name: wanted });
+          if (e3) throw e3;
+        }
       }
     },
     onSuccess: () => {
@@ -863,7 +879,7 @@ function ProductForm({
                 <SelectContent>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.name}
+                      {catName(c, lang)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -872,6 +888,22 @@ function ProductForm({
               <p className="text-xs text-muted-foreground">{t("pmNoCategories")}</p>
             )}
           </Field>
+
+          {isOtherSelected && (
+            <Field label={lang === "mr" ? "नवीन श्रेणी सुचवा (ऐच्छिक)" : "Suggest a new category (optional)"}>
+              <Input
+                value={suggestion}
+                maxLength={40}
+                onChange={(e) => setSuggestion(e.target.value.slice(0, 40))}
+                className="rounded-xl"
+              />
+              {suggestionRow && (
+                <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                  {suggestionLabel(suggestionRow, lang)}
+                </p>
+              )}
+            </Field>
+          )}
 
           <Field label={t("description")}>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-xl" rows={3} />
