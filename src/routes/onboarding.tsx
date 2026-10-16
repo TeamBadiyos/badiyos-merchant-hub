@@ -128,7 +128,7 @@ function OnboardingPage() {
     if (!merchant || hydrated) return;
     void supabase.auth.getUser().then(({ data }) => {
       const meta = (data.user?.user_metadata ?? {}) as Record<string, string>;
-      setForm((p) => ({ ...p, email: meta.contact_email ?? "", upi_id: meta.upi_id ?? "" }));
+      setForm((p) => ({ ...p, email: meta["contact_email"] ?? "", upi_id: meta["upi_id"] ?? "" }));
     });
     setForm((p) => ({
       ...p,
@@ -842,7 +842,10 @@ function AgreementStep({
     setBusy(true);
     const { error } = await supabase.rpc("app_agreement_request_otp", { _agreement_id: agreement!.id });
     setBusy(false);
-    if (error) return toast.error(friendlyErrorMessage(error, lang));
+    if (error) {
+      toast.error(friendlyErrorMessage(error, lang));
+      return;
+    }
     setOtpSent(true);
     toast.success(t("suOtpSent"));
   };
@@ -854,7 +857,10 @@ function AgreementStep({
       _device: navigator.userAgent,
     });
     setBusy(false);
-    if (error) return toast.error(friendlyErrorMessage(error, lang));
+    if (error) {
+      toast.error(friendlyErrorMessage(error, lang));
+      return;
+    }
     hapticNotify("success");
     toast.success(t("suSigned"));
     onSigned();
