@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { ModeShell } from "@/components/ModeShell";
 import { CatalogImage } from "@/components/ProductImage";
+import { ShopLocationCard } from "@/components/ShopLocation";
 import { uploadCatalogImage } from "@/lib/catalog-images";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

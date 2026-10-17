@@ -162,6 +162,8 @@ function HomePage() {
   ];
 
   const alerts: { key: string; text: string; to: "/profile" | "/products" | "/onboarding" | "/settings" }[] = [];
+  if (isOwner && (merchant.latitude == null || merchant.longitude == null))
+    alerts.push({ key: "loc", text: t("alertLocation"), to: "/profile" });
   if (isOwner && !merchant.bank_account_number) alerts.push({ key: "bank", text: t("alertBank"), to: "/profile" });
   if (agreementPending.data) alerts.push({ key: "agr", text: t("alertAgreement"), to: "/onboarding" });
   if ((pendingItems.data ?? 0) > 0)
