@@ -446,16 +446,7 @@ function ProfilePage() {
               <Row label={t("businessName")} value={merchant.store_name} />
               <Row label={t("ownerName")} value={merchant.owner_name} />
               <Row label={t("addressLine")} value={merchant.address} />
-              {merchant.latitude != null && merchant.longitude != null && (
-                <a
-                  href={`https://www.google.com/maps?q=${merchant.latitude},${merchant.longitude}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block py-2 text-right text-xs font-bold text-primary"
-                >
-                  📍 {lang === "mr" ? "नकाशावर पिन पहा" : "View map pin"}
-                </a>
-              )}
+              <ShopLocationCard merchant={merchant} isOwner={isOwner} onSaved={refresh} />
               <Row label={t("city")} value={merchant.city} />
               <Row label={t("state")} value={merchant.state} />
               <Row label={t("pincode")} value={merchant.pincode} />

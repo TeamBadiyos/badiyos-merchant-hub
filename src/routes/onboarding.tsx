@@ -16,9 +16,8 @@ import { toast } from "sonner";
 import { DocumentUpload, type DocType } from "@/components/DocumentUpload";
 import { LegalConsent } from "@/components/LegalConsent";
 import { Wordmark } from "@/components/Wordmark";
-import { LocationPicker } from "@/components/delivery/LocationPicker";
+import { MiniMap, ShopLocationSheet } from "@/components/ShopLocation";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
