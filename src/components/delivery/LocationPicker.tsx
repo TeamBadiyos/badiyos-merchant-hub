@@ -29,6 +29,7 @@ export function LocationPicker({
   onAddress,
   mapClassName = "h-56",
   className,
+  autoLocate = false,
 }: {
   lat: number | null;
   lng: number | null;
@@ -38,6 +39,8 @@ export function LocationPicker({
   mapClassName?: string;
   /** Extra classes for the picker wrapper (e.g. flex layout in a full-screen sheet). */
   className?: string;
+  /** Ask for GPS and drop the pin there when opened without a pin. */
+  autoLocate?: boolean;
 }) {
 
   const dt = useDT();
@@ -108,6 +111,14 @@ export function LocationPicker({
           else reverse(Number(a.toFixed(6)), Number(b.toFixed(6)));
         };
         api.current = { set };
+        // Open on the phone's current location (asks permission) when no pin yet.
+        if (autoLocate && lat == null) {
+          navigator.geolocation?.getCurrentPosition(
+            (p) => !disposed && set(p.coords.latitude, p.coords.longitude),
+            () => undefined,
+            { enableHighAccuracy: true, timeout: 10000 },
+          );
+        }
 
         map.addListener("click", (e: google.maps.MapMouseEvent) => {
           if (e.latLng) set(e.latLng.lat(), e.latLng.lng());
