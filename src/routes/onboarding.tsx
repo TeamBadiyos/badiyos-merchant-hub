@@ -330,6 +330,12 @@ function OnboardingPage() {
         store_category_id: category ? null : t("required"),
         address: form.address.trim() ? null : t("required"),
         pincode: validatePincode(form.pincode),
+        location:
+          coords.lat != null && coords.lng != null
+            ? null
+            : lang === "mr"
+              ? "नकाशावर दुकानाचे ठिकाण पिन करा"
+              : "Pin your shop location on the map",
       })
     )
       return;
@@ -343,9 +349,8 @@ function OnboardingPage() {
         state: form.state,
         country: form.country,
         pincode: form.pincode,
-        ...(coords.lat != null && coords.lng != null
-          ? { latitude: coords.lat, longitude: coords.lng }
-          : {}),
+        latitude: coords.lat,
+        longitude: coords.lng,
       },
       5,
     );
@@ -627,6 +632,7 @@ function OnboardingPage() {
                   <p className="text-xs font-bold text-destructive">{errors["store_category_id"]}</p>
                 )}
               </div>
+              {coords.lat != null && coords.lng != null && <MiniMap lat={coords.lat} lng={coords.lng} />}
               <Button
                 type="button"
                 variant="outline"
@@ -636,6 +642,7 @@ function OnboardingPage() {
                 <MapPin className="size-5 text-primary" />
                 {coords.lat != null ? t("changeOnMap") : t("pickOnMap")}
               </Button>
+              {errors["location"] && <p className="text-xs font-bold text-destructive">{errors["location"]}</p>}
               {field("address", t("addressLine"), { placeholder: "Shop no, building, road, area" })}
               <div className="grid grid-cols-2 gap-3">
                 {field("city", t("city"))}
@@ -657,28 +664,19 @@ function OnboardingPage() {
                 onUploaded={(path) => recordDocument("shop_photo", path)}
               />
               {footer(() => void submit4())}
-              <Dialog open={mapOpen} onOpenChange={setMapOpen}>
-                <DialogContent className="left-0 top-0 flex h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-3 rounded-none border-0 p-4 pb-6 sm:left-1/2 sm:top-1/2 sm:h-[90dvh] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border">
-                  <DialogHeader className="shrink-0 pr-8 text-left">
-                    <DialogTitle className="text-base font-extrabold">{t("mapPickTitle")}</DialogTitle>
-                  </DialogHeader>
-                  <LocationPicker
-                    lat={coords.lat}
-                    lng={coords.lng}
-                    onChange={(lat, lng) => setCoords({ lat, lng })}
-                    onAddress={(address) => setForm((p) => ({ ...p, address }))}
-                    className="flex min-h-0 flex-1 flex-col"
-                    mapClassName="min-h-0 flex-1"
-                  />
-                  <Button
-                    disabled={coords.lat == null}
-                    onClick={() => setMapOpen(false)}
-                    className="h-12 w-full shrink-0 rounded-2xl text-base font-bold"
-                  >
-                    {t("useThisLocation")}
-                  </Button>
-                </DialogContent>
-              </Dialog>
+              <ShopLocationSheet
+                open={mapOpen}
+                onOpenChange={setMapOpen}
+                lat={coords.lat}
+                lng={coords.lng}
+                address={form.address}
+                onConfirm={(lat, lng, address) => {
+                  setCoords({ lat, lng });
+                  if (address) setForm((p) => ({ ...p, address }));
+                  setErrors((e) => ({ ...e, location: null }));
+                  setMapOpen(false);
+                }}
+              />
             </>
           )}
 
