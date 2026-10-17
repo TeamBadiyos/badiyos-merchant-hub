@@ -162,6 +162,8 @@ function HomePage() {
   ];
 
   const alerts: { key: string; text: string; to: "/profile" | "/products" | "/onboarding" | "/settings" }[] = [];
+  if (isOwner && (merchant.latitude == null || merchant.longitude == null))
+    alerts.push({ key: "loc", text: t("alertLocation"), to: "/profile" });
   if (isOwner && !merchant.bank_account_number) alerts.push({ key: "bank", text: t("alertBank"), to: "/profile" });
   if (agreementPending.data) alerts.push({ key: "agr", text: t("alertAgreement"), to: "/onboarding" });
   if ((pendingItems.data ?? 0) > 0)
@@ -216,7 +218,12 @@ function HomePage() {
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-card"
                 >
                   <AlertTriangle className="size-4 shrink-0 text-primary" />
-                  <p className="num min-w-0 flex-1 truncate text-xs font-bold text-foreground">{a.text}</p>
+                  <p className={`num min-w-0 flex-1 text-xs font-bold text-foreground ${a.key === "loc" ? "" : "truncate"}`}>{a.text}</p>
+                  {a.key === "loc" && (
+                    <span className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground">
+                      {t("alertLocationCta")}
+                    </span>
+                  )}
                 </Link>
               </SwipeDismiss>
             ))}
