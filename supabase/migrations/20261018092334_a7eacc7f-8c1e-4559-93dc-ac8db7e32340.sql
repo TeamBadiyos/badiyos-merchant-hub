@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.current_user_phone_digits() FROM authenticated, public, anon;
