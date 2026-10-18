@@ -79,7 +79,7 @@ function AgreementPage() {
     setBusy(true);
     const { data, error } = await supabase.rpc("app_agreement_request_otp", { _agreement_id: agreement!.id });
     setBusy(false);
-    if (error) return toast.error(friendlyErrorMessage(error, lang));
+    if (error) { toast.error(friendlyErrorMessage(error, lang)); return; }
     setSentTo(String((data as { sent_to?: string } | null)?.sent_to ?? ""));
   };
 
@@ -92,7 +92,8 @@ function AgreementPage() {
     });
     if (error) {
       setBusy(false);
-      return toast.error(friendlyErrorMessage(error, lang));
+      toast.error(friendlyErrorMessage(error, lang));
+      return;
     }
     hapticNotify("success");
     toast.success(mr ? "करार स्वाक्षरी झाला. तुमचे दुकान लाइव्ह आहे!" : "Agreement signed. Your store is live!");
