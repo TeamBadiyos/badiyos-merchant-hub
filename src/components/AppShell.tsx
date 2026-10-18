@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart3,
   Clock,
@@ -83,6 +85,20 @@ export function AppShell({
   const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, onRefresh);
   const { dragX, animating } = useEdgeSwipeBack(!open, "/home");
   useNativeBack();
+
+  // Approved owners must sign their Command Center agreement before using the store.
+  const onboarding = useQuery({
+    queryKey: ["onboarding-state", merchant?.id],
+    enabled: Boolean(merchant?.id && merchant.status === "approved" && context.isOwner),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("app_merchant_onboarding_state");
+      if (error) throw error;
+      return (data ?? {}) as { stage?: string };
+    },
+  });
+  useEffect(() => {
+    if (onboarding.data?.stage === "sign_agreement") void navigate({ to: "/agreement", replace: true });
+  }, [onboarding.data?.stage, navigate]);
 
   // Delivery-only businesses must never land on a store screen.
   useEffect(() => {
