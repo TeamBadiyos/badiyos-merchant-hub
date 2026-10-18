@@ -10,7 +10,7 @@ import {
   Store,
   UtensilsCrossed,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { DocumentUpload, type DocType } from "@/components/DocumentUpload";
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/onboarding")({
       {
         name: "description",
         content:
-          "Sign up your shop or restaurant on badiyos in 8 simple steps: business, timings, documents and agreement.",
+          "Sign up your shop or restaurant on badiyos in 7 simple steps: business, timings, documents and bank details.",
       },
       { property: "og:title", content: "Join badiyos as a merchant" },
       { property: "og:description", content: "Register your shop or restaurant on badiyos." },
@@ -62,17 +62,10 @@ export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
 });
 
-const TOTAL = 8;
+const TOTAL = 7;
 const region = lookupRegionDefaults();
 type Errors = Record<string, string | null>;
 type DayRow = { open_time: string; close_time: string; is_closed: boolean };
-type Agreement = {
-  id: string;
-  template_type: string;
-  title: string;
-  body: string;
-  status: string;
-};
 
 function OnboardingPage() {
   const { t, lang } = useI18n();
@@ -216,15 +209,6 @@ function OnboardingPage() {
     });
   }, [hours.data]);
 
-  const agreements = useQuery({
-    queryKey: ["my-agreements", merchant?.id],
-    enabled: Boolean(merchant?.id),
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("app_my_agreements");
-      if (error) throw error;
-      return (data as Agreement[] | null) ?? [];
-    },
-  });
 
   if (!ready || !merchant) {
     return (
@@ -235,9 +219,6 @@ function OnboardingPage() {
   }
 
   const isFood = form.service_type === "food";
-  const agreementType = isFood ? "restaurant" : "store";
-  const agreement = (agreements.data ?? []).find((a) => a.template_type === agreementType);
-  const commissionPct = merchant.commission_pct ?? merchant.commission_value ?? null;
   const docUrl = (d: DocType) =>
     d === "shop_photo"
       ? merchant.shop_photo_url
@@ -421,9 +402,6 @@ function OnboardingPage() {
       },
       7,
     );
-    const { error } = await supabase.rpc("app_merchant_issue_signup_agreement");
-    if (error) console.error("[onboarding] agreement issue failed", error.message);
-    void agreements.refetch();
   };
 
   const submitApplication = async () => {
@@ -460,14 +438,9 @@ function OnboardingPage() {
       <StatusScreen
         status={hasQuery ? "query" : "review"}
         queryNotes={queryNotes}
-        agreementPending={agreement?.status === "sent"}
         onFix={() => {
           setFixing(true);
           goTo(fixStep);
-        }}
-        onSign={() => {
-          setFixing(true);
-          goTo(7);
         }}
       />
     );
@@ -528,8 +501,7 @@ function OnboardingPage() {
     4: "su4Title",
     5: "su5Title",
     6: "su6Title",
-    7: "su7Title",
-    8: "su8Title",
+    7: "su8Title",
   };
 
   return (
@@ -830,15 +802,6 @@ function OnboardingPage() {
           )}
 
           {step === 7 && (
-            <AgreementStep
-              agreement={agreement}
-              commissionPct={commissionPct}
-              onSigned={() => void agreements.refetch()}
-              footer={footer(() => void save({}, 8))}
-            />
-          )}
-
-          {step === 8 && (
             <>
               <dl className="space-y-2 text-sm">
                 {[
@@ -848,7 +811,6 @@ function OnboardingPage() {
                   [t("addressLine"), [form.address, form.pincode].filter(Boolean).join(", ")],
                   [t("panNumber"), form.pan],
                   [t("ifsc"), form.bank_ifsc],
-                  [t("su7Title"), agreement?.status === "accepted" ? t("suSigned") : "—"],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-4 border-b border-border pb-2">
                     <dt className="font-semibold text-muted-foreground">{label}</dt>
@@ -870,138 +832,14 @@ function Card({ children }: { children: ReactNode }) {
   return <div className="rounded-2xl border border-border p-4">{children}</div>;
 }
 
-function AgreementStep({
-  agreement,
-  commissionPct,
-  onSigned,
-  footer,
-}: {
-  agreement: Agreement | undefined;
-  commissionPct: number | null;
-  onSigned: () => void;
-  footer: ReactNode;
-}) {
-  const { t, lang } = useI18n();
-  const [readToEnd, setReadToEnd] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [busy, setBusy] = useState(false);
-  const boxRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = boxRef.current;
-    if (el && el.scrollHeight <= el.clientHeight + 8) setReadToEnd(true);
-  }, [agreement?.id]);
-
-  const requestOtp = async () => {
-    setBusy(true);
-    const { error } = await supabase.rpc("app_agreement_request_otp", { _agreement_id: agreement!.id });
-    setBusy(false);
-    if (error) {
-      toast.error(friendlyErrorMessage(error, lang));
-      return;
-    }
-    setOtpSent(true);
-    toast.success(t("suOtpSent"));
-  };
-  const accept = async () => {
-    setBusy(true);
-    const { error } = await supabase.rpc("app_agreement_accept", {
-      _agreement_id: agreement!.id,
-      _otp: otp,
-      _device: navigator.userAgent,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(friendlyErrorMessage(error, lang));
-      return;
-    }
-    hapticNotify("success");
-    toast.success(t("suSigned"));
-    onSigned();
-  };
-
-  return (
-    <>
-      <div className="rounded-2xl border-2 border-primary bg-primary-soft p-4 text-center">
-        <p className="text-xs font-bold text-muted-foreground">{t("suCommissionBox")}</p>
-        <p className="num text-3xl font-extrabold text-primary">
-          {commissionPct != null ? `${commissionPct}%` : "—"}
-        </p>
-        <p className="text-[11px] font-semibold text-muted-foreground">+ GST</p>
-      </div>
-
-      {!agreement ? (
-        <p className="text-sm text-muted-foreground">{t("suAgreementLater")}</p>
-      ) : agreement.status === "accepted" ? (
-        <p className="flex items-center gap-2 text-sm font-bold text-primary">
-          <CheckCircle2 className="size-5" /> {t("suSigned")}
-        </p>
-      ) : (
-        <>
-          <div
-            ref={boxRef}
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setReadToEnd(true);
-            }}
-            className="selectable max-h-72 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-border p-4 text-sm leading-relaxed text-foreground"
-          >
-            {agreement.body.replace(/^#+\s*/gm, "").replace(/\*\*/g, "")}
-          </div>
-          {!readToEnd && (
-            <p className="text-xs font-bold text-muted-foreground">{t("suScrollToEnd")}</p>
-          )}
-          {!otpSent ? (
-            <Button
-              disabled={!readToEnd || busy}
-              onClick={() => void requestOtp()}
-              className="h-12 w-full rounded-2xl font-bold"
-            >
-              {busy && <Loader2 className="size-5 animate-spin" />}
-              {t("suIAgree")}
-            </Button>
-          ) : (
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">{t("suEnterOtp")}</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={otp}
-                  inputMode="numeric"
-                  maxLength={6}
-                  onChange={(e) => setOtp(digitsOnly(e.target.value).slice(0, 6))}
-                  className="num h-12 flex-1 rounded-2xl text-center text-lg font-bold tracking-widest"
-                />
-                <Button
-                  disabled={otp.length < 4 || busy}
-                  onClick={() => void accept()}
-                  className="h-12 rounded-2xl px-5 font-bold"
-                >
-                  {busy && <Loader2 className="size-5 animate-spin" />}
-                  {t("suSign")}
-                </Button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-      {(!agreement || agreement.status === "accepted") && footer}
-    </>
-  );
-}
-
 function StatusScreen({
   status,
   queryNotes,
-  agreementPending,
   onFix,
-  onSign,
 }: {
   status: "review" | "query";
   queryNotes: string;
-  agreementPending: boolean;
   onFix: () => void;
-  onSign: () => void;
 }) {
   const { t } = useI18n();
   const { signOut } = useAuth();
@@ -1053,11 +891,6 @@ function StatusScreen({
           })}
         </ol>
 
-        {agreementPending && (
-          <Button variant="outline" onClick={onSign} className="mt-4 h-12 w-full rounded-2xl font-bold">
-            {t("signAgreement")}
-          </Button>
-        )}
         <button
           type="button"
           onClick={() => void signOut().then(() => navigate({ to: "/login", replace: true }))}
