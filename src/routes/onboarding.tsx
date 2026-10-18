@@ -66,13 +66,6 @@ const TOTAL = 7;
 const region = lookupRegionDefaults();
 type Errors = Record<string, string | null>;
 type DayRow = { open_time: string; close_time: string; is_closed: boolean };
-type Agreement = {
-  id: string;
-  template_type: string;
-  title: string;
-  body: string;
-  status: string;
-};
 
 function OnboardingPage() {
   const { t, lang } = useI18n();
@@ -448,10 +441,6 @@ function OnboardingPage() {
         onFix={() => {
           setFixing(true);
           goTo(fixStep);
-        }}
-        onSign={() => {
-          setFixing(true);
-          goTo(7);
         }}
       />
     );
@@ -846,15 +835,11 @@ function Card({ children }: { children: ReactNode }) {
 function StatusScreen({
   status,
   queryNotes,
-  agreementPending,
   onFix,
-  onSign,
 }: {
   status: "review" | "query";
   queryNotes: string;
-  agreementPending: boolean;
   onFix: () => void;
-  onSign: () => void;
 }) {
   const { t } = useI18n();
   const { signOut } = useAuth();
@@ -906,11 +891,6 @@ function StatusScreen({
           })}
         </ol>
 
-        {agreementPending && (
-          <Button variant="outline" onClick={onSign} className="mt-4 h-12 w-full rounded-2xl font-bold">
-            {t("signAgreement")}
-          </Button>
-        )}
         <button
           type="button"
           onClick={() => void signOut().then(() => navigate({ to: "/login", replace: true }))}
