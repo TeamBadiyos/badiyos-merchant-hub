@@ -421,9 +421,6 @@ function OnboardingPage() {
       },
       7,
     );
-    const { error } = await supabase.rpc("app_merchant_issue_signup_agreement");
-    if (error) console.error("[onboarding] agreement issue failed", error.message);
-    void agreements.refetch();
   };
 
   const submitApplication = async () => {
@@ -830,15 +827,6 @@ function OnboardingPage() {
           )}
 
           {step === 7 && (
-            <AgreementStep
-              agreement={agreement}
-              commissionPct={commissionPct}
-              onSigned={() => void agreements.refetch()}
-              footer={footer(() => void save({}, 8))}
-            />
-          )}
-
-          {step === 8 && (
             <>
               <dl className="space-y-2 text-sm">
                 {[
@@ -848,7 +836,6 @@ function OnboardingPage() {
                   [t("addressLine"), [form.address, form.pincode].filter(Boolean).join(", ")],
                   [t("panNumber"), form.pan],
                   [t("ifsc"), form.bank_ifsc],
-                  [t("su7Title"), agreement?.status === "accepted" ? t("suSigned") : "—"],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-4 border-b border-border pb-2">
                     <dt className="font-semibold text-muted-foreground">{label}</dt>
