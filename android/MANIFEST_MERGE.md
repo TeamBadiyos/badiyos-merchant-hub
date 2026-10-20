@@ -13,6 +13,8 @@ hand (same as the Partner App). Nothing else in the generated project changes.
 <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 ```
 
 ## 2. Service + activity — add inside `<application>`
@@ -85,3 +87,19 @@ The push sender (`/api/public/merchant-send-push`) needs
 `FIREBASE_SERVICE_ACCOUNT_JSON` (same service account JSON used by
 `expert-send-push`) and `PUSH_TRIGGER_SECRET` (already set, matching the shared
 `edge_runtime_config.push_trigger_secret`). Publish the app after adding secrets.
+
+## 6. Ringing parity with the Expert App (notes)
+
+- Ring screen plays on the **ALARM** stream (USAGE_ALARM), boosts alarm volume to max
+  and restores the merchant's level when it stops. Channel id is now
+  `new_order_alarm_v2` (Android freezes channel sound after creation).
+- Ring length = seconds left until the backend auto-reject deadline
+  (`city_accept_timeout`), sent as `timeout_seconds` by `notify_merchant_new_order`.
+- Pushes `type=order_taken` / `order_cancelled` stop the ringing on every phone.
+- Android 14+: if "full-screen notifications" are not allowed, an insistent
+  heads-up keeps ringing instead; the in-app **Settings → Order ringing & battery**
+  page (`AlertSettingsPlugin`, registered in MainActivity) opens that permission,
+  DND access, battery optimisation and OEM autostart pages.
+- No foreground service is used: ringing runs in `OrderRingActivity`, started by
+  the full-screen intent, so no `foregroundServiceType` declaration is required
+  (Play policy disallows FGS for this use). Copy `AlertSettingsPlugin.java` too.
