@@ -20,6 +20,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(AlertSettingsPlugin.class);
         super.onCreate(savedInstanceState);
         handleOrderAction(getIntent());
     }
