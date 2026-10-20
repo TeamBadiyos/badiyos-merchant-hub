@@ -136,7 +136,7 @@ export const Route = createFileRoute("/api/public/merchant-send-push")({
             title: payload.title ?? "New order",
             body: payload.body ?? "You have a new order waiting.",
             amount: payload.amount == null ? "" : String(payload.amount),
-            timeout_seconds: String(payload.timeout_seconds ?? 45),
+            timeout_seconds: String(payload.timeout_seconds ?? 300),
           };
 
           let sent = 0;

@@ -1,5 +1,6 @@
 package com.badiyos.merchant;
 
+import android.app.KeyguardManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -30,7 +31,9 @@ import java.util.Map;
 public class MerchantMessagingService extends MessagingService {
 
     private static final String TAG = "MerchantMessaging";
-    public static final String CHANNEL_ID = "new_order_alerts";
+    // New id: Android freezes channel sound/usage after creation, so the alarm-stream
+    // channel needs a fresh id on phones that already have "new_order_alerts".
+    public static final String CHANNEL_ID = "new_order_alarm_v2";
     public static final int NOTIFICATION_ID = 42001;
 
     public static final String EXTRA_ORDER_ID = "order_id";
@@ -46,6 +49,14 @@ public class MerchantMessagingService extends MessagingService {
         Map<String, String> data = message.getData();
         String type = data.get("type");
 
+        // Order accepted elsewhere / rejected / auto-rejected / cancelled: stop ringing.
+        if ("order_taken".equals(type) || "order_cancelled".equals(type)) {
+            cancelAlert(this);
+            OrderRingActivity.dismissIfShowing(getApplicationContext(), data.get(EXTRA_ORDER_ID));
+            super.onMessageReceived(message);
+            return;
+        }
+
         if ("business_delivery".equals(type) && !MerchantAppState.isForeground()) {
             try {
                 showDeliveryNotification(data);
@@ -56,7 +67,6 @@ public class MerchantMessagingService extends MessagingService {
         }
 
         if (!"new_order".equals(type) || MerchantAppState.isForeground()) {
-            // Foreground or unrelated push: normal Capacitor handling.
             super.onMessageReceived(message);
             return;
         }
@@ -79,15 +89,26 @@ public class MerchantMessagingService extends MessagingService {
                 CHANNEL_ID, "New order alerts", NotificationManager.IMPORTANCE_HIGH);
         channel.setDescription("Loud full-screen alert for new incoming orders");
         channel.enableVibration(true);
-        channel.setVibrationPattern(new long[]{0, 600, 400, 600, 400});
+        channel.setVibrationPattern(new long[]{0, 700, 400, 700, 400});
+        // Honoured only when the user granted DND access; the ring screen itself
+        // plays on the ALARM stream, which DND "alarms" allow by default.
         channel.setBypassDnd(true);
         channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
-        Uri sound = Uri.parse("android.resource://" + getPackageName() + "/raw/new_order_alert");
+        int raw = getResources().getIdentifier("new_order_alert", "raw", getPackageName());
+        Uri sound = raw != 0
+                ? Uri.parse("android.resource://" + getPackageName() + "/" + raw)
+                : android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
         channel.setSound(sound, new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build());
         nm.createNotificationChannel(channel);
+    }
+
+    private boolean canUseFullScreen() {
+        if (Build.VERSION.SDK_INT < 34) return true;
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        return nm != null && nm.canUseFullScreenIntent();
     }
 
     private void showFullScreenAlert(Map<String, String> data) {
@@ -95,10 +116,12 @@ public class MerchantMessagingService extends MessagingService {
         String title = data.get(EXTRA_TITLE) != null ? data.get(EXTRA_TITLE) : "New order";
         String body = data.get(EXTRA_BODY) != null ? data.get(EXTRA_BODY) : "Tap to accept";
         String amount = data.get(EXTRA_AMOUNT);
-        int timeout = parseInt(data.get(EXTRA_TIMEOUT), 45);
+        // Seconds left until the backend auto-rejects this order.
+        int timeout = parseInt(data.get(EXTRA_TIMEOUT), 300);
 
         Intent ring = new Intent(this, OrderRingActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_NO_USER_ACTION)
                 .putExtra(EXTRA_ORDER_ID, orderId)
                 .putExtra(EXTRA_TITLE, title)
                 .putExtra(EXTRA_BODY, body)
@@ -114,6 +137,7 @@ public class MerchantMessagingService extends MessagingService {
                         .setAction(ACTION_OPEN)
                         .putExtra(EXTRA_ORDER_ID, orderId), flags);
 
+        boolean fsi = canUseFullScreen();
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle(title)
@@ -123,12 +147,23 @@ public class MerchantMessagingService extends MessagingService {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOngoing(true)
                 .setAutoCancel(false)
+                .setOnlyAlertOnce(false)
                 .setTimeoutAfter(timeout * 1000L)
-                .setFullScreenIntent(fullScreen, true)
                 .setContentIntent(fullScreen)
                 .addAction(0, "Open", open);
+        if (fsi) builder.setFullScreenIntent(fullScreen, true);
 
-        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, builder.build());
+        android.app.Notification n = builder.build();
+        // Fallback when full-screen is not allowed: the heads-up keeps ringing.
+        n.flags |= android.app.Notification.FLAG_INSISTENT;
+        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, n);
+
+        // Some OEMs only show a heads-up on a locked phone; start the screen too.
+        KeyguardManager km = getSystemService(KeyguardManager.class);
+        boolean locked = km != null && km.isKeyguardLocked();
+        if (locked || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            try { startActivity(ring); } catch (Exception e) { Log.w(TAG, "direct start blocked", e); }
+        }
     }
 
     public static final String DELIVERY_CHANNEL_ID = "delivery_alerts";

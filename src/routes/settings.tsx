@@ -237,6 +237,20 @@ function SettingsPage() {
   return (
     <AppShell title={t("settings")}>
       <div className="space-y-4">
+        <Link
+          to="/battery-guide"
+          className="flex items-center justify-between rounded-3xl border border-border bg-card p-5 shadow-card"
+        >
+          <span>
+            <span className="block text-base font-bold text-foreground">
+              {lang === "mr" ? "ऑर्डर रिंग आणि बॅटरी" : "Order ringing & battery"}
+            </span>
+            <span className="block text-sm text-muted-foreground">
+              {lang === "mr" ? "लॉक फोनवरही ऑर्डर वाजेल याची खात्री करा" : "Make sure orders ring on a locked phone"}
+            </span>
+          </span>
+          <ChevronRight className="size-5 text-muted-foreground" />
+        </Link>
         <BusyCard />
         <section className="rounded-3xl border border-border bg-card p-5 shadow-card">
           <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
