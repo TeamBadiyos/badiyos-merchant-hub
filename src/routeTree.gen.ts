@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgreementRouteImport } from './routes/agreement'
+import { Route as BatteryGuideRouteImport } from './routes/battery-guide'
 import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
 const AgreementRoute = AgreementRouteImport.update({
   id: '/agreement',
   path: '/agreement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BatteryGuideRoute = BatteryGuideRouteImport.update({
+  id: '/battery-guide',
+  path: '/battery-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeliveryRoute = DeliveryRouteImport.update({
@@ -189,6 +195,7 @@ const DeliveryTripIdRoute = DeliveryTripIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agreement': typeof AgreementRoute
+  '/battery-guide': typeof BatteryGuideRoute
   '/delivery': typeof DeliveryRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agreement': typeof AgreementRoute
+  '/battery-guide': typeof BatteryGuideRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agreement': typeof AgreementRoute
+  '/battery-guide': typeof BatteryGuideRoute
   '/delivery': typeof DeliveryRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/agreement'
+    | '/battery-guide'
     | '/delivery'
     | '/home'
     | '/login'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/agreement'
+    | '/battery-guide'
     | '/home'
     | '/login'
     | '/onboarding'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/agreement'
+    | '/battery-guide'
     | '/delivery'
     | '/home'
     | '/login'
@@ -377,6 +389,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgreementRoute: typeof AgreementRoute
+  BatteryGuideRoute: typeof BatteryGuideRoute
   DeliveryRoute: typeof DeliveryRouteWithChildren
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
@@ -410,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/agreement'
       fullPath: '/agreement'
       preLoaderRoute: typeof AgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/battery-guide': {
+      id: '/battery-guide'
+      path: '/battery-guide'
+      fullPath: '/battery-guide'
+      preLoaderRoute: typeof BatteryGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/delivery': {
@@ -637,6 +657,7 @@ const DeliveryRouteWithChildren = DeliveryRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgreementRoute: AgreementRoute,
+  BatteryGuideRoute: BatteryGuideRoute,
   DeliveryRoute: DeliveryRouteWithChildren,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
