@@ -47,7 +47,7 @@ function BatteryGuide() {
     if (!ok) toast.error(mr ? "फोनच्या Settings मध्ये हे स्वतः उघडा." : "Please open this in your phone's Settings.");
   };
 
-  const rows: { key: AlertSetting; ok?: boolean; title: string; help: string }[] = [
+  const rows: { key: AlertSetting; ok?: boolean | undefined; title: string; help: string }[] = [
     { key: "notifications", ok: status?.notifications, title: mr ? "सूचना" : "Notifications", help: mr ? "नवीन ऑर्डर सूचना चालू ठेवा." : "Keep order notifications on." },
     { key: "fullScreen", ok: status?.fullScreen, title: mr ? "फुल-स्क्रीन अलर्ट" : "Full-screen alerts", help: mr ? "लॉक फोनवर ऑर्डर स्क्रीन उघडते." : "Opens the order screen on a locked phone." },
     { key: "dnd", ok: status?.dnd, title: mr ? "व्यत्यय आणू नका (DND)" : "Do Not Disturb", help: mr ? "DND चालू असतानाही वाजू द्या." : "Lets orders ring even in Do Not Disturb." },
