@@ -49,7 +49,7 @@ function createSupabaseClient() {
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
-      fetch: withSessionRefresh(createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY)),
+      fetch: withSessionRefresh(createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY), SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
       storage: brokeredPreviewStorage(),
