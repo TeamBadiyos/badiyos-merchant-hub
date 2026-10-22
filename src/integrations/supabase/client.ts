@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
+import { registerSessionGuardClient, verifySessionOnStart, withSessionRefresh } from './session-guard';
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
@@ -46,7 +47,7 @@ function createSupabaseClient() {
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
-      fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
+      fetch: withSessionRefresh(createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY)),
     },
     auth: {
       storage: brokeredPreviewStorage(),
@@ -58,11 +59,16 @@ function createSupabaseClient() {
 
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
 
+registerSessionGuardClient(() => _supabase);
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
   get(_, prop, receiver) {
-    if (!_supabase) _supabase = createSupabaseClient();
+    if (!_supabase) {
+      _supabase = createSupabaseClient();
+      if (typeof window !== 'undefined') void verifySessionOnStart();
+    }
     return Reflect.get(_supabase, prop, receiver);
   },
 });
