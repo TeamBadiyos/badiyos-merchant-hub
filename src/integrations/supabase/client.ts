@@ -32,7 +32,9 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env['VITE_SUPABASE_URL'] || process.env['SUPABASE_URL'];
+  // Custom domain shared with the Customer and Expert apps; env vars are fallback only.
+  const CUSTOM_SUPABASE_URL: string = 'https://api.badiyos.com';
+  const SUPABASE_URL = CUSTOM_SUPABASE_URL || import.meta.env['VITE_SUPABASE_URL'] || process.env['SUPABASE_URL'];
   const SUPABASE_PUBLISHABLE_KEY = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
@@ -51,6 +53,8 @@ function createSupabaseClient() {
     },
     auth: {
       storage: brokeredPreviewStorage(),
+      // Pinned so sessions survive URL/domain changes — never derive from the URL.
+      storageKey: 'sb-dkneclwmmjlqswovtqno-auth-token',
       persistSession: true,
       autoRefreshToken: true,
     }
