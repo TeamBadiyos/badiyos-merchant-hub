@@ -36,7 +36,7 @@ function userTokenOf(headers: Headers, apiKey: string): string | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
   try {
-    const json = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
+    const json = atob((parts[1] ?? "").replace(/-/g, "+").replace(/_/g, "/"));
     const payload = JSON.parse(json) as { sub?: string; role?: string };
     if (!payload.sub || payload.role === "anon" || payload.role === "service_role") return null;
     return token;
