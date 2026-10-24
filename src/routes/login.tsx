@@ -22,6 +22,7 @@ import {
   verifyMerchantPin,
 } from "@/lib/merchant-auth.functions";
 import { digitsOnly, validatePhone } from "@/lib/validation";
+import { saveMerchantLoginPin } from "@/lib/pin-setup";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -34,6 +35,8 @@ export const Route = createFileRoute("/login")({
       },
       { property: "og:title", content: "Merchant login — badiyos" },
       { property: "og:description", content: "WhatsApp OTP login for badiyos merchants." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: LoginPage,
@@ -118,11 +121,20 @@ function LoginPage() {
         setOtp("");
         return;
       }
-      await supabase.auth.setSession({
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
         access_token: result.access_token,
         refresh_token: result.refresh_token,
       });
+      if (sessionError || !sessionData.session) {
+        toast.error(lang === "mr" ? "कृपया पुन्हा लॉग इन करा." : "Please log in again.");
+        setStep("mobile");
+        return;
+      }
       const merchant = await ensureDraft(mobile);
+      if (!merchant) {
+        toast.error(lang === "mr" ? "खाते तयार करता आले नाही. कृपया पुन्हा प्रयत्न करा." : "Could not prepare your account. Please try again.");
+        return;
+      }
       if (!merchant?.pin_hash) {
         setStep("pinSetup");
         return;
@@ -146,10 +158,15 @@ function LoginPage() {
         if (result.code === "NO_PIN" || result.code === "NOT_REGISTERED") await requestOtp();
         return;
       }
-      await supabase.auth.setSession({
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
         access_token: result.access_token,
         refresh_token: result.refresh_token,
       });
+      if (sessionError || !sessionData.session) {
+        toast.error(lang === "mr" ? "कृपया पुन्हा लॉग इन करा." : "Please log in again.");
+        setStep("mobile");
+        return;
+      }
       await goAfterLogin();
     } catch (error) {
       console.error(error);
@@ -162,13 +179,23 @@ function LoginPage() {
   const handleSetPin = async () => {
     setBusy(true);
     try {
-      const { error } = await supabase.rpc("merchant_set_login_pin", { p_pin: pin1 });
-      if (error) {
-        toast.error("Could not save your PIN. Please try again.");
+      const result = await saveMerchantLoginPin(supabase, pin1);
+      if (!result.ok) {
+        if (result.reason === "session") {
+          setPin1("");
+          setPin2("");
+          setOtp("");
+          setStep("mobile");
+          toast.error(lang === "mr" ? "कृपया पुन्हा लॉग इन करा." : "Please log in again.");
+        } else {
+          toast.error(lang === "mr" ? "पिन जतन करता आला नाही. कृपया पुन्हा प्रयत्न करा." : "Could not save your PIN. Please try again.");
+        }
         return;
       }
       await refresh();
       await goAfterLogin();
+    } catch {
+      toast.error(lang === "mr" ? "पिन जतन करता आला नाही. कृपया पुन्हा प्रयत्न करा." : "Could not save your PIN. Please try again.");
     } finally {
       setBusy(false);
     }

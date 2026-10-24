@@ -25,3 +25,4 @@
 - Staff access is two-tier: Owner (full) and one standard "Staff" role (ensureStaffRole in staff.tsx); custom roles are not offered but old merchant_roles rows are kept — keeps permissions simple for merchants.
 - Signup is 7 steps with no agreement; CC approval issues the agreement and AppShell sends owners to /agreement while app_merchant_onboarding_state says sign_agreement — terms (commission/fee) are only final after approval.
 - New-order ringing in the foreground lives in useOrderRing (Home only); background ringing stays with native push — avoids double alarms.
+- PIN setup checks session establishment and sends the current user's bearer explicitly through the existing PIN RPC; anonymous requests must never attempt to save a PIN.
